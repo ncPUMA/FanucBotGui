@@ -1,4 +1,4 @@
-# LaserBotGui
+# FanucBotGui
 GUI for move and controll laser-bot
 
 Technologies:
