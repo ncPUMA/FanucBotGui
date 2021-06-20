@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/Lamps">
+        <file>Data/Lamps/green.png</file>
+        <file>Data/Lamps/red.png</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file>Data/Icons/open.png</file>
+        <file>Data/Icons/stop.png</file>
+        <file>Data/Icons/play.png</file>
+        <file>Data/Icons/shading.png</file>
+        <file>Data/Icons/fps-counter.png</file>
+    </qresource>
+    <qresource prefix="/Styles">
+        <file>Data/StyleSheets/style.qss</file>
+    </qresource>
+    <qresource prefix="/Models">
+        <file>Data/Models/gripper_v1.step</file>
+        <file>Data/Models/turbine_blade.stp</file>
+        <file>Data/Models/MHZ2_16D_grip.stp</file>
+    </qresource>
+</RCC>
