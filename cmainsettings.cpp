@@ -121,27 +121,6 @@ public:
     GUI_TYPES::TMSAA getMsaa() const final { return readGuiValue <GUI_TYPES::TMSAA> (ENGK_MSAA); }
     void setMsaa(const GUI_TYPES::TMSAA value) final { writeGuiValue(ENGK_MSAA, value); }
 
-    //The LaserBot
-    double getBotAnchorX() const final { return readGuiValue <double> (ENGK_BOT_ANCHOR_X); }
-    double getBotAnchorY() const final { return readGuiValue <double> (ENGK_BOT_ANCHOR_Y); }
-    double getBotAnchorZ() const final { return readGuiValue <double> (ENGK_BOT_ANCHOR_Z); }
-    double getBotLaserX() const final { return readGuiValue <double> (ENGK_BOT_LASER_X); }
-    double getBotLaserY() const final { return readGuiValue <double> (ENGK_BOT_LASER_Y); }
-    double getBotLaserZ() const final { return readGuiValue <double> (ENGK_BOT_LASER_Z); }
-    GUI_TYPES::TCoordSystem getBotCoordType() const  final {
-        return readGuiValue <GUI_TYPES::TCoordSystem> (ENGK_BOT_COORD_TYPE);
-    }
-
-    void setBotAnchorX(const double value) final { writeGuiValue(ENGK_BOT_ANCHOR_X, value); }
-    void setBotAnchorY(const double value) final { writeGuiValue(ENGK_BOT_ANCHOR_Y, value); }
-    void setBotAnchorZ(const double value) final { writeGuiValue(ENGK_BOT_ANCHOR_Z, value); }
-    void setBotLaserX(const double value) final { writeGuiValue(ENGK_BOT_LASER_X, value); }
-    void setBotLaserY(const double value) final { writeGuiValue(ENGK_BOT_LASER_Y, value); }
-    void setBotLaserZ(const double value) final { writeGuiValue(ENGK_BOT_LASER_Z, value); }
-    void setBotCoordType(const GUI_TYPES::TCoordSystem value) final {
-        writeGuiValue(ENGK_BOT_COORD_TYPE, value);
-    }
-
     //The Part
     double getPartTrX() const final { return readGuiValue <double> (ENGK_PART_TR_X); }
     double getPartTrY() const final { return readGuiValue <double> (ENGK_PART_TR_Y); }
@@ -164,31 +143,6 @@ public:
     void setPartRotationY(const double value) final { writeGuiValue(ENGK_PART_ROTATE_Y, value); }
     void setPartRotationZ(const double value) final { writeGuiValue(ENGK_PART_ROTATE_Z, value); }
     void setPartScale(const double value) final { writeGuiValue(ENGK_PART_SCALE, value); }
-
-    //The Grip
-    bool   isGripVisible() const final { return readGuiValue <bool> (ENGK_GRIP_VISIBLE); }
-    double getGripTrX() const final { return readGuiValue <double> (ENGK_GRIP_TR_X); }
-    double getGripTrY() const final { return readGuiValue <double> (ENGK_GRIP_TR_Y); }
-    double getGripTrZ() const final { return readGuiValue <double> (ENGK_GRIP_TR_Z); }
-    double getGripCenterX() const final { return readGuiValue <double> (ENGK_GRIP_CENTER_X); }
-    double getGripCenterY() const final { return readGuiValue <double> (ENGK_GRIP_CENTER_Y); }
-    double getGripCenterZ() const final { return readGuiValue <double> (ENGK_GRIP_CENTER_Z); }
-    double getGripRotationX() const final { return readGuiValue <double> (ENGK_GRIP_ROTATE_X); }
-    double getGripRotationY() const final { return readGuiValue <double> (ENGK_GRIP_ROTATE_Y); }
-    double getGripRotationZ() const final { return readGuiValue <double> (ENGK_GRIP_ROTATE_Z); }
-    double getGripScale() const final { return readGuiValue <double> (ENGK_GRIP_SCALE); }
-
-    void setGripVisible(const bool value) final { writeGuiValue(ENGK_GRIP_VISIBLE, value); }
-    void setGripTrX(const double value) final { writeGuiValue(ENGK_GRIP_TR_X, value); }
-    void setGripTrY(const double value) final { writeGuiValue(ENGK_GRIP_TR_Y, value); }
-    void setGripTrZ(const double value) final { writeGuiValue(ENGK_GRIP_TR_Z, value); }
-    void setGripCenterX(const double value) final { writeGuiValue(ENGK_GRIP_CENTER_X, value); }
-    void setGripCenterY(const double value) final { writeGuiValue(ENGK_GRIP_CENTER_Y, value); }
-    void setGripCenterZ(const double value) final { writeGuiValue(ENGK_GRIP_CENTER_Z, value); }
-    void setGripRotationX(const double value) final { writeGuiValue(ENGK_GRIP_ROTATE_X, value); }
-    void setGripRotationY(const double value) final { writeGuiValue(ENGK_GRIP_ROTATE_Y, value); }
-    void setGripRotationZ(const double value) final { writeGuiValue(ENGK_GRIP_ROTATE_Z, value); }
-    void setGripScale(const double value) final { writeGuiValue(ENGK_GRIP_SCALE, value); }
 
 //CAbstractBotSocketSettings
     uint32_t getLocalIpV4() const { return readIp(BOT_PREFIX, BOT_KEY_LCL_IP); }

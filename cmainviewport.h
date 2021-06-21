@@ -24,6 +24,8 @@ public:
     void setBackgroundColor(const Quantity_Color &clr);
     void setCoord(const GUI_TYPES::TCoordSystem type);
 
+    void setCalibEnabled(bool enabled);
+
 protected:
     QPaintEngine* paintEngine() const final;
     void paintEvent(QPaintEvent *) final;

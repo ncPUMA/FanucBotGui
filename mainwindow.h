@@ -25,11 +25,6 @@ public:
 
     void init(OpenGl_GraphicDriver &driver);
     void setSettings(CAbstractGuiSettings &settings);
-    void setBotSocket(CAbstractBotSocket &socket);
-
-protected:
-    void updateMdlTransform();
-    void updateBotSocketState();
 
 private slots:
     //Menu "File"
@@ -45,10 +40,6 @@ private slots:
 
     //callib
     void slCallibApply();
-
-    //socket
-    void slStart();
-    void slStop();
 
 private:
     void configMenu();

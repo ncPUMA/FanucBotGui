@@ -9,20 +9,14 @@
 
 #include "cmainsettings.h"
 
-#include "BotSocket/cbotsocketimitator.h"
-#include "BotSocket/cfanucbotsocket.h"
-
 int main(int argc, char *argv[])
 {
     //arg parsing
-    bool bImitator = false;
     bool bStyleSheet = true;
     for(int i = 0; i < argc; ++i)
     {
         const char *arg = argv[i];
-        if (strcmp(arg, "--imitator") == 0)
-            bImitator = true;
-        else if (strcmp(arg, "--no-ssheet") == 0)
+        if (strcmp(arg, "--no-ssheet") == 0)
             bStyleSheet = false;
     }
 
@@ -47,17 +41,6 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.init(*aGraphicDriver);
     w.setSettings(settings.guiSettings());
-    CAbstractBotSocket *botSocket = nullptr;
-    if (bImitator)
-    {
-        CBotSocketImitator * const imitator = new CBotSocketImitator();
-        imitator->setMessageInterval(20);
-        botSocket = imitator;
-    }
-    else
-        botSocket = new CFanucBotSocket();
-    botSocket->setSettings(settings.socketSettings());
-    w.setBotSocket(*botSocket);
     if (bStyleSheet)
     {
         QFile f(":/Styles/Data/StyleSheets/style.qss");
@@ -70,6 +53,5 @@ int main(int argc, char *argv[])
     }
     w.show();
     const int retCode = a.exec();
-    delete botSocket;
     return retCode;
 }

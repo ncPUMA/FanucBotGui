@@ -9,6 +9,10 @@
 #include <AIS_InteractiveContext.hxx>
 #include <V3d_View.hxx>
 
+#include <AIS_Shape.hxx>
+#include <Geom_CartesianPoint.hxx>
+#include <AIS_Point.hxx>
+#include <AIS_TextLabel.hxx>
 #include <TopoDS_Shape.hxx>
 
 #include "caspectwindow.h"
@@ -18,7 +22,10 @@ class CMainViewportPrivate : public AIS_ViewController
     friend class CMainViewport;
 
     CMainViewportPrivate(CMainViewport * const qptr) :
-        q_ptr(qptr)
+        q_ptr(qptr),
+        bCalibEnabled(false),
+        pnt(new AIS_Point(new Geom_CartesianPoint(gp_Pnt()))),
+        pntLbl(new AIS_TextLabel())
     { }
 
     void init(AIS_InteractiveContext &extContext) {
@@ -68,6 +75,10 @@ class CMainViewportPrivate : public AIS_ViewController
     Handle(AIS_InteractiveContext) context;
     Handle(V3d_View)               v3dView;
     Handle(CAspectWindow)          aspect;
+
+    bool bCalibEnabled;
+    Handle(AIS_Point) pnt;
+    Handle(AIS_TextLabel) pntLbl;
 };
 
 
@@ -125,6 +136,11 @@ void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
         orientation = V3d_XposYnegZneg;
     d_ptr->v3dView->SetProj(orientation, Standard_False);
     d_ptr->v3dView->Redraw();
+}
+
+void CMainViewport::setCalibEnabled(bool enabled)
+{
+    d_ptr->bCalibEnabled = enabled;
 }
 
 QPaintEngine *CMainViewport::paintEngine() const
@@ -206,6 +222,38 @@ void CMainViewport::mouseMoveEvent(QMouseEvent *event)
     {
         update();
     }
+
+    if (d_ptr->bCalibEnabled)
+    {
+        Handle(StdSelect_ViewerSelector3d) selector = d_ptr->context->MainSelector();
+        if (selector->NbPicked() > 0)
+        {
+            const gp_Pnt pick = selector->PickedPoint(1);
+            d_ptr->pnt->SetComponent(new Geom_CartesianPoint(pick));
+            if (d_ptr->context->IsDisplayed(d_ptr->pnt))
+                d_ptr->context->Redisplay(d_ptr->pnt, Standard_False);
+            else
+                d_ptr->context->Display(d_ptr->pnt, Standard_False);
+            const QString txt = QString("X:%1\nY:%2\nZ:%3")
+                    .arg(pick.X())
+                    .arg(pick.Y())
+                    .arg(pick.Z());
+            d_ptr->pntLbl->SetPosition(pick);
+            d_ptr->pntLbl->SetText(txt.toLocal8Bit().constData());
+            if (d_ptr->context->IsDisplayed(d_ptr->pntLbl))
+                d_ptr->context->Redisplay(d_ptr->pntLbl, Standard_False);
+            else
+                d_ptr->context->Display(d_ptr->pntLbl, Standard_False);
+            d_ptr->v3dView->Redraw();
+        }
+    }
+//    Handle(SelectMgr_EntityOwner) owner = d_ptr->context->DetectedOwner();
+//    if (owner)
+//    {
+//        Handle(AIS_Shape) shape = Handle(AIS_Shape)::DownCast(owner->Selectable());
+//        if (shape)
+//            qDebug() << shape->This();
+//    }
 }
 
 void CMainViewport::wheelEvent(QWheelEvent *event)

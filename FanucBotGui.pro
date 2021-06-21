@@ -26,7 +26,6 @@ SOURCES += \
     cguisettingswidget.cpp \
     cmainsettings.cpp \
     cmainviewport.cpp \
-    cmodelmover.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -53,7 +52,6 @@ HEADERS += \
     cguisettingswidget.h \
     cmainsettings.h \
     cmainviewport.h \
-    cmodelmover.h \
     gui_types.h \
     mainwindow.h
 
