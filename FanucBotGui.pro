@@ -24,8 +24,8 @@ SOURCES += \
     Primitives/claservec.cpp \
     caspectwindow.cpp \
     cguisettingswidget.cpp \
-    cmainsettings.cpp \
     cmainviewport.cpp \
+    csimplesettingsstorage.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -47,13 +47,14 @@ HEADERS += \
     ModelLoader/cstlloader.h \
     Primitives/cbotcross.h \
     Primitives/claservec.h \
-    cabstractguisettings.h \
+    cabstractsettingsstorage.h \
     caspectwindow.h \
     cguisettingswidget.h \
-    cmainsettings.h \
     cmainviewport.h \
+    csimplesettingsstorage.h \
     gui_types.h \
-    mainwindow.h
+    mainwindow.h \
+    sguisettings.h
 
 FORMS += \
     cguisettingswidget.ui \

@@ -5,10 +5,19 @@
 
 #include <AIS_ViewController.hxx>
 
+#include <OpenGl_GraphicDriver.hxx>
 #include <V3d_Viewer.hxx>
 #include <AIS_InteractiveContext.hxx>
 #include <V3d_View.hxx>
+#include <Prs3d_DatumAspect.hxx>
+#include <Standard_Version.hxx>
+#include <Graphic3d_ZLayerSettings.hxx>
 
+#include <gp_Quaternion.hxx>
+#include <AIS_Trihedron.hxx>
+#include <Geom_Axis2Placement.hxx>
+
+#include <AIS_ViewCube.hxx>
 #include <AIS_Shape.hxx>
 #include <Geom_CartesianPoint.hxx>
 #include <AIS_Point.hxx>
@@ -16,6 +25,15 @@
 #include <TopoDS_Shape.hxx>
 
 #include "caspectwindow.h"
+#include "sguisettings.h"
+
+static const Quantity_Color BG_CLR   = Quantity_Color( .7765,  .9 , 1.  , Quantity_TOC_RGB);
+static const Quantity_Color TXT_CLR  = Quantity_Color( .15  ,  .15, 0.15, Quantity_TOC_RGB);
+static const Quantity_Color FACE_CLR = Quantity_Color(0.1   , 0.1 , 0.1 , Quantity_TOC_RGB);
+
+static constexpr double DEGREE_K = M_PI / 180.;
+
+static const Standard_Integer Z_LAYER = 100;
 
 class CMainViewportPrivate : public AIS_ViewController
 {
@@ -23,13 +41,44 @@ class CMainViewportPrivate : public AIS_ViewController
 
     CMainViewportPrivate(CMainViewport * const qptr) :
         q_ptr(qptr),
+        zLayerId(Z_LAYER),
         bCalibEnabled(false),
         pnt(new AIS_Point(new Geom_CartesianPoint(gp_Pnt()))),
         pntLbl(new AIS_TextLabel())
     { }
 
-    void init(AIS_InteractiveContext &extContext) {
-        context = &extContext;
+    void init(OpenGl_GraphicDriver &driver) {
+        viewer = new V3d_Viewer(&driver);
+        viewer->SetDefaultViewSize(1000.);
+        viewer->SetComputedMode(Standard_True);
+        viewer->SetDefaultComputedMode(Standard_True);
+        viewer->SetDefaultLights();
+        viewer->SetLightOn();
+
+        context = new AIS_InteractiveContext(viewer);
+        context->SetAutoActivateSelection(false);
+
+        Handle(Prs3d_Drawer) drawer = context->DefaultDrawer();
+        Handle(Prs3d_DatumAspect) datum = drawer->DatumAspect();
+
+#if OCC_VERSION_HEX >= 0x070600
+        datum->TextAspect(Prs3d_DatumParts_XAxis)->SetColor(TXT_CLR);
+        datum->TextAspect(Prs3d_DatumParts_YAxis)->SetColor(TXT_CLR);
+        datum->TextAspect(Prs3d_DatumParts_ZAxis)->SetColor(TXT_CLR);
+#else
+        datum->TextAspect()->SetColor(TXT_CLR);
+#endif
+
+        Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
+        lAspect->SetColor(FACE_CLR);
+        drawer->SetFaceBoundaryAspect(lAspect);
+        drawer->SetFaceBoundaryDraw(Standard_True);
+
+        viewer->AddZLayer(zLayerId);
+        Graphic3d_ZLayerSettings zSettings = viewer->ZLayerSettings(zLayerId);
+        zSettings.SetEnableDepthTest(Standard_False);
+        viewer->SetZLayerSettings(zLayerId, zSettings);
+
         v3dView = context->CurrentViewer()->CreateView().get();
 
         aspect = new CAspectWindow(*q_ptr);
@@ -46,12 +95,113 @@ class CMainViewportPrivate : public AIS_ViewController
         SetAllowRotation(Standard_True);
 
         v3dView->ChangeRenderingParams().IsAntialiasingEnabled = Standard_True;
-
+        v3dView->SetBackgroundColor(BG_CLR);
         v3dView->MustBeResized();
+    }
 
-        v3dView->FitAll();
-        v3dView->ZFitAll();
-        v3dView->Redraw();
+    static gp_Trsf calc_transform(const gp_Trsf &base_transform,
+                                  const gp_Vec &model_translation,
+                                  const gp_Vec &model_center,
+                                  double scaleFactor,
+                                  double alpha_off, double beta_off, double gamma_off,
+                                  double alpha_cur = 0.0, double beta_cur = 0.0, double gamma_cur = 0.0) {
+        gp_Trsf trsfTr3 = base_transform;
+        trsfTr3.SetTranslation(model_translation + model_center);
+
+        gp_Trsf trsfSc = base_transform;
+        if (scaleFactor == 0.)
+            scaleFactor = 1.;
+        trsfSc.SetScale(gp_Pnt(), scaleFactor);
+
+        gp_Trsf trsfTr2 = base_transform;
+        trsfTr2.SetTranslation(model_center);
+
+        gp_Trsf trsfRoff = base_transform;
+        gp_Quaternion qoff;
+        qoff.SetEulerAngles(gp_Extrinsic_XYZ,
+                         alpha_off * DEGREE_K,
+                         beta_off  * DEGREE_K,
+                         gamma_off * DEGREE_K);
+        trsfRoff.SetRotation(qoff);
+
+        gp_Trsf trsfRcur = base_transform;
+        gp_Quaternion qcur;
+        qcur.SetEulerAngles(gp_Extrinsic_XYZ,
+                         alpha_cur * DEGREE_K,
+                         beta_cur  * DEGREE_K,
+                         gamma_cur * DEGREE_K);
+        trsfRcur.SetRotation(qcur);
+
+        gp_Trsf trsfTr1 = base_transform;
+        trsfTr1.SetTranslation(-model_center);
+
+        return trsfTr3 *
+               trsfSc *
+               trsfTr2 *
+               trsfRcur *
+               trsfRoff *
+               trsfTr1;
+    }
+
+    AIS_InteractiveObject* createCube() const {
+        AIS_ViewCube * const aViewCube = new AIS_ViewCube();
+        aViewCube->SetDrawEdges(Standard_False);
+        aViewCube->SetDrawVertices(Standard_False);
+        aViewCube->SetBoxTransparency(1.);
+        aViewCube->AIS_InteractiveObject::SetColor(TXT_CLR);
+        TCollection_AsciiString emptyStr;
+        aViewCube->SetBoxSideLabel(V3d_Xpos, emptyStr);
+        aViewCube->SetBoxSideLabel(V3d_Ypos, emptyStr);
+        aViewCube->SetBoxSideLabel(V3d_Zpos, emptyStr);
+        aViewCube->SetBoxSideLabel(V3d_Xneg, emptyStr);
+        aViewCube->SetBoxSideLabel(V3d_Yneg, emptyStr);
+        aViewCube->SetBoxSideLabel(V3d_Zneg, emptyStr);
+        return aViewCube;
+    }
+
+    AIS_InteractiveObject* createGlobalRope() const {
+        Geom_Axis2Placement coords(gp_Pnt(0., 0., 0.), gp_Dir(0., 0., 1.), gp_Dir(1., 0., 0.));
+        Handle(Geom_Axis2Placement) axis = new Geom_Axis2Placement(coords);
+        AIS_Trihedron * const aTrih = new AIS_Trihedron(axis);
+        return aTrih;
+    }
+
+    void updateModelsDefaultPosition(const bool shading) {
+        context->RemoveAll(Standard_False);
+
+        //Draw AIS_ViewCube
+        Handle(AIS_InteractiveObject) aViewCube = createCube();
+        context->SetDisplayMode(aViewCube, 1, Standard_False);
+        context->Display(aViewCube, Standard_False);
+
+        if (bCalibEnabled) {
+            Handle(AIS_InteractiveObject) aRope = createGlobalRope();
+            context->SetDisplayMode(aRope, 1, Standard_False);
+            context->Display(aRope, Standard_False);
+        }
+
+        //The Part
+        {
+            gp_Trsf loc = calc_transform(mainModel.Location().Transformation(),
+                                         gp_Vec(guiSettings.partTrX,
+                                                guiSettings.partTrY,
+                                                guiSettings.partTrZ),
+                                         gp_Vec(guiSettings.partCenterX,
+                                                guiSettings.partCenterY,
+                                                guiSettings.partCenterZ),
+                                         guiSettings.partScale,
+                                         guiSettings.partRotationX,
+                                         guiSettings.partRotationY,
+                                         guiSettings.partRotationZ);
+
+
+            ais_mdl = new AIS_Shape(mainModel);
+            context->SetDisplayMode(ais_mdl, shading ? 1 : 0, Standard_False);
+            context->Display(ais_mdl, Standard_False);
+            context->SetLocation(ais_mdl, loc);
+        }
+
+        viewer->Redraw();
     }
 
     void paintEvent() {
@@ -69,12 +219,29 @@ class CMainViewportPrivate : public AIS_ViewController
         v3dView->Redraw();
     }
 
+    void setMSAA(const GUI_TYPES::TMSAA msaa) {
+        Q_ASSERT(!v3dView.IsNull());
+        guiSettings.msaa = msaa;
+        v3dView->ChangeRenderingParams().NbMsaaSamples = msaa;
+        v3dView->Redraw();
+    }
+
 
     CMainViewport * const q_ptr;
 
     Handle(AIS_InteractiveContext) context;
+    Handle(V3d_Viewer)             viewer;
     Handle(V3d_View)               v3dView;
     Handle(CAspectWindow)          aspect;
+
+    Standard_Integer zLayerId;
+
+    SGuiSettings guiSettings;
+
+    TopoDS_Shape mainModel;
+    Handle(AIS_Shape) ais_mdl;
+    TopoDS_Shape gripModel;
+    Handle(AIS_Shape) ais_grip;
 
     bool bCalibEnabled;
     Handle(AIS_Point) pnt;
@@ -99,17 +266,30 @@ CMainViewport::~CMainViewport()
     delete d_ptr;
 }
 
-void CMainViewport::init(AIS_InteractiveContext &context)
+void CMainViewport::init(OpenGl_GraphicDriver &driver)
 {
-    d_ptr->init(context);
+    d_ptr->init(driver);
+}
+
+void CMainViewport::setGuiSettings(const SGuiSettings &settings)
+{
+    d_ptr->guiSettings = settings;
+    d_ptr->v3dView->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
+}
+
+SGuiSettings CMainViewport::getGuiSettings() const
+{
+    return d_ptr->guiSettings;
 }
 
 void CMainViewport::setMSAA(const GUI_TYPES::TMSAA msaa)
 {
-    Q_ASSERT(!d_ptr->v3dView.IsNull());
+    d_ptr->setMSAA(msaa);
+}
 
-    d_ptr->v3dView->ChangeRenderingParams().NbMsaaSamples = msaa;
-    d_ptr->v3dView->Redraw();
+GUI_TYPES::TMSAA CMainViewport::getMSAA() const
+{
+    return static_cast <GUI_TYPES::TMSAA> (d_ptr->v3dView->RenderingParams().NbMsaaSamples);
 }
 
 void CMainViewport::setStatsVisible(const bool value)
@@ -120,13 +300,6 @@ void CMainViewport::setStatsVisible(const bool value)
 void CMainViewport::fitInView()
 {
     d_ptr->fitInView();
-}
-
-void CMainViewport::setBackgroundColor(const Quantity_Color &clr)
-{
-    Q_ASSERT(!d_ptr->v3dView.IsNull());
-
-    d_ptr->v3dView->SetBackgroundColor(clr);
 }
 
 void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
@@ -141,6 +314,28 @@ void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
 void CMainViewport::setCalibEnabled(bool enabled)
 {
     d_ptr->bCalibEnabled = enabled;
+    if (enabled)
+    {
+        d_ptr->context->Load(d_ptr->ais_mdl, -1);
+        d_ptr->context->Activate(d_ptr->ais_mdl);
+    }
+    else
+        d_ptr->context->Deactivate(d_ptr->ais_mdl);
+}
+
+void CMainViewport::setMainModel(const TopoDS_Shape &shape)
+{
+    d_ptr->mainModel = shape;
+}
+
+void CMainViewport::setGripModel(const TopoDS_Shape &shape)
+{
+    d_ptr->gripModel = shape;
+}
+
+void CMainViewport::updateModelsDefaultPosition(const bool shading)
+{
+    d_ptr->updateModelsDefaultPosition(shading);
 }
 
 QPaintEngine *CMainViewport::paintEngine() const

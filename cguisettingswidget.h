@@ -9,7 +9,7 @@ namespace Ui {
 class CGuiSettingsWidget;
 }
 
-class CAbstractGuiSettings;
+class SGuiSettings;
 
 class CGuiSettingsWidget : public QWidget
 {
@@ -19,8 +19,8 @@ public:
     explicit CGuiSettingsWidget(QWidget *parent = nullptr);
     ~CGuiSettingsWidget();
 
-    void initFromGuiSettings(const CAbstractGuiSettings &settings);
-    void applyToGuiSettings(CAbstractGuiSettings &settings);
+    void initFromGuiSettings(const SGuiSettings &settings);
+    SGuiSettings getChangedSettings() const;
 
 signals:
     void sigApplyRequest();

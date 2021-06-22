@@ -7,7 +7,7 @@
 #include <OpenGl_GraphicDriver.hxx>
 #include <OSD_Environment.hxx>
 
-#include "cmainsettings.h"
+#include "csimplesettingsstorage.h"
 
 int main(int argc, char *argv[])
 {
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
         aGraphicDriver = new OpenGl_GraphicDriver(aDisplayConnection);
     }
 
-    CMainSettings settings;
+    CSimpleSettingsStorage settings;
 #ifdef Q_OS_WIN
     settings.setSettingsFName("LBOT.INI");
 #else
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 #endif
     MainWindow w;
     w.init(*aGraphicDriver);
-    w.setSettings(settings.guiSettings());
+    w.setSettingsStorage(settings);
     if (bStyleSheet)
     {
         QFile f(":/Styles/Data/StyleSheets/style.qss");

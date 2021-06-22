@@ -5,9 +5,11 @@
 
 #include "gui_types.h"
 
+class OpenGl_GraphicDriver;
 class CMainViewportPrivate;
-class AIS_InteractiveContext;
 class Quantity_Color;
+class TopoDS_Shape;
+class SGuiSettings;
 
 class CMainViewport : public QWidget
 {
@@ -16,15 +18,22 @@ public:
     explicit CMainViewport(QWidget *parent = nullptr);
     ~CMainViewport();
 
-    void init(AIS_InteractiveContext &context);
+    void init(OpenGl_GraphicDriver &driver);
+    void setGuiSettings(const SGuiSettings &settings);
+    SGuiSettings getGuiSettings() const;
 
     void setMSAA(const GUI_TYPES::TMSAA msaa);
+    GUI_TYPES::TMSAA getMSAA() const;
     void setStatsVisible(const bool value);
     void fitInView();
-    void setBackgroundColor(const Quantity_Color &clr);
     void setCoord(const GUI_TYPES::TCoordSystem type);
 
     void setCalibEnabled(bool enabled);
+
+    void setMainModel(const TopoDS_Shape &shape);
+    void setGripModel(const TopoDS_Shape &shape);
+
+    void updateModelsDefaultPosition(const bool shading);
 
 protected:
     QPaintEngine* paintEngine() const final;

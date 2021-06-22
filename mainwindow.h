@@ -9,7 +9,7 @@ QT_END_NAMESPACE
 
 class OpenGl_GraphicDriver;
 class MainWindowPrivate;
-class CAbstractGuiSettings;
+class CAbstractSettingsStorage;
 
 class CAbstractBotSocket;
 
@@ -24,7 +24,7 @@ public:
     ~MainWindow();
 
     void init(OpenGl_GraphicDriver &driver);
-    void setSettings(CAbstractGuiSettings &settings);
+    void setSettingsStorage(CAbstractSettingsStorage &storage);
 
 private slots:
     //Menu "File"
