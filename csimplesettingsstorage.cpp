@@ -60,6 +60,8 @@ public:
     SGuiSettings loadGuiSettings() {
         SGuiSettings res;
         settingsFile->beginGroup(GUI_PREFIX);
+        res.msaa          = readGuiValue <GUI_TYPES::TMSAA> (ENGK_MSAA);
+        //The Part
         res.partTrX       = readGuiValue <double> (ENGK_PART_TR_X);
         res.partTrY       = readGuiValue <double> (ENGK_PART_TR_Y);
         res.partTrZ       = readGuiValue <double> (ENGK_PART_TR_Z);
@@ -76,6 +78,8 @@ public:
 
     void saveGuiSettings(const SGuiSettings &settings) {
         settingsFile->beginGroup(GUI_PREFIX);
+        writeGuiValue(ENGK_MSAA         , settings.msaa);
+        //The Part
         writeGuiValue(ENGK_PART_TR_X    , settings.partTrX);
         writeGuiValue(ENGK_PART_TR_Y    , settings.partTrY);
         writeGuiValue(ENGK_PART_TR_Z    , settings.partTrZ);

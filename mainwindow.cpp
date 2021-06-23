@@ -145,6 +145,7 @@ void MainWindow::slShowCalibWidget(bool enabled)
 {
     ui->dockSettings->setVisible(enabled);
     ui->mainView->setCalibEnabled(enabled);
+    ui->mainView->updateModelsDefaultPosition(ui->actionShading->isChecked());
 }
 
 void MainWindow::slMsaa()
@@ -164,6 +165,7 @@ void MainWindow::slMsaa()
         pair.second->blockSignals(false);
     }
     ui->mainView->setMSAA(msaa);
+    d_ptr->settingsStorage->saveGuiSettings(ui->mainView->getGuiSettings());
 }
 
 void MainWindow::slFpsCounter(bool enabled)

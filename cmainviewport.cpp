@@ -94,29 +94,33 @@ class CMainViewportPrivate : public AIS_ViewController
 
         SetAllowRotation(Standard_True);
 
+        ais_axis_cube = createCube();
+        Geom_Axis2Placement coords(gp_Pnt(0., 0., 0.), gp_Dir(0., 0., 1.), gp_Dir(1., 0., 0.));
+        Handle(Geom_Axis2Placement) axis = new Geom_Axis2Placement(coords);
+        calibTrihedron = new AIS_Trihedron(axis);
+
         v3dView->ChangeRenderingParams().IsAntialiasingEnabled = Standard_True;
         v3dView->SetBackgroundColor(BG_CLR);
         v3dView->MustBeResized();
     }
 
-    static gp_Trsf calc_transform(const gp_Trsf &base_transform,
-                                  const gp_Vec &model_translation,
+    static gp_Trsf calc_transform(const gp_Vec &model_translation,
                                   const gp_Vec &model_center,
                                   double scaleFactor,
                                   double alpha_off, double beta_off, double gamma_off,
                                   double alpha_cur = 0.0, double beta_cur = 0.0, double gamma_cur = 0.0) {
-        gp_Trsf trsfTr3 = base_transform;
+        gp_Trsf trsfTr3;
         trsfTr3.SetTranslation(model_translation + model_center);
 
-        gp_Trsf trsfSc = base_transform;
+        gp_Trsf trsfSc;
         if (scaleFactor == 0.)
             scaleFactor = 1.;
         trsfSc.SetScale(gp_Pnt(), scaleFactor);
 
-        gp_Trsf trsfTr2 = base_transform;
+        gp_Trsf trsfTr2;
         trsfTr2.SetTranslation(model_center);
 
-        gp_Trsf trsfRoff = base_transform;
+        gp_Trsf trsfRoff;
         gp_Quaternion qoff;
         qoff.SetEulerAngles(gp_Extrinsic_XYZ,
                          alpha_off * DEGREE_K,
@@ -124,7 +128,7 @@ class CMainViewportPrivate : public AIS_ViewController
                          gamma_off * DEGREE_K);
         trsfRoff.SetRotation(qoff);
 
-        gp_Trsf trsfRcur = base_transform;
+        gp_Trsf trsfRcur;
         gp_Quaternion qcur;
         qcur.SetEulerAngles(gp_Extrinsic_XYZ,
                          alpha_cur * DEGREE_K,
@@ -132,7 +136,7 @@ class CMainViewportPrivate : public AIS_ViewController
                          gamma_cur * DEGREE_K);
         trsfRcur.SetRotation(qcur);
 
-        gp_Trsf trsfTr1 = base_transform;
+        gp_Trsf trsfTr1;
         trsfTr1.SetTranslation(-model_center);
 
         return trsfTr3 *
@@ -143,7 +147,7 @@ class CMainViewportPrivate : public AIS_ViewController
                trsfTr1;
     }
 
-    AIS_InteractiveObject* createCube() const {
+    AIS_ViewCube* createCube() const {
         AIS_ViewCube * const aViewCube = new AIS_ViewCube();
         aViewCube->SetDrawEdges(Standard_False);
         aViewCube->SetDrawVertices(Standard_False);
@@ -159,31 +163,35 @@ class CMainViewportPrivate : public AIS_ViewController
         return aViewCube;
     }
 
-    AIS_InteractiveObject* createGlobalRope() const {
-        Geom_Axis2Placement coords(gp_Pnt(0., 0., 0.), gp_Dir(0., 0., 1.), gp_Dir(1., 0., 0.));
-        Handle(Geom_Axis2Placement) axis = new Geom_Axis2Placement(coords);
-        AIS_Trihedron * const aTrih = new AIS_Trihedron(axis);
-        return aTrih;
+    void setMainModel(const TopoDS_Shape &shape) {
+        ais_mdl = new AIS_Shape(shape);
+        double xMin, xMax, yMin, yMax, zMin, zMax;
+        ais_mdl->BoundingBox().FinitePart().Get(xMin, xMax, yMin, yMax, zMin, zMax);
+        const double deltas[3] = {
+            std::abs(xMin - xMax),
+            std::abs(yMin - yMax),
+            std::abs(zMin - zMax)
+        };
+        calibTrihedron->SetSize(*std::min_element(&deltas[0], &deltas[2]) + 10.);
     }
 
     void updateModelsDefaultPosition(const bool shading) {
         context->RemoveAll(Standard_False);
 
         //Draw AIS_ViewCube
-        Handle(AIS_InteractiveObject) aViewCube = createCube();
-        context->SetDisplayMode(aViewCube, 1, Standard_False);
-        context->Display(aViewCube, Standard_False);
+        context->Display(ais_axis_cube, Standard_False);
+        context->SetDisplayMode(ais_axis_cube, 1, Standard_False);
 
         if (bCalibEnabled) {
-            Handle(AIS_InteractiveObject) aRope = createGlobalRope();
-            context->SetDisplayMode(aRope, 1, Standard_False);
-            context->Display(aRope, Standard_False);
+            //Draw calib trihedron
+            context->Display(calibTrihedron, Standard_False);
+            context->SetDisplayMode(calibTrihedron, 1, Standard_False);
+            context->SetZLayer(calibTrihedron, zLayerId);
         }
 
         //The Part
         {
-            gp_Trsf loc = calc_transform(mainModel.Location().Transformation(),
-                                         gp_Vec(guiSettings.partTrX,
+            gp_Trsf loc = calc_transform(gp_Vec(guiSettings.partTrX,
                                                 guiSettings.partTrY,
                                                 guiSettings.partTrZ),
                                          gp_Vec(guiSettings.partCenterX,
@@ -194,14 +202,60 @@ class CMainViewportPrivate : public AIS_ViewController
                                          guiSettings.partRotationY,
                                          guiSettings.partRotationZ);
 
-
-            ais_mdl = new AIS_Shape(mainModel);
             context->SetDisplayMode(ais_mdl, shading ? 1 : 0, Standard_False);
             context->Display(ais_mdl, Standard_False);
             context->SetLocation(ais_mdl, loc);
+            if (bCalibEnabled) {
+                context->Load(ais_mdl, -1);
+                context->Activate(ais_mdl);
+            }
         }
 
         viewer->Redraw();
+    }
+
+    void updateModelCursor() {
+        if (bCalibEnabled) {
+            Handle(SelectMgr_EntityOwner) owner = context->DetectedOwner();
+            bool bShow = false;
+            if (owner)
+                bShow = Handle(AIS_Shape)::DownCast(owner->Selectable()) == ais_mdl;
+
+            if (bShow) {
+                Handle(StdSelect_ViewerSelector3d) selector = context->MainSelector();
+                if (selector->NbPicked() > 0) {
+                    //cross
+                    const gp_Pnt pick = selector->PickedPoint(1);
+                    pnt->SetComponent(new Geom_CartesianPoint(pick));
+
+                    //label
+                    const QString txt = QString("  X: %1\n  Y: %2\n  Z: %3")
+                            .arg(pick.X(), 10, 'f', 6, '0')
+                            .arg(pick.Y(), 10, 'f', 6, '0')
+                            .arg(pick.Z(), 10, 'f', 6, '0');
+                    pntLbl->SetPosition(pick);
+                    pntLbl->SetText(txt.toLocal8Bit().constData());
+
+                    //redraw
+                    if (context->IsDisplayed(pntLbl)) {
+                        context->Redisplay(pnt, Standard_False);
+                        context->Redisplay(pntLbl, Standard_False);
+                    }
+                    else {
+                        context->Display(pnt, Standard_False);
+                        context->SetZLayer(pnt, zLayerId);
+                        context->Display(pntLbl, Standard_False);
+                        context->SetZLayer(pntLbl, zLayerId);
+                    }
+                }
+            }
+            else {
+                context->Remove(pnt, Standard_False);
+                context->Remove(pntLbl, Standard_False);
+            }
+
+            v3dView->Redraw();
+        }
     }
 
     void paintEvent() {
@@ -238,12 +292,12 @@ class CMainViewportPrivate : public AIS_ViewController
 
     SGuiSettings guiSettings;
 
-    TopoDS_Shape mainModel;
+    Handle(AIS_ViewCube) ais_axis_cube;
     Handle(AIS_Shape) ais_mdl;
-    TopoDS_Shape gripModel;
     Handle(AIS_Shape) ais_grip;
 
     bool bCalibEnabled;
+    Handle(AIS_Trihedron) calibTrihedron;
     Handle(AIS_Point) pnt;
     Handle(AIS_TextLabel) pntLbl;
 };
@@ -314,23 +368,16 @@ void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
 void CMainViewport::setCalibEnabled(bool enabled)
 {
     d_ptr->bCalibEnabled = enabled;
-    if (enabled)
-    {
-        d_ptr->context->Load(d_ptr->ais_mdl, -1);
-        d_ptr->context->Activate(d_ptr->ais_mdl);
-    }
-    else
-        d_ptr->context->Deactivate(d_ptr->ais_mdl);
 }
 
 void CMainViewport::setMainModel(const TopoDS_Shape &shape)
 {
-    d_ptr->mainModel = shape;
+    d_ptr->setMainModel(shape);
 }
 
 void CMainViewport::setGripModel(const TopoDS_Shape &shape)
 {
-    d_ptr->gripModel = shape;
+    d_ptr->ais_grip = new AIS_Shape(shape);
 }
 
 void CMainViewport::updateModelsDefaultPosition(const bool shading)
@@ -418,37 +465,7 @@ void CMainViewport::mouseMoveEvent(QMouseEvent *event)
         update();
     }
 
-    if (d_ptr->bCalibEnabled)
-    {
-        Handle(StdSelect_ViewerSelector3d) selector = d_ptr->context->MainSelector();
-        if (selector->NbPicked() > 0)
-        {
-            const gp_Pnt pick = selector->PickedPoint(1);
-            d_ptr->pnt->SetComponent(new Geom_CartesianPoint(pick));
-            if (d_ptr->context->IsDisplayed(d_ptr->pnt))
-                d_ptr->context->Redisplay(d_ptr->pnt, Standard_False);
-            else
-                d_ptr->context->Display(d_ptr->pnt, Standard_False);
-            const QString txt = QString("X:%1\nY:%2\nZ:%3")
-                    .arg(pick.X())
-                    .arg(pick.Y())
-                    .arg(pick.Z());
-            d_ptr->pntLbl->SetPosition(pick);
-            d_ptr->pntLbl->SetText(txt.toLocal8Bit().constData());
-            if (d_ptr->context->IsDisplayed(d_ptr->pntLbl))
-                d_ptr->context->Redisplay(d_ptr->pntLbl, Standard_False);
-            else
-                d_ptr->context->Display(d_ptr->pntLbl, Standard_False);
-            d_ptr->v3dView->Redraw();
-        }
-    }
-//    Handle(SelectMgr_EntityOwner) owner = d_ptr->context->DetectedOwner();
-//    if (owner)
-//    {
-//        Handle(AIS_Shape) shape = Handle(AIS_Shape)::DownCast(owner->Selectable());
-//        if (shape)
-//            qDebug() << shape->This();
-//    }
+    d_ptr->updateModelCursor();
 }
 
 void CMainViewport::wheelEvent(QWheelEvent *event)
