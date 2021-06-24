@@ -180,7 +180,8 @@ void MainWindow::slClearJrnl()
 
 void MainWindow::slCallibApply()
 {
-    const SGuiSettings settings = ui->wSettings->getChangedSettings();
+    SGuiSettings settings = ui->wSettings->getChangedSettings();
+    settings.msaa = ui->mainView->getMSAA();
     d_ptr->settingsStorage->saveGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);
     ui->mainView->updateModelsDefaultPosition(ui->actionShading->isChecked());
