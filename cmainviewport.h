@@ -14,6 +14,7 @@ class SGuiSettings;
 class CMainViewport : public QWidget
 {
     Q_OBJECT
+
 public:
     explicit CMainViewport(QWidget *parent = nullptr);
     ~CMainViewport();
@@ -44,6 +45,11 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) final;
     void mouseMoveEvent(QMouseEvent *event) final;
     void wheelEvent(QWheelEvent *event) final;
+
+private slots:
+    void slAddCalibPoint();
+    void slChangeCalibPoint();
+    void slRemoveCalibPoint();
 
 private:
     CMainViewportPrivate * const d_ptr;

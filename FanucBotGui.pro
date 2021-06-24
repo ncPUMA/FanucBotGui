@@ -22,6 +22,7 @@ SOURCES += \
     ModelLoader/cstlloader.cpp \
     Primitives/cbotcross.cpp \
     Primitives/claservec.cpp \
+    caddcalibpointdialog.cpp \
     caspectwindow.cpp \
     cguisettingswidget.cpp \
     cmainviewport.cpp \
@@ -48,6 +49,7 @@ HEADERS += \
     Primitives/cbotcross.h \
     Primitives/claservec.h \
     cabstractsettingsstorage.h \
+    caddcalibpointdialog.h \
     caspectwindow.h \
     cguisettingswidget.h \
     cmainviewport.h \
@@ -57,6 +59,7 @@ HEADERS += \
     sguisettings.h
 
 FORMS += \
+    caddcalibpointdialog.ui \
     cguisettingswidget.ui \
     mainwindow.ui
 

@@ -1,7 +1,13 @@
 #include "cmainviewport.h"
 
+#include <vector>
+
 #include <QDebug>
 #include <QMouseEvent>
+#include <QMenu>
+#include <QAction>
+#include <QContextMenuEvent>
+#include <QVariant>
 
 #include <AIS_ViewController.hxx>
 
@@ -26,6 +32,7 @@
 
 #include "caspectwindow.h"
 #include "sguisettings.h"
+#include "caddcalibpointdialog.h"
 
 static const Quantity_Color BG_CLR   = Quantity_Color( .7765,  .9 , 1.  , Quantity_TOC_RGB);
 static const Quantity_Color TXT_CLR  = Quantity_Color( .15  ,  .15, 0.15, Quantity_TOC_RGB);
@@ -56,7 +63,7 @@ class CMainViewportPrivate : public AIS_ViewController
         viewer->SetLightOn();
 
         context = new AIS_InteractiveContext(viewer);
-        context->SetAutoActivateSelection(false);
+//        context->SetAutoActivateSelection(false);
 
         Handle(Prs3d_Drawer) drawer = context->DefaultDrawer();
         Handle(Prs3d_DatumAspect) datum = drawer->DatumAspect();
@@ -181,12 +188,21 @@ class CMainViewportPrivate : public AIS_ViewController
         //Draw AIS_ViewCube
         context->Display(ais_axis_cube, Standard_False);
         context->SetDisplayMode(ais_axis_cube, 1, Standard_False);
+        context->Deactivate(ais_axis_cube);
 
         if (bCalibEnabled) {
             //Draw calib trihedron
             context->Display(calibTrihedron, Standard_False);
             context->SetDisplayMode(calibTrihedron, 1, Standard_False);
             context->SetZLayer(calibTrihedron, zLayerId);
+            context->Deactivate(calibTrihedron);
+            //Draw points
+            for(auto scpnt : calibPoints) {
+                context->Display(scpnt.pnt, Standard_False);
+                context->SetZLayer(scpnt.pntLbl, zLayerId);
+                context->Display(scpnt.pntLbl, Standard_False);
+                context->Deactivate(scpnt.pntLbl);
+            }
         }
 
         //The Part
@@ -205,10 +221,10 @@ class CMainViewportPrivate : public AIS_ViewController
             context->SetDisplayMode(ais_mdl, shading ? 1 : 0, Standard_False);
             context->Display(ais_mdl, Standard_False);
             context->SetLocation(ais_mdl, loc);
-            if (bCalibEnabled) {
-                context->Load(ais_mdl, -1);
-                context->Activate(ais_mdl);
-            }
+//            if (bCalibEnabled) {
+//                context->Load(ais_mdl, -1);
+//                context->Activate(ais_mdl);
+//            }
         }
 
         viewer->Redraw();
@@ -244,8 +260,10 @@ class CMainViewportPrivate : public AIS_ViewController
                     else {
                         context->Display(pnt, Standard_False);
                         context->SetZLayer(pnt, zLayerId);
+                        context->Deactivate(pnt);
                         context->Display(pntLbl, Standard_False);
                         context->SetZLayer(pntLbl, zLayerId);
+                        context->Deactivate(pntLbl);
                     }
                 }
             }
@@ -300,6 +318,17 @@ class CMainViewportPrivate : public AIS_ViewController
     Handle(AIS_Trihedron) calibTrihedron;
     Handle(AIS_Point) pnt;
     Handle(AIS_TextLabel) pntLbl;
+
+    QPoint rbPos;
+
+    struct SCalibPoint
+    {
+        gp_Pnt globalPos;
+        gp_Pnt botPos;
+        Handle(AIS_Point) pnt;
+        Handle(AIS_TextLabel) pntLbl;
+    };
+    std::vector <SCalibPoint> calibPoints;
 };
 
 
@@ -444,6 +473,9 @@ void CMainViewport::mousePressEvent(QMouseEvent *event)
     const Aspect_VKeyFlags aFlags = qtMouseModifiers2VKeys(event->modifiers());
     if (d_ptr->UpdateMouseButtons(aPnt, qtMouseButtons2VKeys(event->buttons()), aFlags, false))
         update();
+
+    if ((event->buttons() & Qt::RightButton) == Qt::RightButton)
+        d_ptr->rbPos = event->globalPos();
 }
 
 void CMainViewport::mouseReleaseEvent(QMouseEvent *event)
@@ -452,6 +484,36 @@ void CMainViewport::mouseReleaseEvent(QMouseEvent *event)
     const Aspect_VKeyFlags aFlags = qtMouseModifiers2VKeys(event->modifiers());
     if (d_ptr->UpdateMouseButtons(aPnt, qtMouseButtons2VKeys(event->buttons()), aFlags, false))
         update();
+
+    if (!d_ptr->rbPos.isNull()) {
+        d_ptr->rbPos = QPoint();
+
+        QMenu menu;
+        if (d_ptr->bCalibEnabled) {
+            Handle(SelectMgr_EntityOwner) owner = d_ptr->context->DetectedOwner();
+            if (owner) {
+                Handle(AIS_InteractiveObject) curShape = Handle(AIS_InteractiveObject)::DownCast(owner->Selectable());
+                if (curShape == d_ptr->ais_mdl)
+                    menu.addAction(tr("Точка привязки"), this, &CMainViewport::slAddCalibPoint);
+                else {
+                    size_t i = 0;
+                    for (auto scpnt : d_ptr->calibPoints) {
+                        if (scpnt.pnt == curShape) {
+                            menu.addAction(tr("Изменить"), this, &CMainViewport::slChangeCalibPoint)->
+                                    setProperty("index", static_cast <qulonglong> (i));
+                            menu.addAction(tr("Удалить"), this, &CMainViewport::slRemoveCalibPoint)->
+                                    setProperty("index", static_cast <qulonglong> (i));;
+                            break;
+                        }
+                        ++i;
+                    }
+                }
+            }
+        }
+
+        if (!menu.isEmpty())
+            menu.exec(event->globalPos());
+    }
 }
 
 void CMainViewport::mouseMoveEvent(QMouseEvent *event)
@@ -465,6 +527,7 @@ void CMainViewport::mouseMoveEvent(QMouseEvent *event)
         update();
     }
 
+    d_ptr->rbPos = QPoint();
     d_ptr->updateModelCursor();
 }
 
@@ -473,4 +536,69 @@ void CMainViewport::wheelEvent(QWheelEvent *event)
     const Graphic3d_Vec2i aPos(event->pos().x(), event->pos().y());
     if (d_ptr->UpdateZoom(Aspect_ScrollDelta(aPos, event->delta() / 8)))
         update();
+}
+
+void CMainViewport::slAddCalibPoint()
+{
+    const gp_Pnt point = d_ptr->pnt->Component()->Pnt();
+    CAddCalibPointDialog dialog(point, this);
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        CMainViewportPrivate::SCalibPoint scpnt;
+        scpnt.globalPos = dialog.getGlobalPos();
+        scpnt.botPos = dialog.getBotPos();
+        scpnt.pnt = new AIS_Point(new Geom_CartesianPoint(scpnt.globalPos));
+        scpnt.pntLbl = new AIS_TextLabel();
+        scpnt.pntLbl->SetPosition(scpnt.globalPos);
+        const QString txt = QString("  C%1").arg(d_ptr->calibPoints.size() + 1);
+        scpnt.pntLbl->SetText(txt.toLocal8Bit().constData());
+        d_ptr->calibPoints.push_back(scpnt);
+        d_ptr->context->Display(scpnt.pnt, Standard_False);
+        d_ptr->context->SetZLayer(scpnt.pntLbl, d_ptr->zLayerId);
+        d_ptr->context->Display(scpnt.pntLbl, Standard_False);
+        d_ptr->context->Deactivate(scpnt.pntLbl);
+        d_ptr->viewer->Redraw();
+    }
+}
+
+void CMainViewport::slChangeCalibPoint()
+{
+    if (sender())
+    {
+        const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
+        if (index < d_ptr->calibPoints.size())
+        {
+            CMainViewportPrivate::SCalibPoint &scpnt = d_ptr->calibPoints[index];
+            CAddCalibPointDialog dialog(scpnt.globalPos, this);
+            if (dialog.exec() == QDialog::Accepted)
+            {
+                scpnt.globalPos = dialog.getGlobalPos();
+                scpnt.botPos = dialog.getBotPos();
+                scpnt.pnt->SetComponent(new Geom_CartesianPoint(scpnt.globalPos));
+                scpnt.pntLbl->SetPosition(scpnt.globalPos);
+                d_ptr->context->Redisplay(scpnt.pnt, Standard_False);
+                d_ptr->context->Redisplay(scpnt.pntLbl, Standard_False);
+                d_ptr->viewer->Redraw();
+            }
+        }
+    }
+}
+
+void CMainViewport::slRemoveCalibPoint()
+{
+    const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
+    if (index < d_ptr->calibPoints.size())
+    {
+        CMainViewportPrivate::SCalibPoint &scpnt = d_ptr->calibPoints[index];
+        d_ptr->context->Remove(scpnt.pnt, Standard_False);
+        d_ptr->context->Remove(scpnt.pntLbl, Standard_False);
+        d_ptr->calibPoints.erase(d_ptr->calibPoints.cbegin() + index);
+        for(size_t i = 0; i < d_ptr->calibPoints.size(); ++i)
+        {
+            const QString txt = QString("  C%1").arg(i + 1);
+            d_ptr->calibPoints[i].pntLbl->SetText(txt.toLocal8Bit().constData());
+            d_ptr->context->Redisplay(d_ptr->calibPoints[i].pntLbl, Standard_False);
+        }
+        d_ptr->viewer->Redraw();
+    }
 }
