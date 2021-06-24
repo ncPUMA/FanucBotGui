@@ -15,6 +15,8 @@ class CMainViewport : public QWidget
 {
     Q_OBJECT
 
+    friend class CMainViewportPrivate;
+
 public:
     explicit CMainViewport(QWidget *parent = nullptr);
     ~CMainViewport();
@@ -29,7 +31,8 @@ public:
     void fitInView();
     void setCoord(const GUI_TYPES::TCoordSystem type);
 
-    void setCalibEnabled(bool enabled);
+    void setUserAction(const GUI_TYPES::TUsrAction usrAction);
+    GUI_TYPES::TUsrAction getUsrAction() const;
 
     void setMainModel(const TopoDS_Shape &shape);
     void setGripModel(const TopoDS_Shape &shape);
@@ -50,6 +53,10 @@ private slots:
     void slAddCalibPoint();
     void slChangeCalibPoint();
     void slRemoveCalibPoint();
+
+    void slAddTaskPoint();
+    void slChangeTaskPoint();
+    void slRemoveTaskPoint();
 
 private:
     CMainViewportPrivate * const d_ptr;

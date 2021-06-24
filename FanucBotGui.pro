@@ -13,6 +13,11 @@ SOURCES += \
     BotSocket/cfanucbotsocket.cpp \
     BotSocket/fanucsocket.cpp \
     BotSocket/cbotsocketimitator.cpp \
+    Dialogs/caddcalibpointdialog.cpp \
+    Dialogs/cbottaskdialogfacade.cpp \
+    Dialogs/cdrillbottaskdialog.cpp \
+    Dialogs/cmarkbottaskdialog.cpp \
+    Dialogs/cmovebottaskdialog.cpp \
     ModelLoader/cabstractmodelloader.cpp \
     ModelLoader/cbreploader.cpp \
     ModelLoader/cigesloader.cpp \
@@ -22,7 +27,6 @@ SOURCES += \
     ModelLoader/cstlloader.cpp \
     Primitives/cbotcross.cpp \
     Primitives/claservec.cpp \
-    caddcalibpointdialog.cpp \
     caspectwindow.cpp \
     cguisettingswidget.cpp \
     cmainviewport.cpp \
@@ -39,6 +43,11 @@ HEADERS += \
     BotSocket/cabstractbotsocketsettings.h \
     BotSocket/cabstractui.h \
     BotSocket/cbotsocketimitator.h \
+    Dialogs/caddcalibpointdialog.h \
+    Dialogs/cbottaskdialogfacade.h \
+    Dialogs/cdrillbottaskdialog.h \
+    Dialogs/cmarkbottaskdialog.h \
+    Dialogs/cmovebottaskdialog.h \
     ModelLoader/cabstractmodelloader.h \
     ModelLoader/cbreploader.h \
     ModelLoader/cigesloader.h \
@@ -49,7 +58,6 @@ HEADERS += \
     Primitives/cbotcross.h \
     Primitives/claservec.h \
     cabstractsettingsstorage.h \
-    caddcalibpointdialog.h \
     caspectwindow.h \
     cguisettingswidget.h \
     cmainviewport.h \
@@ -59,7 +67,10 @@ HEADERS += \
     sguisettings.h
 
 FORMS += \
-    caddcalibpointdialog.ui \
+    Dialogs/caddcalibpointdialog.ui \
+    Dialogs/cdrillbottaskdialog.ui \
+    Dialogs/cmarkbottaskdialog.ui \
+    Dialogs/cmovebottaskdialog.ui \
     cguisettingswidget.ui \
     mainwindow.ui
 

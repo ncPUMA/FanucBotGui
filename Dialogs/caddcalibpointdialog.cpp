@@ -17,7 +17,7 @@ CAddCalibPointDialog::CAddCalibPointDialog(const gp_Pnt &pos, QWidget *parent) :
     ui->dsbBotZ->setValue(pos.Z());
 
     connect(ui->pbOk, &QAbstractButton::clicked, this, &QDialog::accept);
-    connect(ui->pbCancel, &QAbstractButton::clicked, this, &CAddCalibPointDialog::reject);
+    connect(ui->pbCancel, &QAbstractButton::clicked, this, &QDialog::reject);
 }
 
 CAddCalibPointDialog::~CAddCalibPointDialog()

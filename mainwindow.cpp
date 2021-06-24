@@ -89,6 +89,8 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
                                                            static_cast <size_t> (stepData.size()));
         ui->mainView->setGripModel(mdl);
     }
+
+    ui->mainView->setUserAction(GUI_TYPES::ENUA_ADD_TASK);
 }
 
 void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
@@ -144,7 +146,7 @@ void MainWindow::slShading(bool enabled)
 void MainWindow::slShowCalibWidget(bool enabled)
 {
     ui->dockSettings->setVisible(enabled);
-    ui->mainView->setCalibEnabled(enabled);
+    ui->mainView->setUserAction(enabled ? GUI_TYPES::ENUA_CALIBRATION : GUI_TYPES::ENUA_ADD_TASK);
     ui->mainView->updateModelsDefaultPosition(ui->actionShading->isChecked());
 }
 

@@ -32,7 +32,9 @@
 
 #include "caspectwindow.h"
 #include "sguisettings.h"
-#include "caddcalibpointdialog.h"
+
+#include "Dialogs/caddcalibpointdialog.h"
+#include "Dialogs/cbottaskdialogfacade.h"
 
 static const Quantity_Color BG_CLR   = Quantity_Color( .7765,  .9 , 1.  , Quantity_TOC_RGB);
 static const Quantity_Color TXT_CLR  = Quantity_Color( .15  ,  .15, 0.15, Quantity_TOC_RGB);
@@ -49,7 +51,7 @@ class CMainViewportPrivate : public AIS_ViewController
     CMainViewportPrivate(CMainViewport * const qptr) :
         q_ptr(qptr),
         zLayerId(Z_LAYER),
-        bCalibEnabled(false),
+        usrAction(GUI_TYPES::ENUA_NO),
         pnt(new AIS_Point(new Geom_CartesianPoint(gp_Pnt()))),
         pntLbl(new AIS_TextLabel())
     { }
@@ -172,14 +174,7 @@ class CMainViewportPrivate : public AIS_ViewController
 
     void setMainModel(const TopoDS_Shape &shape) {
         ais_mdl = new AIS_Shape(shape);
-        double xMin, xMax, yMin, yMax, zMin, zMax;
-        ais_mdl->BoundingBox().FinitePart().Get(xMin, xMax, yMin, yMax, zMin, zMax);
-        const double deltas[3] = {
-            std::abs(xMin - xMax),
-            std::abs(yMin - yMax),
-            std::abs(zMin - zMax)
-        };
-        calibTrihedron->SetSize(*std::min_element(&deltas[0], &deltas[2]) + 10.);
+        calibTrihedron->SetSize(10.);
     }
 
     void updateModelsDefaultPosition(const bool shading) {
@@ -190,7 +185,7 @@ class CMainViewportPrivate : public AIS_ViewController
         context->SetDisplayMode(ais_axis_cube, 1, Standard_False);
         context->Deactivate(ais_axis_cube);
 
-        if (bCalibEnabled) {
+        if (usrAction == GUI_TYPES::ENUA_CALIBRATION) {
             //Draw calib trihedron
             context->Display(calibTrihedron, Standard_False);
             context->SetDisplayMode(calibTrihedron, 1, Standard_False);
@@ -221,58 +216,65 @@ class CMainViewportPrivate : public AIS_ViewController
             context->SetDisplayMode(ais_mdl, shading ? 1 : 0, Standard_False);
             context->Display(ais_mdl, Standard_False);
             context->SetLocation(ais_mdl, loc);
-//            if (bCalibEnabled) {
-//                context->Load(ais_mdl, -1);
-//                context->Activate(ais_mdl);
-//            }
         }
 
         viewer->Redraw();
     }
 
-    void updateModelCursor() {
-        if (bCalibEnabled) {
-            Handle(SelectMgr_EntityOwner) owner = context->DetectedOwner();
-            bool bShow = false;
-            if (owner)
-                bShow = Handle(AIS_Shape)::DownCast(owner->Selectable()) == ais_mdl;
+    void drawVertexCursor() {
+        Handle(SelectMgr_EntityOwner) owner = context->DetectedOwner();
+        bool bShow = false;
+        if (owner)
+            bShow = Handle(AIS_Shape)::DownCast(owner->Selectable()) == ais_mdl;
 
-            if (bShow) {
-                Handle(StdSelect_ViewerSelector3d) selector = context->MainSelector();
-                if (selector->NbPicked() > 0) {
-                    //cross
-                    const gp_Pnt pick = selector->PickedPoint(1);
-                    pnt->SetComponent(new Geom_CartesianPoint(pick));
+        if (bShow) {
+            Handle(StdSelect_ViewerSelector3d) selector = context->MainSelector();
+            if (selector->NbPicked() > 0) {
+                //cross
+                const gp_Pnt pick = selector->PickedPoint(1);
+                pnt->SetComponent(new Geom_CartesianPoint(pick));
 
-                    //label
-                    const QString txt = QString("  X: %1\n  Y: %2\n  Z: %3")
-                            .arg(pick.X(), 10, 'f', 6, '0')
-                            .arg(pick.Y(), 10, 'f', 6, '0')
-                            .arg(pick.Z(), 10, 'f', 6, '0');
-                    pntLbl->SetPosition(pick);
-                    pntLbl->SetText(txt.toLocal8Bit().constData());
+                //label
+                const QString txt = QString("  X: %1\n  Y: %2\n  Z: %3")
+                        .arg(pick.X(), 10, 'f', 6, '0')
+                        .arg(pick.Y(), 10, 'f', 6, '0')
+                        .arg(pick.Z(), 10, 'f', 6, '0');
+                pntLbl->SetPosition(pick);
+                pntLbl->SetText(txt.toLocal8Bit().constData());
 
-                    //redraw
-                    if (context->IsDisplayed(pntLbl)) {
-                        context->Redisplay(pnt, Standard_False);
-                        context->Redisplay(pntLbl, Standard_False);
-                    }
-                    else {
-                        context->Display(pnt, Standard_False);
-                        context->SetZLayer(pnt, zLayerId);
-                        context->Deactivate(pnt);
-                        context->Display(pntLbl, Standard_False);
-                        context->SetZLayer(pntLbl, zLayerId);
-                        context->Deactivate(pntLbl);
-                    }
+                //redraw
+                if (context->IsDisplayed(pntLbl)) {
+                    context->Redisplay(pnt, Standard_False);
+                    context->Redisplay(pntLbl, Standard_False);
+                }
+                else {
+                    context->Display(pnt, Standard_False);
+                    context->SetZLayer(pnt, zLayerId);
+                    context->Deactivate(pnt);
+                    context->Display(pntLbl, Standard_False);
+                    context->SetZLayer(pntLbl, zLayerId);
+                    context->Deactivate(pntLbl);
                 }
             }
-            else {
-                context->Remove(pnt, Standard_False);
-                context->Remove(pntLbl, Standard_False);
-            }
+        }
+        else {
+            context->Remove(pnt, Standard_False);
+            context->Remove(pntLbl, Standard_False);
+        }
+    }
 
-            v3dView->Redraw();
+    void updateModelCursor() {
+        switch(usrAction) {
+            using namespace GUI_TYPES;
+
+            case ENUA_CALIBRATION:
+            case ENUA_ADD_TASK:
+                drawVertexCursor();
+                v3dView->Redraw();
+                break;
+
+            default:
+                break;
         }
     }
 
@@ -298,6 +300,70 @@ class CMainViewportPrivate : public AIS_ViewController
         v3dView->Redraw();
     }
 
+    void fillCalibContextMenu(QMenu &menu) {
+        Handle(SelectMgr_EntityOwner) owner = context->DetectedOwner();
+        if (owner) {
+            Handle(AIS_InteractiveObject) curShape = Handle(AIS_InteractiveObject)::DownCast(owner->Selectable());
+            if (curShape == ais_mdl)
+                menu.addAction(CMainViewport::tr("Точка привязки"),
+                               q_ptr,
+                               &CMainViewport::slAddCalibPoint);
+            else {
+                size_t i = 0;
+                for (auto scpnt : calibPoints) {
+                    if (scpnt.pnt == curShape) {
+                        menu.addAction(CMainViewport::tr("Изменить"),
+                                       q_ptr,
+                                       &CMainViewport::slChangeCalibPoint)->
+                                setProperty("index", static_cast <qulonglong> (i));
+                        menu.addAction(CMainViewport::tr("Удалить"),
+                                       q_ptr,
+                                       &CMainViewport::slRemoveCalibPoint)->
+                                setProperty("index", static_cast <qulonglong> (i));;
+                        break;
+                    }
+                    ++i;
+                }
+            }
+        }
+    }
+
+    void fillTaskContextMenu(QMenu &menu) {
+        Handle(SelectMgr_EntityOwner) owner = context->DetectedOwner();
+        if (owner) {
+            Handle(AIS_InteractiveObject) curShape = Handle(AIS_InteractiveObject)::DownCast(owner->Selectable());
+            if (curShape == ais_mdl) {
+                using namespace GUI_TYPES;
+                menu.addAction(CMainViewport::tr("Перемещение в точку"),
+                               q_ptr,
+                               &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MOVE);
+                menu.addAction(CMainViewport::tr("Сверление"),
+                               q_ptr,
+                               &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_DRILL);;
+                menu.addAction(CMainViewport::tr("Маркировка"),
+                               q_ptr,
+                               &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MARK);;
+            }
+            else {
+                size_t i = 0;
+                for (auto scpnt : taskPoints) {
+                    if (scpnt.pnt == curShape) {
+                        menu.addAction(CMainViewport::tr("Изменить"),
+                                       q_ptr,
+                                       &CMainViewport::slChangeTaskPoint)->
+                                setProperty("index", static_cast <qulonglong> (i));
+                        menu.addAction(CMainViewport::tr("Удалить"),
+                                       q_ptr,
+                                       &CMainViewport::slRemoveTaskPoint)->
+                                setProperty("index", static_cast <qulonglong> (i));;
+                        break;
+                    }
+                    ++i;
+                }
+            }
+        }
+    }
+
 
     CMainViewport * const q_ptr;
 
@@ -314,7 +380,8 @@ class CMainViewportPrivate : public AIS_ViewController
     Handle(AIS_Shape) ais_mdl;
     Handle(AIS_Shape) ais_grip;
 
-    bool bCalibEnabled;
+    GUI_TYPES::TUsrAction usrAction;
+
     Handle(AIS_Trihedron) calibTrihedron;
     Handle(AIS_Point) pnt;
     Handle(AIS_TextLabel) pntLbl;
@@ -323,12 +390,20 @@ class CMainViewportPrivate : public AIS_ViewController
 
     struct SCalibPoint
     {
-        gp_Pnt globalPos;
         gp_Pnt botPos;
         Handle(AIS_Point) pnt;
         Handle(AIS_TextLabel) pntLbl;
     };
     std::vector <SCalibPoint> calibPoints;
+
+    struct STaskPoint
+    {
+        GUI_TYPES::TBotTaskType taskType;
+        gp_Pnt angles;
+        Handle(AIS_Point) pnt;
+        Handle(AIS_TextLabel) pntLbl;
+    };
+    std::vector <STaskPoint> taskPoints;
 };
 
 
@@ -394,9 +469,14 @@ void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
     d_ptr->v3dView->Redraw();
 }
 
-void CMainViewport::setCalibEnabled(bool enabled)
+void CMainViewport::setUserAction(const GUI_TYPES::TUsrAction usrAction)
 {
-    d_ptr->bCalibEnabled = enabled;
+    d_ptr->usrAction = usrAction;
+}
+
+GUI_TYPES::TUsrAction CMainViewport::getUsrAction() const
+{
+    return d_ptr->usrAction;
 }
 
 void CMainViewport::setMainModel(const TopoDS_Shape &shape)
@@ -489,26 +569,20 @@ void CMainViewport::mouseReleaseEvent(QMouseEvent *event)
         d_ptr->rbPos = QPoint();
 
         QMenu menu;
-        if (d_ptr->bCalibEnabled) {
-            Handle(SelectMgr_EntityOwner) owner = d_ptr->context->DetectedOwner();
-            if (owner) {
-                Handle(AIS_InteractiveObject) curShape = Handle(AIS_InteractiveObject)::DownCast(owner->Selectable());
-                if (curShape == d_ptr->ais_mdl)
-                    menu.addAction(tr("Точка привязки"), this, &CMainViewport::slAddCalibPoint);
-                else {
-                    size_t i = 0;
-                    for (auto scpnt : d_ptr->calibPoints) {
-                        if (scpnt.pnt == curShape) {
-                            menu.addAction(tr("Изменить"), this, &CMainViewport::slChangeCalibPoint)->
-                                    setProperty("index", static_cast <qulonglong> (i));
-                            menu.addAction(tr("Удалить"), this, &CMainViewport::slRemoveCalibPoint)->
-                                    setProperty("index", static_cast <qulonglong> (i));;
-                            break;
-                        }
-                        ++i;
-                    }
-                }
-            }
+        switch(d_ptr->usrAction)
+        {
+            using namespace GUI_TYPES;
+
+            case ENUA_CALIBRATION:
+                d_ptr->fillCalibContextMenu(menu);
+                break;
+
+            case ENUA_ADD_TASK:
+                d_ptr->fillTaskContextMenu(menu);
+                break;
+
+            default:
+                break;
         }
 
         if (!menu.isEmpty())
@@ -544,12 +618,12 @@ void CMainViewport::slAddCalibPoint()
     CAddCalibPointDialog dialog(point, this);
     if (dialog.exec() == QDialog::Accepted)
     {
+        const gp_Pnt globalPos = dialog.getGlobalPos();
         CMainViewportPrivate::SCalibPoint scpnt;
-        scpnt.globalPos = dialog.getGlobalPos();
         scpnt.botPos = dialog.getBotPos();
-        scpnt.pnt = new AIS_Point(new Geom_CartesianPoint(scpnt.globalPos));
+        scpnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
         scpnt.pntLbl = new AIS_TextLabel();
-        scpnt.pntLbl->SetPosition(scpnt.globalPos);
+        scpnt.pntLbl->SetPosition(globalPos);
         const QString txt = QString("  C%1").arg(d_ptr->calibPoints.size() + 1);
         scpnt.pntLbl->SetText(txt.toLocal8Bit().constData());
         d_ptr->calibPoints.push_back(scpnt);
@@ -569,13 +643,14 @@ void CMainViewport::slChangeCalibPoint()
         if (index < d_ptr->calibPoints.size())
         {
             CMainViewportPrivate::SCalibPoint &scpnt = d_ptr->calibPoints[index];
-            CAddCalibPointDialog dialog(scpnt.globalPos, this);
+            gp_Pnt globalPos = scpnt.pnt->Component()->Pnt();
+            CAddCalibPointDialog dialog(globalPos, this);
             if (dialog.exec() == QDialog::Accepted)
             {
-                scpnt.globalPos = dialog.getGlobalPos();
+                globalPos = dialog.getGlobalPos();
                 scpnt.botPos = dialog.getBotPos();
-                scpnt.pnt->SetComponent(new Geom_CartesianPoint(scpnt.globalPos));
-                scpnt.pntLbl->SetPosition(scpnt.globalPos);
+                scpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
+                scpnt.pntLbl->SetPosition(globalPos);
                 d_ptr->context->Redisplay(scpnt.pnt, Standard_False);
                 d_ptr->context->Redisplay(scpnt.pntLbl, Standard_False);
                 d_ptr->viewer->Redraw();
@@ -601,4 +676,42 @@ void CMainViewport::slRemoveCalibPoint()
         }
         d_ptr->viewer->Redraw();
     }
+}
+
+void CMainViewport::slAddTaskPoint()
+{
+    Q_ASSERT(sender() != nullptr);
+
+    const GUI_TYPES::TBotTaskType taskType = static_cast <GUI_TYPES::TBotTaskType>
+            (sender()->property("taskType").toInt());
+    const gp_Pnt point = d_ptr->pnt->Component()->Pnt();
+    CBotTaskDialogFacade dialog(this, taskType, point);
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        CMainViewportPrivate::STaskPoint stpnt;
+        stpnt.taskType = taskType;
+        stpnt.angles = dialog.getAngles();
+        const gp_Pnt globalPos = dialog.getPos();
+        stpnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
+        stpnt.pntLbl = new AIS_TextLabel();
+        stpnt.pntLbl->SetPosition(globalPos);
+        const QString txt = QString("  T%1").arg(d_ptr->taskPoints.size() + 1);
+        stpnt.pntLbl->SetText(txt.toLocal8Bit().constData());
+        d_ptr->taskPoints.push_back(stpnt);
+        d_ptr->context->Display(stpnt.pnt, Standard_False);
+        d_ptr->context->SetZLayer(stpnt.pntLbl, d_ptr->zLayerId);
+        d_ptr->context->Display(stpnt.pntLbl, Standard_False);
+        d_ptr->context->Deactivate(stpnt.pntLbl);
+        d_ptr->viewer->Redraw();
+    }
+}
+
+void CMainViewport::slChangeTaskPoint()
+{
+
+}
+
+void CMainViewport::slRemoveTaskPoint()
+{
+
 }
