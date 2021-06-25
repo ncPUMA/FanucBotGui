@@ -45,7 +45,7 @@ inline static CBotTaskDialogFacadePrivate* create(QWidget *parent, const GUI_TYP
         case ENBTT_DRILL: result = new CDialogContainer <CDrillBotTaskDialog> (new CDrillBotTaskDialog(parent, pos)); break;
         case ENBTT_MARK : result = new CDialogContainer <CMarkBotTaskDialog>  (new CMarkBotTaskDialog (parent, pos)); break;
     }
-    Q_ASSERT(result != nullptr);
+    assert(result != nullptr);
     return result;
 }
 

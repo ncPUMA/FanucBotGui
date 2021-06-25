@@ -90,6 +90,7 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
         ui->mainView->setGripModel(mdl);
     }
 
+    ui->mainView->setShading(true);
     ui->mainView->setUserAction(GUI_TYPES::ENUA_ADD_TASK);
 }
 
@@ -104,7 +105,6 @@ void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
     }
     ui->wSettings->initFromGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);
-    ui->mainView->updateModelsDefaultPosition(ui->actionShading->isChecked());
     ui->mainView->fitInView();
 }
 
@@ -123,7 +123,6 @@ void MainWindow::slImport()
         CAbstractModelLoader &loader = factory.loader(selectedFilter);
         const TopoDS_Shape shape = loader.load(fName.toStdString().c_str());
         ui->mainView->setMainModel(shape);
-        ui->mainView->updateModelsDefaultPosition(ui->actionShading->isChecked());
         if (!shape.IsNull())
             ui->mainView->fitInView();
         else
@@ -140,14 +139,13 @@ void MainWindow::slExit()
 
 void MainWindow::slShading(bool enabled)
 {
-    ui->mainView->updateModelsDefaultPosition(enabled);
+    ui->mainView->setShading(enabled);
 }
 
 void MainWindow::slShowCalibWidget(bool enabled)
 {
     ui->dockSettings->setVisible(enabled);
     ui->mainView->setUserAction(enabled ? GUI_TYPES::ENUA_CALIBRATION : GUI_TYPES::ENUA_ADD_TASK);
-    ui->mainView->updateModelsDefaultPosition(ui->actionShading->isChecked());
 }
 
 void MainWindow::slMsaa()
@@ -186,7 +184,6 @@ void MainWindow::slCallibApply()
     settings.msaa = ui->mainView->getMSAA();
     d_ptr->settingsStorage->saveGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);
-    ui->mainView->updateModelsDefaultPosition(ui->actionShading->isChecked());
 }
 
 void MainWindow::configMenu()

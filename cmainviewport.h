@@ -28,6 +28,7 @@ public:
     void setMSAA(const GUI_TYPES::TMSAA msaa);
     GUI_TYPES::TMSAA getMSAA() const;
     void setStatsVisible(const bool value);
+    void setShading(const bool enabled);
     void fitInView();
     void setCoord(const GUI_TYPES::TCoordSystem type);
 
@@ -36,8 +37,6 @@ public:
 
     void setMainModel(const TopoDS_Shape &shape);
     void setGripModel(const TopoDS_Shape &shape);
-
-    void updateModelsDefaultPosition(const bool shading);
 
 protected:
     QPaintEngine* paintEngine() const final;

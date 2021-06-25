@@ -1,6 +1,8 @@
 #ifndef GUI_TYPES_H
 #define GUI_TYPES_H
 
+#include <map>
+
 namespace GUI_TYPES
 {
 
