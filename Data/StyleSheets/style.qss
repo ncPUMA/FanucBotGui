@@ -1,6 +1,9 @@
 QMainWindow {
         background-color:rgb(82, 82, 82);
 }
+QDialog {
+        background-color:rgb(82, 82, 82);
+}
 QToolBar {
         background-color:rgb(42, 42, 42);
 }
