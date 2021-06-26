@@ -38,6 +38,10 @@ public:
      transforms position from part to robot
      */
     virtual position_t transformPartToRobot(const position_t &position) const = 0;
+    /**
+     transforms position from part to robot
+     */
+    virtual position_t transformRobotToPart(const position_t &position) const = 0;
 };
 
 /**
@@ -51,8 +55,8 @@ class IPartPointPairsReferencer:
 public:
     struct point_pair_t
     {
-        gp_Vec t;               // translation, part coordinates
-        gp_Quaternion t_robot;  // translation, robot coordinates
+        gp_Vec t;        // translation, part coordinates
+        gp_Vec t_robot;  // translation, robot coordinates
     };
 
     virtual ~IPartPointPairsReferencer() = default;

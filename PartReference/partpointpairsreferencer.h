@@ -13,6 +13,7 @@ public:
     std::future<bool> referencePart() override;
 
     position_t transformPartToRobot(const position_t &position) const override;
+    position_t transformRobotToPart(const position_t &position) const override;
 };
 
 

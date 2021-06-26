@@ -18,3 +18,7 @@ std::future<bool> PartPointPairsReferencer::referencePart()
 IPartReferencer::position_t PartPointPairsReferencer::transformPartToRobot(const position_t &position) const
 {
 }
+
+IPartReferencer::position_t PartPointPairsReferencer::transformRobotToPart(const position_t &position) const
+{
+}
