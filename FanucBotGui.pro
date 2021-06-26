@@ -25,12 +25,14 @@ SOURCES += \
     ModelLoader/cobjloader.cpp \
     ModelLoader/csteploader.cpp \
     ModelLoader/cstlloader.cpp \
+    PartReference/partpointpairsreferencer.cpp \
     Primitives/cbotcross.cpp \
     Primitives/claservec.cpp \
     caspectwindow.cpp \
     cguisettingswidget.cpp \
     cmainviewport.cpp \
     csimplesettingsstorage.cpp \
+    RobotMovers/simplelasermover.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -55,6 +57,7 @@ HEADERS += \
     ModelLoader/cobjloader.h \
     ModelLoader/csteploader.h \
     ModelLoader/cstlloader.h \
+    PartReference/partpointpairsreferencer.h \
     Primitives/cbotcross.h \
     Primitives/claservec.h \
     cabstractsettingsstorage.h \
@@ -63,6 +66,11 @@ HEADERS += \
     cmainviewport.h \
     csimplesettingsstorage.h \
     gui_types.h \
+    if/ipartreferencer.hpp \
+    if/ipositionreceiver.hpp \
+    if/irobotmover.hpp \
+    if/isceneprovider.hpp \
+    RobotMovers/simplelasermover.h \
     mainwindow.h \
     sguisettings.h
 
