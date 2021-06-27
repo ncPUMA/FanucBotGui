@@ -79,8 +79,19 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
         ui->mainView->setPartModel(mdl);
     }
 
+    //load deskModel
+    QFile deskFile(":/Models/Data/Models/WTTGA-001 - Configurable Table.stp");
+    if (deskFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        const QByteArray stepData = deskFile.readAll();
+        CStepLoader loader;
+        const TopoDS_Shape mdl = loader.loadFromBinaryData(stepData.constData(),
+                                                           static_cast <size_t> (stepData.size()));
+        ui->mainView->setDeskModel(mdl);
+    }
+
     //load gripModel
-    QFile gripFile(":/Models/Data/Models/MHZ2_16D_grip.stp");
+    QFile gripFile(":/Models/Data/Models/LDLSR30w.STEP");
     if (gripFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         const QByteArray stepData = gripFile.readAll();

@@ -38,6 +38,7 @@ public:
     GUI_TYPES::TUsrAction getUsrAction() const;
 
     void setPartModel(const TopoDS_Shape &shape);
+    void setDeskModel(const TopoDS_Shape &shape);
     void setGripModel(const TopoDS_Shape &shape);
 
 protected:

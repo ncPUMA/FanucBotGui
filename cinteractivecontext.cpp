@@ -103,6 +103,8 @@ private:
         const AIS_DisplayMode mode = bShading ? AIS_Shaded : AIS_WireFrame;
         context->SetDisplayMode(ais_part, mode, Standard_False);
         context->Redisplay(ais_part, Standard_False);
+        context->SetDisplayMode(ais_desk, mode, Standard_False);
+        context->Redisplay(ais_desk, Standard_False);
         context->SetDisplayMode(ais_grip, mode, Standard_False);
         context->Redisplay(ais_grip, Standard_False);
     }
@@ -166,10 +168,50 @@ private:
         }
     }
 
+    void setDeskModel(const TopoDS_Shape &shape) {
+        if (!ais_desk.IsNull())
+            context->Remove(ais_desk, Standard_False);
+        ais_desk = new AIS_Shape(shape);
+
+        Handle(Prs3d_Drawer) drawer = new Prs3d_Drawer();
+        Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
+        aShAspect->SetColor(Quantity_Color(Quantity_NOC_MATRAGRAY));
+        drawer->SetShadingAspect(aShAspect);
+        context->SetLocalAttributes(ais_desk, drawer, Standard_False);
+
+        Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
+        lAspect->SetColor(FACE_CLR);
+        drawer->SetFaceBoundaryAspect(lAspect);
+        drawer->SetFaceBoundaryDraw(Standard_True);
+
+        context->SetDisplayMode(ais_desk, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
+        context->Display(ais_desk, Standard_False);
+        context->Deactivate(ais_desk);
+    }
+
+    void setDeskMdlTransform(const gp_Trsf &trsf) {
+        if (!ais_desk.IsNull()) {
+            context->SetLocation(ais_desk, trsf);
+            context->Redisplay(ais_desk, Standard_False);
+        }
+    }
+
     void setGripModel(const TopoDS_Shape &shape) {
         if (!ais_grip.IsNull())
             context->Remove(ais_grip, Standard_False);
         ais_grip = new AIS_Shape(shape);
+
+        Handle(Prs3d_Drawer) drawer = new Prs3d_Drawer();
+        Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
+        aShAspect->SetColor(Quantity_Color(Quantity_NOC_TOMATO3));
+        drawer->SetShadingAspect(aShAspect);
+        context->SetLocalAttributes(ais_grip, drawer, Standard_False);
+
+        Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
+        lAspect->SetColor(FACE_CLR);
+        drawer->SetFaceBoundaryAspect(lAspect);
+        drawer->SetFaceBoundaryDraw(Standard_True);
+
         context->SetDisplayMode(ais_grip, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
         context->Display(ais_grip, Standard_False);
         context->Deactivate(ais_grip);
@@ -341,6 +383,7 @@ private:
 
     Handle(AIS_ViewCube) ais_axis_cube;
     Handle(AIS_Shape) ais_part;
+    Handle(AIS_Shape) ais_desk;
     Handle(AIS_Shape) ais_grip;
 
     Handle(AIS_Trihedron) calibTrihedron;
@@ -417,6 +460,16 @@ void CInteractiveContext::setPartModel(const TopoDS_Shape &shape)
 void CInteractiveContext::setPartMdlTransform(const gp_Trsf &trsf)
 {
     d_ptr->setPartMdlTransform(trsf);
+}
+
+void CInteractiveContext::setDeskModel(const TopoDS_Shape &shape)
+{
+    d_ptr->setDeskModel(shape);
+}
+
+void CInteractiveContext::setDeskMdlTransform(const gp_Trsf &trsf)
+{
+    d_ptr->setDeskMdlTransform(trsf);
 }
 
 void CInteractiveContext::setGripModel(const TopoDS_Shape &shape)

@@ -145,21 +145,50 @@ class CMainViewportPrivate : public AIS_ViewController
                               guiSettings.partRotationZ);
     }
 
+    gp_Trsf calcDeskTrsf() const {
+        return calc_transform(gp_Vec(guiSettings.deskTrX,
+                                     guiSettings.deskTrY,
+                                     guiSettings.deskTrZ),
+                              gp_Vec(guiSettings.deskCenterX,
+                                     guiSettings.deskCenterY,
+                                     guiSettings.deskCenterZ),
+                              guiSettings.deskScale,
+                              guiSettings.deskRotationX,
+                              guiSettings.deskRotationY,
+                              guiSettings.deskRotationZ);
+    }
+
     gp_Trsf calcGripTrsf() const {
-        return gp_Trsf();
+        return calc_transform(gp_Vec(guiSettings.gripTrX,
+                                     guiSettings.gripTrY,
+                                     guiSettings.gripTrZ),
+                              gp_Vec(guiSettings.gripCenterX,
+                                     guiSettings.gripCenterY,
+                                     guiSettings.gripCenterZ),
+                              guiSettings.gripScale,
+                              guiSettings.gripRotationX,
+                              guiSettings.gripRotationY,
+                              guiSettings.gripRotationZ);
     }
 
     void setGuiSettings(const SGuiSettings &settings) {
         guiSettings = settings;
         view->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
         context->setPartMdlTransform(calcPartTrsf());
-        context->setGripMdlTransform(calcPartTrsf());
+        context->setDeskMdlTransform(calcDeskTrsf());
+        context->setGripMdlTransform(calcGripTrsf());
         view->Redraw();
     }
 
     void setPartModel(const TopoDS_Shape &shape) {
         context->setPartModel(shape);
         context->setPartMdlTransform(calcPartTrsf());
+        view->Redraw();
+    }
+
+    void setDeskModel(const TopoDS_Shape &shape) {
+        context->setDeskModel(shape);
+        context->setDeskMdlTransform(calcDeskTrsf());
         view->Redraw();
     }
 
@@ -288,6 +317,11 @@ GUI_TYPES::TUsrAction CMainViewport::getUsrAction() const
 void CMainViewport::setPartModel(const TopoDS_Shape &shape)
 {
     d_ptr->setPartModel(shape);
+}
+
+void CMainViewport::setDeskModel(const TopoDS_Shape &shape)
+{
+    d_ptr->setDeskModel(shape);
 }
 
 void CMainViewport::setGripModel(const TopoDS_Shape &shape)
