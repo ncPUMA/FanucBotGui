@@ -38,6 +38,49 @@ enum EN_BotTaskTypes
 };
 typedef int TBotTaskType;
 
+struct SVertex
+{
+    SVertex(const double X = 0., const double Y = 0, const double Z = 0) :
+        x(X), y(Y), z(Z) { }
+
+    double x, y, z;
+};
+
+struct SRotationAngle
+{
+    SRotationAngle() :
+        x(0.), y(0.), z(0.) { }
+
+    double x, y, z;
+};
+
+struct SCalibPoint
+{
+    SCalibPoint() {}
+
+    SVertex globalPos, botPos;
+};
+
+struct STaskPoint
+{
+    STaskPoint() : taskType(ENBTT_MOVE) { }
+
+    TBotTaskType taskType;
+    SVertex globalPos;
+    SRotationAngle angle;
+};
+
+template <typename Key, typename Value>
+inline static Value extract_map_value(const std::map <Key, Value> &map,
+                                      const Key key,
+                                      const Value defaultVl = Value()) {
+    Value res = defaultVl;
+    const typename std::map<Key, Value>::const_iterator it = map.find(key);
+    if (it != map.cend())
+        res = it->second;
+    return res;
+}
+
 }
 
 #endif // GUI_TYPES_H

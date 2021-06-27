@@ -16,8 +16,7 @@
 #include <V3d_Viewer.hxx>
 #include <AIS_InteractiveContext.hxx>
 #include <V3d_View.hxx>
-#include <Prs3d_DatumAspect.hxx>
-#include <Standard_Version.hxx>
+
 #include <Graphic3d_ZLayerSettings.hxx>
 
 #include <gp_Quaternion.hxx>
@@ -31,30 +30,17 @@
 #include <AIS_TextLabel.hxx>
 #include <TopoDS_Shape.hxx>
 
+#include "cinteractivecontext.h"
 #include "caspectwindow.h"
 #include "sguisettings.h"
 
 #include "Dialogs/caddcalibpointdialog.h"
 #include "Dialogs/cbottaskdialogfacade.h"
 
-static const Quantity_Color BG_CLR   = Quantity_Color( .7765,  .9 , 1.  , Quantity_TOC_RGB);
-static const Quantity_Color TXT_CLR  = Quantity_Color( .15  ,  .15, 0.15, Quantity_TOC_RGB);
-static const Quantity_Color FACE_CLR = Quantity_Color(0.1   , 0.1 , 0.1 , Quantity_TOC_RGB);
-
 static constexpr double DEGREE_K = M_PI / 180.;
 
-static const Standard_Integer Z_LAYER = 100;
-
-template <typename Key, typename Value>
-inline static Value extract_map_value(const std::map <Key, Value> &map,
-                                      const Key key,
-                                      const Value defaultVl = Value()) {
-    Value res = defaultVl;
-    const typename std::map<Key, Value>::const_iterator it = map.find(key);
-    if (it != map.cend())
-        res = it->second;
-    return res;
-}
+static const Quantity_Color BG_CLR   = Quantity_Color( .7765,  .9 , 1.  , Quantity_TOC_RGB);
+static const Graphic3d_ZLayerId Z_LAYER_ID_WITHOUT_DEPTH_TEST_DEFAULT = 100;
 
 class CMainViewportPrivate : public AIS_ViewController
 {
@@ -62,14 +48,20 @@ class CMainViewportPrivate : public AIS_ViewController
 
     CMainViewportPrivate(CMainViewport * const qptr) :
         q_ptr(qptr),
-        bShading(false),
-        zLayerId(Z_LAYER),
-        usrAction(GUI_TYPES::ENUA_NO),
-        pnt(new AIS_Point(new Geom_CartesianPoint(gp_Pnt()))),
-        pntLbl(new AIS_TextLabel())
-    { }
+        context(new CInteractiveContext()),
+        usrAction(GUI_TYPES::ENUA_NO) {
+        myMouseGestureMap.Clear();
+        myMouseGestureMap.Bind(Aspect_VKeyMouse_LeftButton, AIS_MouseGesture_Pan);
+        myMouseGestureMap.Bind(Aspect_VKeyMouse_RightButton, AIS_MouseGesture_RotateOrbit);
+        SetAllowRotation(Standard_True);
+    }
+
+    ~CMainViewportPrivate() {
+        delete context;
+    }
 
     void init(OpenGl_GraphicDriver &driver) {
+        //Viewer
         viewer = new V3d_Viewer(&driver);
         viewer->SetDefaultViewSize(1000.);
         viewer->SetComputedMode(Standard_True);
@@ -77,62 +69,29 @@ class CMainViewportPrivate : public AIS_ViewController
         viewer->SetDefaultLights();
         viewer->SetLightOn();
 
-        context = new AIS_InteractiveContext(viewer);
-//        context->SetAutoActivateSelection(false);
-
-        Handle(Prs3d_Drawer) drawer = context->DefaultDrawer();
-        Handle(Prs3d_DatumAspect) datum = drawer->DatumAspect();
-
-#if OCC_VERSION_HEX >= 0x070600
-        datum->TextAspect(Prs3d_DatumParts_XAxis)->SetColor(TXT_CLR);
-        datum->TextAspect(Prs3d_DatumParts_YAxis)->SetColor(TXT_CLR);
-        datum->TextAspect(Prs3d_DatumParts_ZAxis)->SetColor(TXT_CLR);
-#else
-        datum->TextAspect()->SetColor(TXT_CLR);
-#endif
-
-        Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
-        lAspect->SetColor(FACE_CLR);
-        drawer->SetFaceBoundaryAspect(lAspect);
-        drawer->SetFaceBoundaryDraw(Standard_True);
-
-        viewer->AddZLayer(zLayerId);
-        Graphic3d_ZLayerSettings zSettings = viewer->ZLayerSettings(zLayerId);
+        //ZLayer without depth-test
+        Graphic3d_ZLayerId zLayerIdWithoutDepthTest = Graphic3d_ZLayerId_UNKNOWN;
+        viewer->AddZLayer(zLayerIdWithoutDepthTest);
+        Graphic3d_ZLayerSettings zSettings = viewer->ZLayerSettings(zLayerIdWithoutDepthTest);
         zSettings.SetEnableDepthTest(Standard_False);
-        viewer->SetZLayerSettings(zLayerId, zSettings);
+        viewer->SetZLayerSettings(zLayerIdWithoutDepthTest, zSettings);
 
-        v3dView = context->CurrentViewer()->CreateView().get();
+        //Context
+        AIS_InteractiveContext * const cntxt = new AIS_InteractiveContext(viewer);
+        context->setDisableTepthTestZLayer(zLayerIdWithoutDepthTest);
+        context->init(*cntxt);
+        view = cntxt->CurrentViewer()->CreateView().get();
 
+        //Aspect
         aspect = new CAspectWindow(*q_ptr);
-        v3dView->SetWindow(aspect);
+        view->SetWindow(aspect);
         if (!aspect->IsMapped())
-        {
-          aspect->Map();
-        }
+            aspect->Map();
 
-        myMouseGestureMap.Clear();
-        myMouseGestureMap.Bind(Aspect_VKeyMouse_LeftButton, AIS_MouseGesture_Pan);
-        myMouseGestureMap.Bind(Aspect_VKeyMouse_RightButton, AIS_MouseGesture_RotateOrbit);
-
-        SetAllowRotation(Standard_True);
-
-        //Draw AIS_ViewCube
-        ais_axis_cube = createCube();
-        context->Display(ais_axis_cube, Standard_False);
-        context->SetDisplayMode(ais_axis_cube, 1, Standard_False);
-        context->Deactivate(ais_axis_cube);
-
-        Geom_Axis2Placement coords(gp_Pnt(0., 0., 0.), gp_Dir(0., 0., 1.), gp_Dir(1., 0., 0.));
-        Handle(Geom_Axis2Placement) axis = new Geom_Axis2Placement(coords);
-        calibTrihedron = new AIS_Trihedron(axis);
-        context->Load(calibTrihedron, Standard_False);
-        context->SetDisplayMode(calibTrihedron, 1, Standard_False);
-        context->SetZLayer(calibTrihedron, zLayerId);
-        context->Deactivate(calibTrihedron);
-
-        v3dView->ChangeRenderingParams().IsAntialiasingEnabled = Standard_True;
-        v3dView->SetBackgroundColor(BG_CLR);
-        v3dView->MustBeResized();
+        //Final
+        view->ChangeRenderingParams().IsAntialiasingEnabled = Standard_True;
+        view->SetBackgroundColor(BG_CLR);
+        view->MustBeResized();
     }
 
     static gp_Trsf calc_transform(const gp_Vec &model_translation,
@@ -170,313 +129,81 @@ class CMainViewportPrivate : public AIS_ViewController
         gp_Trsf trsfTr1;
         trsfTr1.SetTranslation(-model_center);
 
-        return trsfTr3 *
-               trsfSc *
-               trsfTr2 *
-               trsfRcur *
-               trsfRoff *
-               trsfTr1;
+        return trsfTr3 * trsfSc * trsfTr2 * trsfRcur * trsfRoff * trsfTr1;
+    }
+
+    gp_Trsf calcPartTrsf() const {
+        return calc_transform(gp_Vec(guiSettings.partTrX,
+                                     guiSettings.partTrY,
+                                     guiSettings.partTrZ),
+                              gp_Vec(guiSettings.partCenterX,
+                                     guiSettings.partCenterY,
+                                     guiSettings.partCenterZ),
+                              guiSettings.partScale,
+                              guiSettings.partRotationX,
+                              guiSettings.partRotationY,
+                              guiSettings.partRotationZ);
+    }
+
+    gp_Trsf calcGripTrsf() const {
+        return gp_Trsf();
     }
 
     void setGuiSettings(const SGuiSettings &settings) {
         guiSettings = settings;
-        v3dView->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
-
-        if (!ais_mdl.IsNull()) {
-            const gp_Trsf loc = calc_transform(gp_Vec(guiSettings.partTrX,
-                                                      guiSettings.partTrY,
-                                                      guiSettings.partTrZ),
-                                               gp_Vec(guiSettings.partCenterX,
-                                                      guiSettings.partCenterY,
-                                                      guiSettings.partCenterZ),
-                                               guiSettings.partScale,
-                                               guiSettings.partRotationX,
-                                               guiSettings.partRotationY,
-                                               guiSettings.partRotationZ);
-            context->SetLocation(ais_mdl, loc);
-            context->Redisplay(ais_mdl, Standard_False);
-        }
-
-        v3dView->Redraw();
+        view->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
+        context->setPartMdlTransform(calcPartTrsf());
+        context->setGripMdlTransform(calcPartTrsf());
+        view->Redraw();
     }
 
-    AIS_ViewCube* createCube() const {
-        AIS_ViewCube * const aViewCube = new AIS_ViewCube();
-        aViewCube->SetDrawEdges(Standard_False);
-        aViewCube->SetDrawVertices(Standard_False);
-        aViewCube->SetBoxTransparency(1.);
-        aViewCube->AIS_InteractiveObject::SetColor(TXT_CLR);
-        TCollection_AsciiString emptyStr;
-        aViewCube->SetBoxSideLabel(V3d_Xpos, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Ypos, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Zpos, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Xneg, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Yneg, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Zneg, emptyStr);
-        return aViewCube;
+    void setPartModel(const TopoDS_Shape &shape) {
+        context->setPartModel(shape);
+        context->setPartMdlTransform(calcPartTrsf());
+        view->Redraw();
     }
 
-    void setMainModel(const TopoDS_Shape &shape) {
-        if (!ais_mdl.IsNull())
-            context->Remove(ais_mdl, Standard_False);
-        ais_mdl = new AIS_Shape(shape);
-        const gp_Trsf loc = calc_transform(gp_Vec(guiSettings.partTrX,
-                                                  guiSettings.partTrY,
-                                                  guiSettings.partTrZ),
-                                           gp_Vec(guiSettings.partCenterX,
-                                                  guiSettings.partCenterY,
-                                                  guiSettings.partCenterZ),
-                                           guiSettings.partScale,
-                                           guiSettings.partRotationX,
-                                           guiSettings.partRotationY,
-                                           guiSettings.partRotationZ);
-
-        context->SetDisplayMode(ais_mdl, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
-        context->Display(ais_mdl, Standard_False);
-        context->SetLocation(ais_mdl, loc);
-        v3dView->Redraw();
-    }
-
-    void drawVertexCursor() {
-        Handle(SelectMgr_EntityOwner) owner = context->DetectedOwner();
-        bool bShow = false;
-        if (owner)
-            bShow = Handle(AIS_Shape)::DownCast(owner->Selectable()) == ais_mdl;
-
-        if (bShow) {
-            Handle(StdSelect_ViewerSelector3d) selector = context->MainSelector();
-            if (selector->NbPicked() > 0) {
-                //cross
-                const gp_Pnt pick = selector->PickedPoint(1);
-                pnt->SetComponent(new Geom_CartesianPoint(pick));
-
-                //label
-                const QString txt = QString("  X: %1\n  Y: %2\n  Z: %3")
-                        .arg(pick.X(), 10, 'f', 6, '0')
-                        .arg(pick.Y(), 10, 'f', 6, '0')
-                        .arg(pick.Z(), 10, 'f', 6, '0');
-                pntLbl->SetPosition(pick);
-                pntLbl->SetText(txt.toLocal8Bit().constData());
-
-                //redraw
-                if (context->IsDisplayed(pntLbl)) {
-                    context->Redisplay(pnt, Standard_False);
-                    context->Redisplay(pntLbl, Standard_False);
-                }
-                else {
-                    context->Display(pnt, Standard_False);
-                    context->SetZLayer(pnt, zLayerId);
-                    context->Deactivate(pnt);
-                    context->Display(pntLbl, Standard_False);
-                    context->SetZLayer(pntLbl, zLayerId);
-                    context->Deactivate(pntLbl);
-                }
-            }
-        }
-        else {
-            context->Remove(pnt, Standard_False);
-            context->Remove(pntLbl, Standard_False);
-        }
-    }
-
-    void updateModelCursor() {
-        switch(usrAction) {
-            using namespace GUI_TYPES;
-
-            case ENUA_CALIBRATION:
-            case ENUA_ADD_TASK:
-                drawVertexCursor();
-                v3dView->Redraw();
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    void paintEvent() {
-        v3dView->InvalidateImmediate();
-        FlushViewEvents(context, v3dView, Standard_True);
-    }
-
-    void resizeEvent() {
-        v3dView->MustBeResized();
-    }
-
-    void fitInView() {
-        v3dView->FitAll();
-        v3dView->ZFitAll();
-        v3dView->Redraw();
+    void setGripModel(const TopoDS_Shape &shape) {
+        context->setGripModel(shape);
+        context->setGripMdlTransform(calcGripTrsf());
+        view->Redraw();
     }
 
     void setMSAA(const GUI_TYPES::TMSAA msaa) {
-        assert(!v3dView.IsNull());
+        assert(!view.IsNull());
         guiSettings.msaa = msaa;
-        v3dView->ChangeRenderingParams().NbMsaaSamples = msaa;
-        v3dView->Redraw();
+        view->ChangeRenderingParams().NbMsaaSamples = msaa;
+        view->Redraw();
     }
 
     void setShading(const bool enabled) {
-        bShading = enabled;
-        const AIS_DisplayMode mode = bShading ? AIS_Shaded : AIS_WireFrame;
-        context->SetDisplayMode(ais_mdl, mode, Standard_False);
-        context->Redisplay(ais_mdl, Standard_False);
-        v3dView->Redraw();
-    }
-
-    void removeAdditionalObjects() {
-        context->Remove(calibTrihedron, Standard_False);
-        for(auto scpnt : calibPoints) {
-            context->Remove(scpnt.pnt, Standard_False);
-            context->Remove(scpnt.pntLbl, Standard_False);
-        }
-        for(auto stpnt : taskPoints) {
-            context->Remove(stpnt.pnt, Standard_False);
-            context->Remove(stpnt.pntLbl, Standard_False);
-        }
+        context->setShading(enabled);
+        view->Redraw();
     }
 
     void setUserAction(const GUI_TYPES::TUsrAction userAction) {
         usrAction = userAction;
-        removeAdditionalObjects();
-        switch(usrAction) {
-            using namespace GUI_TYPES;
-
-            case ENUA_CALIBRATION:
-                context->Display(calibTrihedron, Standard_False);
-                for(auto scpnt : calibPoints) {
-                    context->Display(scpnt.pnt, Standard_False);
-                    context->Display(scpnt.pntLbl, Standard_False);
-                }
-                break;
-
-            case ENUA_ADD_TASK:
-                for(auto stpnt : taskPoints) {
-                    context->Display(stpnt.pnt, Standard_False);
-                    context->Display(stpnt.pntLbl, Standard_False);
-                }
-                break;
-
-            default:
-                break;
+        context->hideAllAdditionalObjects();
+        switch(userAction) {
+            case GUI_TYPES::ENUA_CALIBRATION: context->showCalibObjects(); break;
+            case GUI_TYPES::ENUA_ADD_TASK   : context->showTaskObjects();  break;
+            default: break;
         }
-        v3dView->Redraw();
-    }
-
-    void fillCalibContextMenu(QMenu &menu) {
-        Handle(SelectMgr_EntityOwner) owner = context->DetectedOwner();
-        if (owner) {
-            Handle(AIS_InteractiveObject) curShape = Handle(AIS_InteractiveObject)::DownCast(owner->Selectable());
-            if (curShape == ais_mdl)
-                menu.addAction(CMainViewport::tr("Точка привязки"),
-                               q_ptr,
-                               &CMainViewport::slAddCalibPoint);
-            else {
-                size_t i = 0;
-                for (auto scpnt : calibPoints) {
-                    if (scpnt.pnt == curShape) {
-                        menu.addAction(CMainViewport::tr("Изменить"),
-                                       q_ptr,
-                                       &CMainViewport::slChangeCalibPoint)->
-                                setProperty("index", static_cast <qulonglong> (i));
-                        menu.addAction(CMainViewport::tr("Удалить"),
-                                       q_ptr,
-                                       &CMainViewport::slRemoveCalibPoint)->
-                                setProperty("index", static_cast <qulonglong> (i));;
-                        break;
-                    }
-                    ++i;
-                }
-            }
-        }
-    }
-
-    QString taskName(const GUI_TYPES::TBotTaskType taskType) const {
-        const std::map <GUI_TYPES::TBotTaskType, QString> mapNames = {
-            { GUI_TYPES::ENBTT_MOVE , CMainViewport::tr("Перемещение") },
-            { GUI_TYPES::ENBTT_DRILL, CMainViewport::tr("Сверление")   },
-            { GUI_TYPES::ENBTT_MARK , CMainViewport::tr("Маркировка")  }
-        };
-        return extract_map_value(mapNames, taskType, QString());
-    }
-
-    void fillTaskContextMenu(QMenu &menu) {
-        Handle(SelectMgr_EntityOwner) owner = context->DetectedOwner();
-        if (owner) {
-            Handle(AIS_InteractiveObject) curShape = Handle(AIS_InteractiveObject)::DownCast(owner->Selectable());
-            if (curShape == ais_mdl) {
-                using namespace GUI_TYPES;
-                menu.addAction(taskName(ENBTT_MOVE),
-                               q_ptr,
-                               &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MOVE);
-                menu.addAction(taskName(ENBTT_DRILL),
-                               q_ptr,
-                               &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_DRILL);;
-                menu.addAction(taskName(ENBTT_MARK),
-                               q_ptr,
-                               &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MARK);;
-            }
-            else {
-                size_t i = 0;
-                for (auto scpnt : taskPoints) {
-                    if (scpnt.pnt == curShape) {
-                        menu.addAction(CMainViewport::tr("Изменить"),
-                                       q_ptr,
-                                       &CMainViewport::slChangeTaskPoint)->
-                                setProperty("index", static_cast <qulonglong> (i));
-                        menu.addAction(CMainViewport::tr("Удалить"),
-                                       q_ptr,
-                                       &CMainViewport::slRemoveTaskPoint)->
-                                setProperty("index", static_cast <qulonglong> (i));;
-                        break;
-                    }
-                    ++i;
-                }
-            }
-        }
+        view->Redraw();
     }
 
 
     CMainViewport * const q_ptr;
-    bool bShading;
 
-    Handle(AIS_InteractiveContext) context;
     Handle(V3d_Viewer)             viewer;
-    Handle(V3d_View)               v3dView;
+    Handle(V3d_View)               view;
     Handle(CAspectWindow)          aspect;
 
-    Standard_Integer zLayerId;
-
     SGuiSettings guiSettings;
-
-    Handle(AIS_ViewCube) ais_axis_cube;
-    Handle(AIS_Shape) ais_mdl;
-    Handle(AIS_Shape) ais_grip;
+    CInteractiveContext * const context;
 
     GUI_TYPES::TUsrAction usrAction;
-
-    Handle(AIS_Trihedron) calibTrihedron;
-    Handle(AIS_Point) pnt;
-    Handle(AIS_TextLabel) pntLbl;
-
     QPoint rbPos;
-
-    struct SCalibPoint
-    {
-        gp_Pnt botPos;
-        Handle(AIS_Point) pnt;
-        Handle(AIS_TextLabel) pntLbl;
-    };
-    std::vector <SCalibPoint> calibPoints;
-
-    struct STaskPoint
-    {
-        GUI_TYPES::TBotTaskType taskType;
-        gp_Pnt angles;
-        Handle(AIS_Point) pnt;
-        Handle(AIS_TextLabel) pntLbl;
-    };
-    std::vector <STaskPoint> taskPoints;
 };
 
 
@@ -519,12 +246,12 @@ void CMainViewport::setMSAA(const GUI_TYPES::TMSAA msaa)
 
 GUI_TYPES::TMSAA CMainViewport::getMSAA() const
 {
-    return static_cast <GUI_TYPES::TMSAA> (d_ptr->v3dView->RenderingParams().NbMsaaSamples);
+    return static_cast <GUI_TYPES::TMSAA> (d_ptr->view->RenderingParams().NbMsaaSamples);
 }
 
 void CMainViewport::setStatsVisible(const bool value)
 {
-    d_ptr->v3dView->ChangeRenderingParams().ToShowStats = value;
+    d_ptr->view->ChangeRenderingParams().ToShowStats = value;
 }
 
 void CMainViewport::setShading(const bool enabled)
@@ -534,7 +261,9 @@ void CMainViewport::setShading(const bool enabled)
 
 void CMainViewport::fitInView()
 {
-    d_ptr->fitInView();
+    d_ptr->view->FitAll();
+    d_ptr->view->ZFitAll();
+    d_ptr->view->Redraw();
 }
 
 void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
@@ -542,8 +271,8 @@ void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
     V3d_TypeOfOrientation orientation = V3d_XposYnegZpos;
     if (type == GUI_TYPES::ENCS_LEFT)
         orientation = V3d_XposYnegZneg;
-    d_ptr->v3dView->SetProj(orientation, Standard_False);
-    d_ptr->v3dView->Redraw();
+    d_ptr->view->SetProj(orientation, Standard_False);
+    d_ptr->view->Redraw();
 }
 
 void CMainViewport::setUserAction(const GUI_TYPES::TUsrAction usrAction)
@@ -556,14 +285,14 @@ GUI_TYPES::TUsrAction CMainViewport::getUsrAction() const
     return d_ptr->usrAction;
 }
 
-void CMainViewport::setMainModel(const TopoDS_Shape &shape)
+void CMainViewport::setPartModel(const TopoDS_Shape &shape)
 {
-    d_ptr->setMainModel(shape);
+    d_ptr->setPartModel(shape);
 }
 
 void CMainViewport::setGripModel(const TopoDS_Shape &shape)
 {
-    d_ptr->ais_grip = new AIS_Shape(shape);
+    d_ptr->setGripModel(shape);
 }
 
 QPaintEngine *CMainViewport::paintEngine() const
@@ -573,12 +302,13 @@ QPaintEngine *CMainViewport::paintEngine() const
 
 void CMainViewport::paintEvent(QPaintEvent *)
 {
-    d_ptr->paintEvent();
+    d_ptr->view->InvalidateImmediate();
+    d_ptr->FlushViewEvents(&d_ptr->context->context(), d_ptr->view, Standard_True);
 }
 
 void CMainViewport::resizeEvent(QResizeEvent *)
 {
-    d_ptr->resizeEvent();
+    d_ptr->view->MustBeResized();
 }
 
 //! Map Qt buttons bitmask to virtual keys.
@@ -646,11 +376,11 @@ void CMainViewport::mouseReleaseEvent(QMouseEvent *event)
             using namespace GUI_TYPES;
 
             case ENUA_CALIBRATION:
-                d_ptr->fillCalibContextMenu(menu);
+                fillCalibCntxtMenu(menu);
                 break;
 
             case ENUA_ADD_TASK:
-                d_ptr->fillTaskContextMenu(menu);
+                fillTaskAddCntxtMenu(menu);
                 break;
 
             default:
@@ -674,7 +404,8 @@ void CMainViewport::mouseMoveEvent(QMouseEvent *event)
     }
 
     d_ptr->rbPos = QPoint();
-    d_ptr->updateModelCursor();
+    d_ptr->context->updateCursorPosition();
+    d_ptr->view->Redraw();
 }
 
 void CMainViewport::wheelEvent(QWheelEvent *event)
@@ -684,24 +415,85 @@ void CMainViewport::wheelEvent(QWheelEvent *event)
         update();
 }
 
+QString CMainViewport::taskName(const GUI_TYPES::TBotTaskType taskType) const
+{
+    using namespace GUI_TYPES;
+    const std::map <TBotTaskType, QString> mapNames = {
+        { ENBTT_MOVE , tr("Перемещение") },
+        { ENBTT_DRILL, tr("Сверление")   },
+        { ENBTT_MARK , tr("Маркировка")  }
+    };
+    return extract_map_value(mapNames, taskType, QString());
+}
+
+void CMainViewport::fillCalibCntxtMenu(QMenu &menu)
+{
+    if (d_ptr->context->isPartDetected())
+    {
+        menu.addAction(CMainViewport::tr("Точка привязки"),
+                       this,
+                       &CMainViewport::slAddCalibPoint);
+    }
+    else
+    {
+        size_t index = 0;
+        if (d_ptr->context->isCalibPointDetected(index))
+        {
+            menu.addAction(CMainViewport::tr("Изменить"),
+                           this,
+                           &CMainViewport::slChangeCalibPoint)->
+                    setProperty("index", static_cast <qulonglong> (index));
+            menu.addAction(CMainViewport::tr("Удалить"),
+                           this,
+                           &CMainViewport::slRemoveCalibPoint)->
+                    setProperty("index", static_cast <qulonglong> (index));;
+        }
+    }
+}
+
+void CMainViewport::fillTaskAddCntxtMenu(QMenu &menu)
+{
+    if (d_ptr->context->isPartDetected())
+    {
+        using namespace GUI_TYPES;
+        menu.addAction(taskName(ENBTT_MOVE),
+                       this,
+                       &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MOVE);
+        menu.addAction(taskName(ENBTT_DRILL),
+                       this,
+                       &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_DRILL);;
+        menu.addAction(taskName(ENBTT_MARK),
+                       this,
+                       &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MARK);;
+    }
+    else
+    {
+        size_t index = 0;
+        if (d_ptr->context->isTaskPointDetected(index))
+        {
+                menu.addAction(CMainViewport::tr("Изменить"),
+                               this,
+                               &CMainViewport::slChangeTaskPoint)->
+                        setProperty("index", static_cast <qulonglong> (index));
+                menu.addAction(CMainViewport::tr("Удалить"),
+                               this,
+                               &CMainViewport::slRemoveTaskPoint)->
+                        setProperty("index", static_cast <qulonglong> (index));;
+        }
+    }
+}
+
 void CMainViewport::slAddCalibPoint()
 {
-    CAddCalibPointDialog dialog(d_ptr->pnt->Component()->Pnt(), this);
+    const gp_Pnt cursorPos = d_ptr->context->lastCursorPosition();
+    GUI_TYPES::SCalibPoint initPoint;
+    initPoint.globalPos.x = cursorPos.X();
+    initPoint.globalPos.y = cursorPos.Y();
+    initPoint.globalPos.z = cursorPos.Z();
+    CAddCalibPointDialog dialog(this, initPoint);
     if (dialog.exec() == QDialog::Accepted)
     {
-        const gp_Pnt globalPos = dialog.getGlobalPos();
-        CMainViewportPrivate::SCalibPoint scpnt;
-        scpnt.botPos = dialog.getBotPos();
-        scpnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
-        scpnt.pntLbl = new AIS_TextLabel();
-        scpnt.pntLbl->SetPosition(globalPos);
-        const QString txt = tr("  C%1").arg(d_ptr->calibPoints.size() + 1);
-        scpnt.pntLbl->SetText(TCollection_ExtendedString(txt.toLocal8Bit().constData(), Standard_True));
-        d_ptr->calibPoints.push_back(scpnt);
-        d_ptr->context->Display(scpnt.pnt, Standard_False);
-        d_ptr->context->SetZLayer(scpnt.pntLbl, d_ptr->zLayerId);
-        d_ptr->context->Display(scpnt.pntLbl, Standard_False);
-        d_ptr->context->Deactivate(scpnt.pntLbl);
+        d_ptr->context->appendCalibPoint(dialog.getCalibPoint());
         d_ptr->viewer->Redraw();
     }
 }
@@ -711,18 +503,13 @@ void CMainViewport::slChangeCalibPoint()
     assert(sender() != nullptr);
 
     const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
-    if (index < d_ptr->calibPoints.size())
+    if (index < d_ptr->context->getCalibPointCount())
     {
-        CMainViewportPrivate::SCalibPoint &scpnt = d_ptr->calibPoints[index];
-        CAddCalibPointDialog dialog(scpnt.pnt->Component()->Pnt(), this);
+        const GUI_TYPES::SCalibPoint calibPnt = d_ptr->context->getCalibPoint(index);
+        CAddCalibPointDialog dialog(this, calibPnt);
         if (dialog.exec() == QDialog::Accepted)
         {
-            const gp_Pnt globalPos = dialog.getGlobalPos();
-            scpnt.botPos = dialog.getBotPos();
-            scpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
-            scpnt.pntLbl->SetPosition(globalPos);
-            d_ptr->context->Redisplay(scpnt.pnt, Standard_False);
-            d_ptr->context->Redisplay(scpnt.pntLbl, Standard_False);
+            d_ptr->context->changeCalibPoint(index, dialog.getCalibPoint());
             d_ptr->viewer->Redraw();
         }
     }
@@ -733,18 +520,9 @@ void CMainViewport::slRemoveCalibPoint()
     assert(sender() != nullptr);
 
     const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
-    if (index < d_ptr->calibPoints.size())
+    if (index < d_ptr->context->getCalibPointCount())
     {
-        CMainViewportPrivate::SCalibPoint &scpnt = d_ptr->calibPoints[index];
-        d_ptr->context->Remove(scpnt.pnt, Standard_False);
-        d_ptr->context->Remove(scpnt.pntLbl, Standard_False);
-        d_ptr->calibPoints.erase(d_ptr->calibPoints.cbegin() + index);
-        for(size_t i = 0; i < d_ptr->calibPoints.size(); ++i)
-        {
-            const QString txt = tr("  C%1").arg(i + 1);
-            d_ptr->calibPoints[i].pntLbl->SetText(TCollection_ExtendedString(txt.toLocal8Bit().constData(), Standard_True));
-            d_ptr->context->Redisplay(d_ptr->calibPoints[i].pntLbl, Standard_False);
-        }
+        d_ptr->context->removeCalibPoint(index);
         d_ptr->viewer->Redraw();
     }
 }
@@ -753,27 +531,18 @@ void CMainViewport::slAddTaskPoint()
 {
     assert(sender() != nullptr);
 
-    const GUI_TYPES::TBotTaskType taskType = static_cast <GUI_TYPES::TBotTaskType>
+    GUI_TYPES::STaskPoint taskPoint;
+    taskPoint.taskType = static_cast <GUI_TYPES::TBotTaskType>
             (sender()->property("taskType").toInt());
-    CBotTaskDialogFacade dialog(this, taskType, d_ptr->pnt->Component()->Pnt());
+    const gp_Pnt cursorPos = d_ptr->context->lastCursorPosition();
+    taskPoint.globalPos.x = cursorPos.X();
+    taskPoint.globalPos.y = cursorPos.Y();
+    taskPoint.globalPos.z = cursorPos.Z();
+
+    CBotTaskDialogFacade dialog(this, taskPoint);
     if (dialog.exec() == QDialog::Accepted)
     {
-        CMainViewportPrivate::STaskPoint stpnt;
-        stpnt.taskType = taskType;
-        stpnt.angles = dialog.getAngles();
-        const gp_Pnt globalPos = dialog.getPos();
-        stpnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
-        stpnt.pntLbl = new AIS_TextLabel();
-        stpnt.pntLbl->SetPosition(globalPos);
-        const QString txt = tr("  T%1 (%2)")
-                .arg(d_ptr->taskPoints.size() + 1)
-                .arg(d_ptr->taskName(taskType));
-        stpnt.pntLbl->SetText(TCollection_ExtendedString(txt.toLocal8Bit().constData(), Standard_True));
-        d_ptr->taskPoints.push_back(stpnt);
-        d_ptr->context->Display(stpnt.pnt, Standard_False);
-        d_ptr->context->SetZLayer(stpnt.pntLbl, d_ptr->zLayerId);
-        d_ptr->context->Display(stpnt.pntLbl, Standard_False);
-        d_ptr->context->Deactivate(stpnt.pntLbl);
+        d_ptr->context->appendTaskPoint(dialog.getTaskPoint());
         d_ptr->viewer->Redraw();
     }
 }
@@ -783,18 +552,13 @@ void CMainViewport::slChangeTaskPoint()
     assert(sender() != nullptr);
 
     const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
-    if (index < d_ptr->taskPoints.size())
+    if (index < d_ptr->context->getTaskPointCount())
     {
-        CMainViewportPrivate::STaskPoint &stpnt = d_ptr->taskPoints[index];
-        CBotTaskDialogFacade dialog(this, stpnt.taskType, stpnt.pnt->Component()->Pnt());
+        const GUI_TYPES::STaskPoint taskPoint = d_ptr->context->getTaskPoint(index);
+        CBotTaskDialogFacade dialog(this, taskPoint);
         if (dialog.exec() == QDialog::Accepted)
         {
-            stpnt.angles = dialog.getAngles();
-            const gp_Pnt globalPos = dialog.getPos();
-            stpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
-            stpnt.pntLbl->SetPosition(globalPos);
-            d_ptr->context->Redisplay(stpnt.pnt, Standard_False);
-            d_ptr->context->Redisplay(stpnt.pntLbl, Standard_False);
+            d_ptr->context->changeTaskPoint(index, dialog.getTaskPoint());
             d_ptr->viewer->Redraw();
         }
     }
@@ -805,20 +569,9 @@ void CMainViewport::slRemoveTaskPoint()
     assert(sender() != nullptr);
 
     const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
-    if (index < d_ptr->taskPoints.size())
+    if (index < d_ptr->context->getTaskPointCount())
     {
-        CMainViewportPrivate::STaskPoint &stpnt = d_ptr->taskPoints[index];
-        d_ptr->context->Remove(stpnt.pnt, Standard_False);
-        d_ptr->context->Remove(stpnt.pntLbl, Standard_False);
-        d_ptr->taskPoints.erase(d_ptr->taskPoints.cbegin() + index);
-        for(size_t i = 0; i < d_ptr->taskPoints.size(); ++i)
-        {
-            const QString txt = tr("  T%1 (%2)")
-                    .arg(i + 1)
-                    .arg(d_ptr->taskName(d_ptr->taskPoints[i].taskType));
-            d_ptr->taskPoints[i].pntLbl->SetText(TCollection_ExtendedString(txt.toLocal8Bit().constData(), Standard_True));
-            d_ptr->context->Redisplay(d_ptr->taskPoints[i].pntLbl, Standard_False);
-        }
+        d_ptr->context->removeTaskPoint(index);
         d_ptr->viewer->Redraw();
     }
 }

@@ -76,7 +76,7 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
         CStepLoader loader;
         const TopoDS_Shape mdl = loader.loadFromBinaryData(stepData.constData(),
                                                            static_cast <size_t> (stepData.size()));
-        ui->mainView->setMainModel(mdl);
+        ui->mainView->setPartModel(mdl);
     }
 
     //load gripModel
@@ -122,7 +122,7 @@ void MainWindow::slImport()
     {
         CAbstractModelLoader &loader = factory.loader(selectedFilter);
         const TopoDS_Shape shape = loader.load(fName.toStdString().c_str());
-        ui->mainView->setMainModel(shape);
+        ui->mainView->setPartModel(shape);
         if (!shape.IsNull())
             ui->mainView->fitInView();
         else

@@ -3,7 +3,9 @@
 
 #include <QDialog>
 
-class gp_Pnt;
+namespace GUI_TYPES {
+struct SCalibPoint;
+}
 
 namespace Ui {
 class CAddCalibPointDialog;
@@ -14,12 +16,11 @@ class CAddCalibPointDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit CAddCalibPointDialog(const gp_Pnt &pos, QWidget *parent);
+    explicit CAddCalibPointDialog(QWidget *parent, const GUI_TYPES::SCalibPoint &initData);
     ~CAddCalibPointDialog();
 
 public:
-    gp_Pnt getGlobalPos() const;
-    gp_Pnt getBotPos() const;
+    GUI_TYPES::SCalibPoint getCalibPoint() const;
 
 private:
     Ui::CAddCalibPointDialog *ui;

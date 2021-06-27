@@ -29,6 +29,7 @@ SOURCES += \
     Primitives/claservec.cpp \
     caspectwindow.cpp \
     cguisettingswidget.cpp \
+    cinteractivecontext.cpp \
     cmainviewport.cpp \
     csimplesettingsstorage.cpp \
     main.cpp \
@@ -60,6 +61,7 @@ HEADERS += \
     cabstractsettingsstorage.h \
     caspectwindow.h \
     cguisettingswidget.h \
+    cinteractivecontext.h \
     cmainviewport.h \
     csimplesettingsstorage.h \
     gui_types.h \

@@ -5,11 +5,13 @@
 
 #include "gui_types.h"
 
+class QMenu;
 class OpenGl_GraphicDriver;
 class CMainViewportPrivate;
 class Quantity_Color;
 class TopoDS_Shape;
 class SGuiSettings;
+class CInteractiveContext;
 
 class CMainViewport : public QWidget
 {
@@ -35,7 +37,7 @@ public:
     void setUserAction(const GUI_TYPES::TUsrAction usrAction);
     GUI_TYPES::TUsrAction getUsrAction() const;
 
-    void setMainModel(const TopoDS_Shape &shape);
+    void setPartModel(const TopoDS_Shape &shape);
     void setGripModel(const TopoDS_Shape &shape);
 
 protected:
@@ -47,6 +49,11 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) final;
     void mouseMoveEvent(QMouseEvent *event) final;
     void wheelEvent(QWheelEvent *event) final;
+
+private:
+    QString taskName(const GUI_TYPES::TBotTaskType taskType) const;
+    void fillCalibCntxtMenu(QMenu &menu);
+    void fillTaskAddCntxtMenu(QMenu &menu);
 
 private slots:
     void slAddCalibPoint();

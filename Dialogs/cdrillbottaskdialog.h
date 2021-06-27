@@ -3,7 +3,9 @@
 
 #include <QDialog>
 
-class gp_Pnt;
+namespace GUI_TYPES {
+struct STaskPoint;
+}
 
 namespace Ui {
 class CDrillBotTaskDialog;
@@ -14,11 +16,10 @@ class CDrillBotTaskDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit CDrillBotTaskDialog(QWidget *parent, const gp_Pnt pos);
+    explicit CDrillBotTaskDialog(QWidget *parent, const GUI_TYPES::STaskPoint &initData);
     ~CDrillBotTaskDialog();
 
-    gp_Pnt getPos() const;
-    gp_Pnt getAngles() const;
+    GUI_TYPES::STaskPoint getTaskPoint() const;
 
 private:
     Ui::CDrillBotTaskDialog *ui;
