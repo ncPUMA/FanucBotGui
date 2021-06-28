@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
 
 SUBDIRS += \
-    FanucBotGui
+    MainApp
 
-FanucBotGui.file = src/FanucBotGui.pro
+MainApp.file = src/MainApp.pro
