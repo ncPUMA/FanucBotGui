@@ -2,8 +2,7 @@
 #define IPOSITIONRECEIVER_HPP
 
 #include <utility>
-#include <gp_Vec.hxx>
-#include <gp_Quaternion.hxx>
+#include "position.hpp"
 
 /**
  * @brief The IPositionReceiver interface
@@ -19,7 +18,6 @@ public:
         POSITION_STATE_NOT_ATTACHED,
         POSITION_STATE_ATTACHED
     };
-    using position_t = std::pair<gp_Vec, gp_Quaternion>;
 
     virtual ~IPositionReceiver() = default;
 
@@ -28,7 +26,7 @@ public:
 };
 
 /**
- * @brief The IPositionNotifires interface
+ * @brief The IPositionNotifier interface
  *
  * Implementers of this interface
  * must notify about robot position using IPositionReceiver

@@ -3,7 +3,7 @@
 
 #include <utility>
 #include <vector>
-#include <future>
+#include <QFuture>
 #include <gp_Vec.hxx>
 #include <gp_Dir.hxx>
 
@@ -14,8 +14,7 @@ class IRobotMover
 {
 public:
     struct path_point_t {
-        gp_Vec t_robot;            // translation, robot coordinates
-        gp_Quaternion r_robot;     // rotation, robot coordinates
+        position_t pos;
         int timeout_ms = 0;        // stop in this point for ms
         std::string task_filename; // filename with task for externally called programs
     };
@@ -30,8 +29,10 @@ public:
 
     virtual ~IRobotMover() = default;
 
-    virtual std::future<MOVE_RESULT> moveToPosition(const path_point_t &position) = 0;
-    virtual std::future<MOVE_RESULT> moveAlongPath(const path_t &path) = 0;
+    virtual void setPartReferencer(IPartReferencer *part_referencer) = 0;
+
+    virtual QFuture<MOVE_RESULT> moveToPosition(const path_point_t &position) = 0;
+    virtual QFuture<MOVE_RESULT> moveAlongPath(const path_t &path) = 0;
 
     // stops move no matter what
     virtual void abortMove() = 0;

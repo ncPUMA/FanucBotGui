@@ -25,9 +25,10 @@ SOURCES += \
     ModelLoader/cobjloader.cpp \
     ModelLoader/csteploader.cpp \
     ModelLoader/cstlloader.cpp \
-    PartReference/partpointpairsreferencer.cpp \
+    PartReference/pointpairspartreferencer.cpp \
     Primitives/cbotcross.cpp \
     Primitives/claservec.cpp \
+    RobotMovers/emulatorlasermover.cpp \
     caspectwindow.cpp \
     cguisettingswidget.cpp \
     cinteractivecontext.cpp \
@@ -58,9 +59,10 @@ HEADERS += \
     ModelLoader/cobjloader.h \
     ModelLoader/csteploader.h \
     ModelLoader/cstlloader.h \
-    PartReference/partpointpairsreferencer.h \
+    PartReference/pointpairspartreferencer.h \
     Primitives/cbotcross.h \
     Primitives/claservec.h \
+    RobotMovers/emulatorlasermover.h \
     cabstractsettingsstorage.h \
     caspectwindow.h \
     cguisettingswidget.h \
@@ -73,6 +75,7 @@ HEADERS += \
     if/irobotmover.hpp \
     if/isceneprovider.hpp \
     RobotMovers/simplelasermover.h \
+    if/position.hpp \
     mainwindow.h \
     sguisettings.h
 
@@ -93,6 +96,8 @@ LIBS += -lTKernel -lTKMath -lTKService -lTKV3d -lTKOpenGl \
         -lTKXSBase -lTKShHealing -lTKHLR -lTKTopAlgo -lTKMesh -lTKPrim \
         -lTKCDF -lTKBool -lTKBO -lTKFillet -lTKOffset -lTKLCAF -lTKCAF -lTKVCAF \
                 -lTKBin -lTKXml -lTKRWMesh
+
+INCLUDEPATH += $$quote($$(EIGEN_INCLUDE_DIRS))
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

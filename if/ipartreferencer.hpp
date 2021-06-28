@@ -2,10 +2,9 @@
 #define IPARTREFERENCER_HPP
 
 #include <vector>
-#include <future>
-#include <gp_Vec.hxx>
-#include <gp_Quaternion.hxx>
+#include <QFuture>
 
+#include "position.hpp"
 #include "isceneprovider.hpp"
 
 /**
@@ -18,19 +17,13 @@
 class IPartReferencer
 {
 public:
-    struct position_t
-    {
-        gp_Vec t;           // translation
-        gp_Quaternion r;    // rotation
-    };
-
     virtual ~IPartReferencer() = default;
 
     /**
      * @brief referencePart
      * asynchronously referencePart with implementation-defined method
      */
-    virtual std::future<bool> referencePart() = 0;
+    virtual QFuture<bool> referencePart() = 0;
 
     virtual bool isReferenced() const = 0;
 
@@ -45,11 +38,11 @@ public:
 };
 
 /**
- * @brief The IPartReferencer interface
+ * @brief The IPointPairsPartReferencer interface
  *
  * References part with at least three points
  */
-class IPartPointPairsReferencer:
+class IPointPairsPartReferencer:
         virtual public IPartReferencer
 {
 public:
@@ -59,24 +52,23 @@ public:
         gp_Vec t_robot;  // translation, robot coordinates
     };
 
-    virtual ~IPartPointPairsReferencer() = default;
+    virtual ~IPointPairsPartReferencer() = default;
 
     virtual void setPointPairs(const std::vector<point_pair_t> &point_pairs) = 0;
 };
 
 /**
- * @brief The IPartReferencer interface
+ * @brief The IFixturePartReferencer interface
  *
- * References part with at least three points
  * reference SHAPE_PART according to it position to SHAPE_FIXTURE
  * SHAPE_PART and SHAPE_FIXTURE must be available via scene_provider
  */
-class IPartFixtureReferencer:
+class IFixturePartReferencer:
         virtual public ISceneObserver,
         virtual public IPartReferencer
 {
 public:
-    virtual ~IPartFixtureReferencer() = default;
+    virtual ~IFixturePartReferencer() = default;
 };
 
 #endif // IPARTREFERENCER_HPP
