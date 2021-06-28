@@ -30,6 +30,7 @@ SOURCES += \
     Primitives/claservec.cpp \
     caspectwindow.cpp \
     cguisettingswidget.cpp \
+    cinteractivecontext.cpp \
     cmainviewport.cpp \
     csimplesettingsstorage.cpp \
     RobotMovers/simplelasermover.cpp \
@@ -63,6 +64,7 @@ HEADERS += \
     cabstractsettingsstorage.h \
     caspectwindow.h \
     cguisettingswidget.h \
+    cinteractivecontext.h \
     cmainviewport.h \
     csimplesettingsstorage.h \
     gui_types.h \
@@ -106,6 +108,10 @@ DISTFILES += \
     Data/Icons/stop.png \
     Data/Lamps/green.png \
     Data/Lamps/red.png \
+    Data/Models/LDLSR30w.STEP \
+    Data/Models/MHZ2_16D_grip.stp \
+    Data/Models/WTTGA-001 - Configurable Table.stp \
+    Data/Models/WTTGA-001 - Configurable Table.stp \
     Data/Models/gripper_v1.step \
     Data/Models/plate.stp \
     Data/Models/turbine_blade.stp \

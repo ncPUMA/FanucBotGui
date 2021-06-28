@@ -14,8 +14,8 @@
         <file>Data/StyleSheets/style.qss</file>
     </qresource>
     <qresource prefix="/Models">
-        <file>Data/Models/gripper_v1.step</file>
         <file>Data/Models/turbine_blade.stp</file>
-        <file>Data/Models/MHZ2_16D_grip.stp</file>
+        <file>Data/Models/LDLSR30w.STEP</file>
+        <file>Data/Models/WTTGA-001 - Configurable Table.stp</file>
     </qresource>
 </RCC>

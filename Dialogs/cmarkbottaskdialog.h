@@ -3,7 +3,9 @@
 
 #include <QDialog>
 
-class gp_Pnt;
+namespace GUI_TYPES {
+struct STaskPoint;
+}
 
 namespace Ui {
 class CMarkBotTaskDialog;
@@ -14,11 +16,10 @@ class CMarkBotTaskDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit CMarkBotTaskDialog(QWidget *parent, const gp_Pnt pos);
+    explicit CMarkBotTaskDialog(QWidget *parent, const GUI_TYPES::STaskPoint &initData);
     ~CMarkBotTaskDialog();
 
-    gp_Pnt getPos() const;
-    gp_Pnt getAngles() const;
+    GUI_TYPES::STaskPoint getTaskPoint() const;
 
 private:
     Ui::CMarkBotTaskDialog *ui;

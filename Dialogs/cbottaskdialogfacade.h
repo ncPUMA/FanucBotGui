@@ -1,23 +1,23 @@
 #ifndef CBOTTASKDIALOGFACADE_H
 #define CBOTTASKDIALOGFACADE_H
 
-#include "../gui_types.h"
+namespace GUI_TYPES {
+struct STaskPoint;
+}
 
 class QDialog;
 class QWidget;
-class gp_Pnt;
 class CBotTaskDialogFacadePrivate;
 
 class CBotTaskDialogFacade
 {
 public:
-    CBotTaskDialogFacade(QWidget *parent, const GUI_TYPES::TBotTaskType taskType, const gp_Pnt &pos);
+    CBotTaskDialogFacade(QWidget *parent, const GUI_TYPES::STaskPoint &initData);
     ~CBotTaskDialogFacade();
 
     int exec();
 
-    gp_Pnt getPos() const;
-    gp_Pnt getAngles() const;
+    GUI_TYPES::STaskPoint getTaskPoint() const;
 
 private:
     CBotTaskDialogFacadePrivate * const d_ptr;
