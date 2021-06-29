@@ -92,7 +92,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
-    .gitignore \
+    ../.gitignore \
     Data/Icons/fps-counter.png \
     Data/Icons/open.png \
     Data/Icons/play.png \
@@ -108,8 +108,8 @@ DISTFILES += \
     Data/Models/plate.stp \
     Data/Models/turbine_blade.stp \
     Data/StyleSheets/style.qss \
-    LICENSE \
-    README.md
+    ../LICENSE \
+    ../README.md
 
 RESOURCES += \
     data.qrc
