@@ -73,8 +73,8 @@ position_t PointPairsPartReferencer::transformPartToRobot(const position_t &posi
     pos_src.SetRotation(position.r);
     pos_src.SetTranslationPart(position.t);
 
-    gp_Trsf pos_result = pos_src * transform_part_to_robot_;
-    return {pos_result.TranslationPart(), pos_result.GetRotation()};
+    gp_Trsf pos_result = transform_part_to_robot_ * pos_src;
+    return {pos_result.TranslationPart(), pos_result.GetRotation().Normalized()};
 }
 
 position_t PointPairsPartReferencer::transformRobotToPart(const position_t &position) const
@@ -83,6 +83,6 @@ position_t PointPairsPartReferencer::transformRobotToPart(const position_t &posi
     pos_src.SetRotation(position.r);
     pos_src.SetTranslationPart(position.t);
 
-    gp_Trsf pos_result = pos_src * transform_robot_to_part_;
-    return {pos_result.TranslationPart(), pos_result.GetRotation()};
+    gp_Trsf pos_result = transform_robot_to_part_ * pos_src;
+    return {pos_result.TranslationPart(), pos_result.GetRotation().Normalized()};
 }

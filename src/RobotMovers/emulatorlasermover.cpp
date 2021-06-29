@@ -4,6 +4,8 @@
 int TIMER_MSEC = 100;
 
 EmulatorLaserMover::EmulatorLaserMover(double linear_speed, double angular_speed):
+    aborted_(false),
+    moving_(false),
     linear_speed_(linear_speed),
     angular_speed_(angular_speed)
 {
@@ -15,10 +17,12 @@ EmulatorLaserMover::EmulatorLaserMover(double linear_speed, double angular_speed
 
 void EmulatorLaserMover::setPositionReceiver(IPositionReceiver *receiver)
 {
+    std::lock_guard<std::recursive_mutex> lock_guard(mutex_);
     position_receiver_ = receiver;
 }
 void EmulatorLaserMover::setPartReferencer(IPartReferencer *part_referencer)
 {
+    std::lock_guard<std::recursive_mutex> lock_guard(mutex_);
     part_referencer_ = part_referencer;
 }
 
@@ -29,43 +33,52 @@ QFuture<EmulatorLaserMover::MOVE_RESULT> EmulatorLaserMover::moveToPosition(cons
 
 QFuture<EmulatorLaserMover::MOVE_RESULT> EmulatorLaserMover::moveAlongPath(const path_t &path)
 {
-    return QtConcurrent::run(this, &EmulatorLaserMover::moveAlongPath, path);
+    return QtConcurrent::run(this, &EmulatorLaserMover::moveAlongPathAsync, path);
 }
 
 void EmulatorLaserMover::abortMove()
 {
     aborted_ = true;
+
 }
 
 bool EmulatorLaserMover::isMoving() const
 {
-    return cur_.t.IsEqual(goal_.t, gp::Resolution(), gp::Resolution()) && cur_.r.IsEqual(goal_.r);
+    return moving_;
+}
+
+bool EmulatorLaserMover::isGoalEqualCurrent() const
+{
+    return cur_.t.IsEqual(goal_.t, gp::Resolution(), gp::Resolution()) && ((cur_.r-goal_.r).Norm() < gp::Resolution());
 }
 
 void EmulatorLaserMover::updatePosition()
 {
+    std::lock_guard<std::recursive_mutex> lock_guard(mutex_);
+
     position_t diff = {goal_.t - cur_.t, goal_.r - cur_.r};
     if(linear_speed_ > 0.0)
     {
         double max_move = linear_speed_ * TIMER_MSEC / 1000.0;
 
-        goal_.t.SetX(std::max(-max_move, std::min(diff.t.X(), max_move)));
-        goal_.t.SetY(std::max(-max_move, std::min(diff.t.Y(), max_move)));
-        goal_.t.SetZ(std::max(-max_move, std::min(diff.t.Z(), max_move)));
+        diff.t.SetX(std::max(-max_move, std::min(diff.t.X(), max_move)));
+        diff.t.SetY(std::max(-max_move, std::min(diff.t.Y(), max_move)));
+        diff.t.SetZ(std::max(-max_move, std::min(diff.t.Z(), max_move)));
     }
 
     if(angular_speed_ > 0.0)
     {
         double max_move = angular_speed_*M_PI / 180 * TIMER_MSEC / 1000.0;
 
-        goal_.r.Set(std::max(-max_move, std::min(diff.r.X(), max_move)),
-                    std::max(-max_move, std::min(diff.r.Y(), max_move)),
-                    std::max(-max_move, std::min(diff.r.Z(), max_move)),
-                    std::max(-max_move, std::min(diff.r.W(), max_move)));
+        diff.r.Set(std::max(-max_move, std::min(diff.r.X(), max_move)),
+                   std::max(-max_move, std::min(diff.r.Y(), max_move)),
+                   std::max(-max_move, std::min(diff.r.Z(), max_move)),
+                   std::max(-max_move, std::min(diff.r.W(), max_move)));
     }
 
 
     cur_ = {cur_.t + diff.t, cur_.r + diff.r};
+    moving_ = (!isGoalEqualCurrent()) && (!aborted_);
 
     if(position_receiver_ != nullptr)
     {
@@ -81,11 +94,12 @@ void EmulatorLaserMover::updatePosition()
 
 EmulatorLaserMover::MOVE_RESULT EmulatorLaserMover::moveToPositionAsync(const path_point_t &position)
 {
-    aborted_ = false;
     if(part_referencer_ != nullptr)
         goal_ = part_referencer_->transformPartToRobot(position.pos);
     else
         goal_ = position.pos;
+    moving_ = !isGoalEqualCurrent();
+    aborted_ = false;
 
     while(isMoving())
     {

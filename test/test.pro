@@ -5,6 +5,7 @@ CONFIG += c++14 testcase no_testcase_installs
 HEADERS = catch2/catch.hpp
 
 SOURCES += \
+    test_emulator_laser_mover.cpp \
     test_main.cpp \
     test_point_pair_part_referencer.cpp
 

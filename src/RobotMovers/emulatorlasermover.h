@@ -1,6 +1,8 @@
 #ifndef EMULATORLASERMOVER_H
 #define EMULATORLASERMOVER_H
 
+#include <atomic>
+#include <mutex>
 #include <QTimer>
 #include "../if/ipositionreceiver.hpp"
 #include "../if/irobotmover.hpp"
@@ -11,7 +13,7 @@ class EmulatorLaserMover:
         public IRobotMover
 {
 public:
-    EmulatorLaserMover(double linear_speed = 1.0, double angular_speed = 15.0);
+    EmulatorLaserMover(double linear_speed = 1.0, double angular_speed = 90.0);
 
     void setPositionReceiver(IPositionReceiver *receiver) override;
     void setPartReferencer(IPartReferencer *part_referencer) override;
@@ -24,7 +26,10 @@ public:
     bool isMoving() const;
 
 private:
-    bool aborted_ = false;
+    bool isGoalEqualCurrent() const;
+
+    mutable std::recursive_mutex mutex_;
+    std::atomic_bool aborted_, moving_;
     position_t cur_, goal_;
     double linear_speed_ = 0.0, angular_speed_ = 0.0;
     QTimer position_notify_timer_;
