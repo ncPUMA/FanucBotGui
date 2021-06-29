@@ -1,9 +1,9 @@
 #ifndef SIMPLELASERMOVER_H
 #define SIMPLELASERMOVER_H
 
-#include "if/ipositionreceiver.hpp"
-#include "if/irobotmover.hpp"
-#include "if/ipartreferencer.hpp"
+#include "../if/ipositionreceiver.hpp"
+#include "../if/irobotmover.hpp"
+#include "../if/ipartreferencer.hpp"
 #include "../BotSocket/fanucsocket.h"
 
 class SimpleLaserMover:

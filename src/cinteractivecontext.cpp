@@ -226,6 +226,7 @@ private:
 
     void hideAllAdditionalObjects() {
         context->Erase(calibTrihedron, Standard_False);
+        context->Erase(ais_desk, Standard_False);
         for(auto scpnt : calibPoints) {
             context->Erase(scpnt.pnt, Standard_False);
             context->Erase(scpnt.pntLbl, Standard_False);
@@ -238,6 +239,9 @@ private:
 
     void showCalibObjects() {
         context->Display(calibTrihedron, Standard_False);
+        context->Deactivate(calibTrihedron);
+        context->Display(ais_desk, Standard_False);
+        context->Deactivate(ais_desk);
         for(auto scpnt : calibPoints) {
             context->Display(scpnt.pnt, Standard_False);
             context->Display(scpnt.pntLbl, Standard_False);

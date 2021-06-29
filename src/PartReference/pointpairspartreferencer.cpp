@@ -14,6 +14,11 @@ void PointPairsPartReferencer::setPointPairs(const std::vector<point_pair_t> &po
     point_pairs_ = point_pairs;
 }
 
+bool PointPairsPartReferencer::isReferenced() const
+{
+    return reference_ok_;
+}
+
 QFuture<bool> PointPairsPartReferencer::referencePart()
 {
     return QtConcurrent::run(this, &PointPairsPartReferencer::referencePartAsync);
@@ -23,6 +28,10 @@ bool PointPairsPartReferencer::referencePartAsync()
 {
     const bool with_scaling = false;
     const double max_error = 0.01;
+
+    transform_part_to_robot_ = gp_Trsf();
+    transform_robot_to_part_ = gp_Trsf();
+    reference_ok_ = false;
 
     Eigen::Matrix<Standard_Real, 3, Eigen::Dynamic> cloud_model (3, point_pairs_.size());
     Eigen::Matrix<Standard_Real, 3, Eigen::Dynamic> cloud_robot (3, point_pairs_.size());
@@ -53,6 +62,7 @@ bool PointPairsPartReferencer::referencePartAsync()
     transform_robot_to_part_.SetValues(robot2model(0,0), robot2model(0,1), robot2model(0,2), robot2model(0,3),
                                        robot2model(1,0), robot2model(1,1), robot2model(1,2), robot2model(1,3),
                                        robot2model(2,0), robot2model(2,1), robot2model(2,2), robot2model(2,3));
+    reference_ok_ = true;
 
     return true;
 }

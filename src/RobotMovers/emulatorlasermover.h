@@ -2,9 +2,9 @@
 #define EMULATORLASERMOVER_H
 
 #include <QTimer>
-#include "if/ipositionreceiver.hpp"
-#include "if/irobotmover.hpp"
-#include "if/ipartreferencer.hpp"
+#include "../if/ipositionreceiver.hpp"
+#include "../if/irobotmover.hpp"
+#include "../if/ipartreferencer.hpp"
 
 class EmulatorLaserMover:
         public IPositionNotifier,
