@@ -34,12 +34,21 @@ public:
     void fitInView();
     void setCoord(const GUI_TYPES::TCoordSystem type);
 
-    void setUserAction(const GUI_TYPES::TUsrAction usrAction);
-    GUI_TYPES::TUsrAction getUsrAction() const;
+    void setUserAction(const GUI_TYPES::EN_UserActions usrAction);
+    GUI_TYPES::EN_UserActions getUsrAction() const;
 
     void setPartModel(const TopoDS_Shape &shape);
     void setDeskModel(const TopoDS_Shape &shape);
+    void setLsrheadModel(const TopoDS_Shape &shape);
     void setGripModel(const TopoDS_Shape &shape);
+
+    const TopoDS_Shape& getPartShape() const;
+    const TopoDS_Shape& getDeskShape() const;
+    const TopoDS_Shape& getLsrheadShape() const;
+    const TopoDS_Shape& getGripShape() const;
+
+    void moveLsrhead(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle);
+    void moveGrip(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle);
 
 protected:
     QPaintEngine* paintEngine() const final;

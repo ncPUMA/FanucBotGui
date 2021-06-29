@@ -10,9 +10,7 @@ CONFIG += c++11
 
 SOURCES += \
     BotSocket/cabstractbotsocket.cpp \
-    BotSocket/cfanucbotsocket.cpp \
-    BotSocket/fanucsocket.cpp \
-    BotSocket/cbotsocketimitator.cpp \
+    BotSocket/cabstractui.cpp \
     Dialogs/caddcalibpointdialog.cpp \
     Dialogs/cbottaskdialogfacade.cpp \
     Dialogs/cdrillbottaskdialog.cpp \
@@ -38,12 +36,7 @@ SOURCES += \
 HEADERS += \
     BotSocket/bot_socket_types.h \
     BotSocket/cabstractbotsocket.h \
-    BotSocket/cfanucbotsocket.h \
-    BotSocket/fanuc_imitation_data.h \
-    BotSocket/fanucsocket.h \
-    BotSocket/cabstractbotsocketsettings.h \
     BotSocket/cabstractui.h \
-    BotSocket/cbotsocketimitator.h \
     Dialogs/caddcalibpointdialog.h \
     Dialogs/cbottaskdialogfacade.h \
     Dialogs/cdrillbottaskdialog.h \
@@ -102,6 +95,7 @@ DISTFILES += \
     Data/Lamps/red.png \
     Data/Models/LDLSR30w.STEP \
     Data/Models/MHZ2_16D_grip.stp \
+    Data/Models/Neje tool 30W Laser Module.stp \
     Data/Models/WTTGA-001 - Configurable Table.stp \
     Data/Models/WTTGA-001 - Configurable Table.stp \
     Data/Models/gripper_v1.step \

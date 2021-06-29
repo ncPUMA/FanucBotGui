@@ -158,6 +158,8 @@ class CMainViewportPrivate : public AIS_ViewController
                               guiSettings.deskRotationZ);
     }
 
+    gp_Trsf calcLsrheadTrsf() const { return gp_Trsf(); }
+
     gp_Trsf calcGripTrsf() const {
         return calc_transform(gp_Vec(guiSettings.gripTrX,
                                      guiSettings.gripTrY,
@@ -192,6 +194,12 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
+    void setLsrheadModel(const TopoDS_Shape &shape) {
+        context->setLsrheadModel(shape);
+        context->setLsrheadMdlTransform(calcLsrheadTrsf());
+        view->Redraw();
+    }
+
     void setGripModel(const TopoDS_Shape &shape) {
         context->setGripModel(shape);
         context->setGripMdlTransform(calcGripTrsf());
@@ -210,7 +218,7 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
-    void setUserAction(const GUI_TYPES::TUsrAction userAction) {
+    void setUserAction(const GUI_TYPES::EN_UserActions userAction) {
         usrAction = userAction;
         context->hideAllAdditionalObjects();
         switch(userAction) {
@@ -231,7 +239,7 @@ class CMainViewportPrivate : public AIS_ViewController
     SGuiSettings guiSettings;
     CInteractiveContext * const context;
 
-    GUI_TYPES::TUsrAction usrAction;
+    GUI_TYPES::EN_UserActions usrAction;
     QPoint rbPos;
 };
 
@@ -304,12 +312,12 @@ void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
     d_ptr->view->Redraw();
 }
 
-void CMainViewport::setUserAction(const GUI_TYPES::TUsrAction usrAction)
+void CMainViewport::setUserAction(const GUI_TYPES::EN_UserActions usrAction)
 {
     d_ptr->setUserAction(usrAction);
 }
 
-GUI_TYPES::TUsrAction CMainViewport::getUsrAction() const
+GUI_TYPES::EN_UserActions CMainViewport::getUsrAction() const
 {
     return d_ptr->usrAction;
 }
@@ -324,9 +332,44 @@ void CMainViewport::setDeskModel(const TopoDS_Shape &shape)
     d_ptr->setDeskModel(shape);
 }
 
+void CMainViewport::setLsrheadModel(const TopoDS_Shape &shape)
+{
+    d_ptr->setLsrheadModel(shape);
+}
+
 void CMainViewport::setGripModel(const TopoDS_Shape &shape)
 {
     d_ptr->setGripModel(shape);
+}
+
+const TopoDS_Shape& CMainViewport::getPartShape() const
+{
+    return d_ptr->context->getPartShape();
+}
+
+const TopoDS_Shape& CMainViewport::getDeskShape() const
+{
+    return d_ptr->context->getDeskShape();
+}
+
+const TopoDS_Shape& CMainViewport::getLsrheadShape() const
+{
+    return d_ptr->context->getLsrHeadShape();
+}
+
+const TopoDS_Shape& CMainViewport::getGripShape() const
+{
+    return d_ptr->context->getGripShape();
+}
+
+void CMainViewport::moveLsrhead(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle)
+{
+
+}
+
+void CMainViewport::moveGrip(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle)
+{
+
 }
 
 QPaintEngine *CMainViewport::paintEngine() const

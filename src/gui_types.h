@@ -28,7 +28,6 @@ enum EN_UserActions
     ENUA_CALIBRATION,
     ENUA_ADD_TASK
 };
-typedef int TUsrAction;
 
 enum EN_BotTaskTypes
 {
@@ -38,20 +37,23 @@ enum EN_BotTaskTypes
 };
 typedef int TBotTaskType;
 
+typedef double TDistance;
+typedef double TDegree;
+
 struct SVertex
 {
-    SVertex(const double X = 0., const double Y = 0, const double Z = 0) :
+    SVertex(const TDistance X = 0., const TDistance Y = 0, const TDistance Z = 0) :
         x(X), y(Y), z(Z) { }
 
-    double x, y, z;
+    TDistance x, y, z;
 };
 
 struct SRotationAngle
 {
-    SRotationAngle() :
-        x(0.), y(0.), z(0.) { }
+    SRotationAngle(const TDegree alpha = 0., const TDegree beta = 0, const TDegree gamma = 0) :
+        x(alpha), y(beta), z(gamma) { }
 
-    double x, y, z;
+    TDistance x, y, z;
 };
 
 struct SCalibPoint
