@@ -9,7 +9,7 @@ SOURCES += \
     test_main.cpp \
     test_point_pair_part_referencer.cpp
 
-#include(../src/opencascade.pri)
+include(../src/opencascade.pri)
 include(../src/if/if.pri)
 include(../src/PartReference/PartReference.pri)
 include(../src/RobotMovers/RobotMovers.pri)

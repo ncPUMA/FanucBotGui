@@ -26,7 +26,7 @@ QFuture<bool> PointPairsPartReferencer::referencePart()
 
 bool PointPairsPartReferencer::referencePartAsync()
 {
-    const bool with_scaling = false;
+    const bool with_scaling = true;
     const double max_error = 0.01;
 
     transform_part_to_robot_ = gp_Trsf();
