@@ -257,6 +257,17 @@ private:
         }
     }
 
+    Handle(AIS_InteractiveObject) curShape() const {
+        Handle(AIS_InteractiveObject) res = nullptr;
+        const Handle(SelectMgr_EntityOwner) detectedOwner = context->DetectedOwner();
+        if(!detectedOwner.IsNull()) {
+            Handle(SelectMgr_SelectableObject) selected = detectedOwner->Selectable();
+            if (!selected.IsNull())
+                res = Handle(AIS_InteractiveObject)::DownCast(selected);
+        }
+        return res;
+    }
+
     GUI_TYPES::SCalibPoint getCalibPoint(const size_t index) const {
         assert(index < calibPoints.size());
         const SCalibPoint &scpnt = calibPoints[index];
@@ -503,15 +514,12 @@ void CInteractiveContext::showTaskObjects()
 
 bool CInteractiveContext::isPartDetected() const
 {
-    Handle(AIS_InteractiveObject) curShape =
-            Handle(AIS_InteractiveObject)::DownCast(d_ptr->context->DetectedOwner()->Selectable());
-    return curShape == d_ptr->ais_part;
+    return d_ptr->curShape() == d_ptr->ais_part;
 }
 
 bool CInteractiveContext::isCalibPointDetected(size_t &index) const
 {
-    Handle(AIS_InteractiveObject) curShape =
-            Handle(AIS_InteractiveObject)::DownCast(d_ptr->context->DetectedOwner()->Selectable());
+    Handle(AIS_InteractiveObject) curShape = d_ptr->curShape();
     for (auto scpnt : d_ptr->calibPoints)
     {
         if (scpnt.pnt == curShape)
@@ -524,8 +532,7 @@ bool CInteractiveContext::isCalibPointDetected(size_t &index) const
 
 bool CInteractiveContext::isTaskPointDetected(size_t &index) const
 {
-    Handle(AIS_InteractiveObject) curShape =
-            Handle(AIS_InteractiveObject)::DownCast(d_ptr->context->DetectedOwner()->Selectable());
+    Handle(AIS_InteractiveObject) curShape = d_ptr->curShape();
     for (auto stpnt : d_ptr->taskPoints)
     {
         if (stpnt.pnt == curShape)
