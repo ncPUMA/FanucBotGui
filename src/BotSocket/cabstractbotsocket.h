@@ -20,11 +20,11 @@ protected:
     void socketStateChanged(const BotSocket::TBotState state);
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos);
     void gripPositionChanged(const BotSocket::SBotPosition &pos);
+    const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const;
 
     virtual void init(const GUI_TYPES::EN_UserActions curAction,
                       const std::map <BotSocket::EN_ShapeType, TopoDS_Shape> &shapes) = 0;
-    virtual void shapeTransformChaged(const BotSocket::EN_ShapeType shType,
-                                      const TopoDS_Shape &shape) = 0;
+    virtual void shapeTransformChaged(const BotSocket::EN_ShapeType shType) = 0;
     virtual void usrActionChanged(const GUI_TYPES::EN_UserActions action) = 0;
 
 

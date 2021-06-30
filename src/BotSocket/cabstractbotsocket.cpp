@@ -1,5 +1,7 @@
 #include "cabstractbotsocket.h"
 
+#include <TopoDS_Shape.hxx>
+
 #include "cabstractui.h"
 
 static class CEmptyUi : public CAbstractUi
@@ -10,6 +12,10 @@ protected:
     void socketStateChanged(const BotSocket::TBotState) final { }
     void laserHeadPositionChanged(const BotSocket::SBotPosition &) final { }
     void gripPositionChanged(const BotSocket::SBotPosition &) final { }
+    const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType) const final { return shape; }
+
+private:
+    TopoDS_Shape shape;
 
 } emptyUi;
 
@@ -39,4 +45,9 @@ void CAbstractBotSocket::laserHeadPositionChanged(const BotSocket::SBotPosition 
 void CAbstractBotSocket::gripPositionChanged(const BotSocket::SBotPosition &pos)
 {
     ui->gripPositionChanged(pos);
+}
+
+const TopoDS_Shape &CAbstractBotSocket::getShape(const BotSocket::EN_ShapeType shType) const
+{
+    return ui->getShape(shType);
 }

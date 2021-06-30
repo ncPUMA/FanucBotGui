@@ -88,14 +88,27 @@ protected:
 
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos) final {
         viewport->moveLsrhead(pos);
-        shapeTransformChaged(BotSocket::ENST_LSRHEAD, viewport->getLsrheadShape());
+        shapeTransformChaged(BotSocket::ENST_LSRHEAD);
     }
 
     void gripPositionChanged(const BotSocket::SBotPosition &pos) final {
         viewport->moveGrip(pos);
-        shapeTransformChaged(BotSocket::ENST_GRIP, viewport->getGripShape());
+        shapeTransformChaged(BotSocket::ENST_GRIP);
         if (viewport->getBotState() == BotSocket::ENBS_ATTACHED)
-            shapeTransformChaged(BotSocket::ENST_PART, viewport->getPartShape());
+            shapeTransformChaged(BotSocket::ENST_PART);
+    }
+
+    const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const {
+        using namespace BotSocket;
+        switch(shType) {
+            case ENST_DESK   : return viewport->getDeskShape();
+            case ENST_PART   : return viewport->getPartShape();
+            case ENST_LSRHEAD: return viewport->getLsrheadShape();
+            case ENST_GRIP   : return viewport->getGripShape();
+            default: break;
+        }
+        static const TopoDS_Shape sh;
+        return sh;
     }
 
 private:
@@ -229,7 +242,7 @@ void MainWindow::slImport()
         CAbstractModelLoader &loader = factory.loader(selectedFilter);
         const TopoDS_Shape shape = loader.load(fName.toStdString().c_str());
         ui->mainView->setPartModel(shape);
-        d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART, ui->mainView->getPartShape());
+        d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART);
         if (!shape.IsNull())
             ui->mainView->fitInView();
         else
@@ -295,10 +308,10 @@ void MainWindow::slCallibApply()
     settings.msaa = ui->mainView->getMSAA();
     d_ptr->settingsStorage->saveGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);
-    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_DESK   , ui->mainView->getDeskShape());
-    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_LSRHEAD, ui->mainView->getLsrheadShape());
-    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART   , ui->mainView->getPartShape());
-    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   , ui->mainView->getGripShape());
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_DESK   );
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_LSRHEAD);
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART   );
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   );
 }
 
 void MainWindow::configMenu()
