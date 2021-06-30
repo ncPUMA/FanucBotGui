@@ -42,16 +42,22 @@ void CGuiSettingsWidget::initFromGuiSettings(const GUI_TYPES::SGuiSettings &sett
     ui->dsbDeskRotateZ->setValue(settings.deskRotationZ);
     ui->dsbDeskScale->setValue  (settings.deskScale    );
     //The Laser Head
-    ui->dsbLHeadTrX->setValue    (settings.lheadTrX      );
-    ui->dsbLHeadTrY->setValue    (settings.lheadTrY      );
-    ui->dsbLHeadTrZ->setValue    (settings.lheadTrZ      );
-    ui->dsbLHeadCenterX->setValue(settings.lheadCenterX  );
-    ui->dsbLHeadCenterY->setValue(settings.lheadCenterY  );
-    ui->dsbLHeadCenterZ->setValue(settings.lheadCenterZ  );
-    ui->dsbLHeadRotateX->setValue(settings.lheadRotationX);
-    ui->dsbLHeadRotateY->setValue(settings.lheadRotationY);
-    ui->dsbLHeadRotateZ->setValue(settings.lheadRotationZ);
-    ui->dsbLHeadScale->setValue  (settings.lheadScale    );
+    ui->dsbLHeadTrX->setValue     (settings.lheadTrX       );
+    ui->dsbLHeadTrY->setValue     (settings.lheadTrY       );
+    ui->dsbLHeadTrZ->setValue     (settings.lheadTrZ       );
+    ui->dsbLHeadLaserTrX->setValue(settings.lheadLsrTrX    );
+    ui->dsbLHeadLaserTrY->setValue(settings.lheadLsrTrY    );
+    ui->dsbLHeadLaserTrZ->setValue(settings.lheadLsrTrZ    );
+    ui->dsbLHeadNormalX->setValue (settings.lheadLsrNormalX);
+    ui->dsbLHeadNormalY->setValue (settings.lheadLsrNormalY);
+    ui->dsbLHeadNormalZ->setValue (settings.lheadLsrNormalZ);
+    ui->dsbLHeadCenterX->setValue (settings.lheadCenterX   );
+    ui->dsbLHeadCenterY->setValue (settings.lheadCenterY   );
+    ui->dsbLHeadCenterZ->setValue (settings.lheadCenterZ   );
+    ui->dsbLHeadRotateX->setValue (settings.lheadRotationX );
+    ui->dsbLHeadRotateY->setValue (settings.lheadRotationY );
+    ui->dsbLHeadRotateZ->setValue (settings.lheadRotationZ );
+    ui->dsbLHeadScale->setValue   (settings.lheadScale     );
     //The Grip
     ui->dsbGripTrX->setValue    (settings.gripTrX      );
     ui->dsbGripTrY->setValue    (settings.gripTrY      );
@@ -63,6 +69,7 @@ void CGuiSettingsWidget::initFromGuiSettings(const GUI_TYPES::SGuiSettings &sett
     ui->dsbGripRotateY->setValue(settings.gripRotationY);
     ui->dsbGripRotateZ->setValue(settings.gripRotationZ);
     ui->dsbGripScale->setValue  (settings.gripScale    );
+    ui->checkGripVis->setChecked(settings.gripVis      );
 }
 
 GUI_TYPES::SGuiSettings CGuiSettingsWidget::getChangedSettings() const
@@ -91,16 +98,22 @@ GUI_TYPES::SGuiSettings CGuiSettingsWidget::getChangedSettings() const
     settings.deskRotationZ = ui->dsbDeskRotateZ->value();
     settings.deskScale     = ui->dsbDeskScale->value();
     //The Laser Head
-    settings.lheadTrX       = ui->dsbLHeadTrX->value();
-    settings.lheadTrY       = ui->dsbLHeadTrY->value();
-    settings.lheadTrZ       = ui->dsbLHeadTrZ->value();
-    settings.lheadCenterX   = ui->dsbLHeadCenterX->value();
-    settings.lheadCenterY   = ui->dsbLHeadCenterY->value();
-    settings.lheadCenterZ   = ui->dsbLHeadCenterZ->value();
-    settings.lheadRotationX = ui->dsbLHeadRotateX->value();
-    settings.lheadRotationY = ui->dsbLHeadRotateY->value();
-    settings.lheadRotationZ = ui->dsbLHeadRotateZ->value();
-    settings.lheadScale     = ui->dsbLHeadScale->value();
+    settings.lheadTrX        = ui->dsbLHeadTrX->value();
+    settings.lheadTrY        = ui->dsbLHeadTrY->value();
+    settings.lheadTrZ        = ui->dsbLHeadTrZ->value();
+    settings.lheadLsrTrX     = ui->dsbLHeadLaserTrX->value();
+    settings.lheadLsrTrY     = ui->dsbLHeadLaserTrY->value();
+    settings.lheadLsrTrZ     = ui->dsbLHeadLaserTrZ->value();
+    settings.lheadLsrNormalX = ui->dsbLHeadNormalX->value();
+    settings.lheadLsrNormalY = ui->dsbLHeadNormalY->value();
+    settings.lheadLsrNormalZ = ui->dsbLHeadNormalZ->value();
+    settings.lheadCenterX    = ui->dsbLHeadCenterX->value();
+    settings.lheadCenterY    = ui->dsbLHeadCenterY->value();
+    settings.lheadCenterZ    = ui->dsbLHeadCenterZ->value();
+    settings.lheadRotationX  = ui->dsbLHeadRotateX->value();
+    settings.lheadRotationY  = ui->dsbLHeadRotateY->value();
+    settings.lheadRotationZ  = ui->dsbLHeadRotateZ->value();
+    settings.lheadScale      = ui->dsbLHeadScale->value();
     //The Grip
     settings.gripTrX       = ui->dsbGripTrX->value();
     settings.gripTrY       = ui->dsbGripTrY->value();
@@ -112,5 +125,6 @@ GUI_TYPES::SGuiSettings CGuiSettingsWidget::getChangedSettings() const
     settings.gripRotationY = ui->dsbGripRotateY->value();
     settings.gripRotationZ = ui->dsbGripRotateZ->value();
     settings.gripScale     = ui->dsbGripScale->value();
+    settings.gripVis       = ui->checkGripVis->isChecked();
     return settings;
 }

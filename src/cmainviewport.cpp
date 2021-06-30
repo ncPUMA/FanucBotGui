@@ -200,8 +200,21 @@ class CMainViewportPrivate : public AIS_ViewController
         view->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
         context->setPartMdlTransform(calcPartTrsf());
         context->setDeskMdlTransform(calcDeskTrsf());
-        context->setLsrheadMdlTransform(calcLsrheadTrsf());
+        const gp_Trsf trsf = calcLsrheadTrsf();
+        context->setLsrheadMdlTransform(trsf);
+        const gp_Pnt start = gp_Pnt(guiSettings.lheadLsrTrX,
+                                    guiSettings.lheadLsrTrY,
+                                    guiSettings.lheadLsrTrZ);
+        gp_Dir dir;
+        if (guiSettings.lheadLsrNormalX != 0. ||
+                guiSettings.lheadLsrNormalY != 0. ||
+                guiSettings.lheadLsrNormalZ != 0.)
+            dir = gp_Dir(guiSettings.lheadLsrNormalX,
+                         guiSettings.lheadLsrNormalY,
+                         guiSettings.lheadLsrNormalZ);
+        context->setLaserLine(start, dir);
         context->setGripMdlTransform(calcGripTrsf());
+        context->setGripVisible(guiSettings.gripVis);
         view->Redraw();
     }
 
@@ -226,6 +239,7 @@ class CMainViewportPrivate : public AIS_ViewController
     void setGripModel(const TopoDS_Shape &shape) {
         context->setGripModel(shape);
         context->setGripMdlTransform(calcGripTrsf());
+        context->setGripVisible(guiSettings.gripVis);
         view->Redraw();
     }
 
@@ -247,7 +261,7 @@ class CMainViewportPrivate : public AIS_ViewController
         switch(state) {
             case GUI_TYPES::ENUS_CALIBRATION : context->showCalibObjects(); break;
             case GUI_TYPES::ENUS_TASK_EDITING: context->showTaskObjects();  break;
-            default: break;
+            default: context->resetCursorPosition(); break;
         }
         view->Redraw();
     }
@@ -527,7 +541,6 @@ void CMainViewport::mouseReleaseEvent(QMouseEvent *event)
                 break;
 
             case ENUS_TASK_EDITING:
-            case ENUS_BOT_WORKED:
                 fillTaskAddCntxtMenu(menu);
                 break;
 
@@ -552,8 +565,16 @@ void CMainViewport::mouseMoveEvent(QMouseEvent *event)
     }
 
     d_ptr->rbPos = QPoint();
-    d_ptr->context->updateCursorPosition();
-    d_ptr->view->Redraw();
+    switch(d_ptr->uiState)
+    {
+        case GUI_TYPES::ENUS_CALIBRATION:
+        case GUI_TYPES::ENUS_TASK_EDITING:
+            d_ptr->context->updateCursorPosition();
+            d_ptr->view->Redraw();
+            break;
+        default:
+            break;
+    }
 }
 
 void CMainViewport::wheelEvent(QWheelEvent *event)

@@ -23,7 +23,8 @@ public:
     CUiIface() :
         stateLamp(new QLabel()),
         attachLamp(new QLabel()),
-        viewport(nullptr) { }
+        viewport(nullptr),
+        jrnl(nullptr) { }
 
     void initToolBar(QToolBar *tBar) {
         iconSize = tBar->iconSize();
@@ -87,11 +88,31 @@ protected:
     }
 
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos) final {
+        const QString jrnlTxt = MainWindow::tr(" Lsr: %1\t-->\tx: %2 y: %3 z: %4 "
+                                               "α: %5 β: %6 γ: %7")
+                .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
+                .arg(pos.globalPos.x     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.y     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.z     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
+        jrnl->append(jrnlTxt);
         viewport->moveLsrhead(pos);
         shapeTransformChaged(BotSocket::ENST_LSRHEAD);
     }
 
     void gripPositionChanged(const BotSocket::SBotPosition &pos) final {
+        const QString jrnlTxt = MainWindow::tr("Grip: %1\t-->\tx: %2 y: %3 z: %4 "
+                                               "α: %5 β: %6 γ: %7")
+                .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
+                .arg(pos.globalPos.x     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.y     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.z     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
+        jrnl->append(jrnlTxt);
         viewport->moveGrip(pos);
         shapeTransformChaged(BotSocket::ENST_GRIP);
         if (viewport->getBotState() == BotSocket::ENBS_ATTACHED)
@@ -128,6 +149,7 @@ private:
     QLabel * const stateLamp, * const attachLamp;
 
     CMainViewport *viewport;
+    QTextEdit *jrnl;
 };
 
 
@@ -169,6 +191,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     d_ptr->uiIface.viewport = ui->mainView;
+    d_ptr->uiIface.jrnl = ui->teJrnl;
 
     configMenu();
     configToolBar();

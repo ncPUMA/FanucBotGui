@@ -44,6 +44,12 @@ struct SGuiSettings
         lheadRotationY(0.),
         lheadRotationZ(0.),
         lheadScale(1.),
+        lheadLsrTrX(0.),
+        lheadLsrTrY(0.),
+        lheadLsrTrZ(0.),
+        lheadLsrNormalX(0.),
+        lheadLsrNormalY(0.),
+        lheadLsrNormalZ(0.),
         //The Grip
         gripTrX(0.),
         gripTrY(0.),
@@ -54,7 +60,8 @@ struct SGuiSettings
         gripRotationX(0.),
         gripRotationY(0.),
         gripRotationZ(0.),
-        gripScale(1.)
+        gripScale(1.),
+        gripVis(true)
     { }
 
     //common
@@ -84,7 +91,7 @@ struct SGuiSettings
     TDegree deskRotationZ;
     TScale deskScale;
 
-    //The Grip
+    //The Laser Head
     TDistance lheadTrX;
     TDistance lheadTrY;
     TDistance lheadTrZ;
@@ -95,6 +102,12 @@ struct SGuiSettings
     TDegree lheadRotationY;
     TDegree lheadRotationZ;
     TScale lheadScale;
+    TDistance lheadLsrTrX;
+    TDistance lheadLsrTrY;
+    TDistance lheadLsrTrZ;
+    TDistance lheadLsrNormalX;
+    TDistance lheadLsrNormalY;
+    TDistance lheadLsrNormalZ;
 
     //The Grip
     TDistance gripTrX;
@@ -107,6 +120,7 @@ struct SGuiSettings
     TDegree gripRotationY;
     TDegree gripRotationZ;
     TScale gripScale;
+    bool gripVis;
 };
 
 }

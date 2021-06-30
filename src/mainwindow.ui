@@ -101,6 +101,9 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
+   <property name="windowTitle">
+    <string>Журнал</string>
+   </property>
    <attribute name="dockWidgetArea">
     <number>8</number>
    </attribute>

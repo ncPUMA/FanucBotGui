@@ -14,6 +14,7 @@ class AIS_InteractiveObject;
 class TopoDS_Shape;
 class gp_Trsf;
 class gp_Pnt;
+class gp_Dir;
 
 class CInteractiveContext
 {
@@ -29,7 +30,10 @@ public:
     void setShading(const bool enabled);
 
     void updateCursorPosition();
+    void resetCursorPosition();
     gp_Pnt lastCursorPosition() const;
+
+    void setLaserLine(const gp_Pnt &pnt, const gp_Dir &dir);
 
     void setPartModel(const TopoDS_Shape &shape);
     void setPartMdlTransform(const gp_Trsf &trsf);
@@ -48,6 +52,8 @@ public:
     void hideAllAdditionalObjects();
     void showCalibObjects();
     void showTaskObjects();
+
+    void setGripVisible(const bool enabled);
 
     bool isPartDetected() const;
     bool isCalibPointDetected(size_t &index) const;
