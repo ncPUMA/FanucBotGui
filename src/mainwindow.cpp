@@ -295,6 +295,10 @@ void MainWindow::slCallibApply()
     settings.msaa = ui->mainView->getMSAA();
     d_ptr->settingsStorage->saveGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_DESK   , ui->mainView->getDeskShape());
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_LSRHEAD, ui->mainView->getLsrheadShape());
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART   , ui->mainView->getPartShape());
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   , ui->mainView->getGripShape());
 }
 
 void MainWindow::configMenu()

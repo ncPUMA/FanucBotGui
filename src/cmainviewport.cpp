@@ -200,6 +200,7 @@ class CMainViewportPrivate : public AIS_ViewController
         view->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
         context->setPartMdlTransform(calcPartTrsf());
         context->setDeskMdlTransform(calcDeskTrsf());
+        context->setLsrheadMdlTransform(calcLsrheadTrsf());
         context->setGripMdlTransform(calcGripTrsf());
         view->Redraw();
     }
