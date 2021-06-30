@@ -10,7 +10,7 @@ public:
 protected:
     void init(const GUI_TYPES::EN_UserActions,
               const std::map <BotSocket::EN_ShapeType, TopoDS_Shape> &) final { }
-    void shapeTransformChaged(const BotSocket::EN_ShapeType) final { }
+    void shapeTransformChanged(const BotSocket::EN_ShapeType) final { }
     void usrActionChanged(const GUI_TYPES::EN_UserActions) final { }
 } emptySocket;
 
@@ -51,7 +51,7 @@ void CAbstractUi::init(const GUI_TYPES::EN_UserActions curAction,
 
 void CAbstractUi::shapeTransformChaged(const BotSocket::EN_ShapeType shType)
 {
-    d_ptr->bot->shapeTransformChaged(shType);
+    d_ptr->bot->shapeTransformChanged(shType);
 }
 
 void CAbstractUi::usrActionChanged(const GUI_TYPES::EN_UserActions action)

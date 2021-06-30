@@ -2,7 +2,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++14
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -11,6 +11,7 @@ CONFIG += c++11
 SOURCES += \
     BotSocket/cabstractbotsocket.cpp \
     BotSocket/cabstractui.cpp \
+    BotSocket/cbotsocketemulator.cpp \
     Dialogs/caddcalibpointdialog.cpp \
     Dialogs/cbottaskdialogfacade.cpp \
     Dialogs/cdrillbottaskdialog.cpp \
@@ -37,6 +38,7 @@ HEADERS += \
     BotSocket/bot_socket_types.h \
     BotSocket/cabstractbotsocket.h \
     BotSocket/cabstractui.h \
+    BotSocket/cbotsocketemulator.h \
     Dialogs/caddcalibpointdialog.h \
     Dialogs/cbottaskdialogfacade.h \
     Dialogs/cdrillbottaskdialog.h \

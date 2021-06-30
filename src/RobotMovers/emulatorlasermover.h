@@ -14,6 +14,7 @@ class EmulatorLaserMover:
 {
 public:
     EmulatorLaserMover(double linear_speed = 1.0, double angular_speed = 90.0);
+    EmulatorLaserMover(IPositionReceiver *receiver, IPartReferencer *part_referencer, double linear_speed = 1.0, double angular_speed = 90.0);
 
     void setPositionReceiver(IPositionReceiver *receiver) override;
     void setPartReferencer(IPartReferencer *part_referencer) override;
@@ -23,7 +24,7 @@ public:
 
     void abortMove() override;
 
-    bool isMoving() const;
+    bool isMoving() const override;
 
 private:
     bool isGoalEqualCurrent() const;

@@ -15,6 +15,13 @@ EmulatorLaserMover::EmulatorLaserMover(double linear_speed, double angular_speed
     position_notify_timer_.start(TIMER_MSEC);
 }
 
+EmulatorLaserMover::EmulatorLaserMover(IPositionReceiver *receiver, IPartReferencer *part_referencer, double linear_speed, double angular_speed):
+    EmulatorLaserMover(linear_speed, angular_speed)
+{
+    setPositionReceiver(receiver);
+    setPartReferencer(part_referencer);
+}
+
 void EmulatorLaserMover::setPositionReceiver(IPositionReceiver *receiver)
 {
     std::lock_guard<std::recursive_mutex> lock_guard(mutex_);
@@ -39,7 +46,6 @@ QFuture<EmulatorLaserMover::MOVE_RESULT> EmulatorLaserMover::moveAlongPath(const
 void EmulatorLaserMover::abortMove()
 {
     aborted_ = true;
-
 }
 
 bool EmulatorLaserMover::isMoving() const

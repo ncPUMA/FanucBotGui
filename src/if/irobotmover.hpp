@@ -15,8 +15,8 @@ class IRobotMover
 public:
     struct path_point_t {
         position_t pos;
-        int timeout_ms = 0;        // stop in this point for ms
-        std::string task_filename; // filename with task for externally called programs
+        int timeout_ms = 0;        // stop in this point for ms, optional
+        std::string task_filename; // filename with task for externally called programs, optional
     };
     typedef std::vector<path_point_t> path_t;
 
@@ -34,6 +34,7 @@ public:
     virtual QFuture<MOVE_RESULT> moveToPosition(const path_point_t &position) = 0;
     virtual QFuture<MOVE_RESULT> moveAlongPath(const path_t &path) = 0;
 
+    virtual bool isMoving() const = 0;
     // stops move no matter what
     virtual void abortMove() = 0;
 };
