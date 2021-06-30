@@ -42,6 +42,10 @@ private slots:
     //callib
     void slCallibApply();
 
+    //start/stop
+    void slStart();
+    void slStop();
+
 private:
     void configMenu();
     void configToolBar();

@@ -1,8 +1,6 @@
 #ifndef GUI_TYPES_H
 #define GUI_TYPES_H
 
-#include <map>
-
 namespace GUI_TYPES
 {
 
@@ -22,11 +20,11 @@ enum EN_CoordSystems
 };
 typedef int TCoordSystem;
 
-enum EN_UserActions
+enum EN_UiStates
 {
-    ENUA_NO,
-    ENUA_CALIBRATION,
-    ENUA_ADD_TASK
+    ENUS_CALIBRATION,
+    ENUS_TASK_EDITING,
+    ENUS_BOT_WORKED
 };
 
 enum EN_BotTaskTypes
@@ -73,12 +71,12 @@ struct STaskPoint
     SRotationAngle angle;
 };
 
-template <typename Key, typename Value>
-inline static Value extract_map_value(const std::map <Key, Value> &map,
+template <typename Key, typename Value, typename Map>
+inline static Value extract_map_value(const Map &map,
                                       const Key key,
                                       const Value defaultVl = Value()) {
     Value res = defaultVl;
-    const typename std::map<Key, Value>::const_iterator it = map.find(key);
+    const typename Map::const_iterator it = map.find(key);
     if (it != map.cend())
         res = it->second;
     return res;

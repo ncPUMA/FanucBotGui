@@ -49,7 +49,7 @@ class CMainViewportPrivate : public AIS_ViewController
     CMainViewportPrivate(CMainViewport * const qptr) :
         q_ptr(qptr),
         context(new CInteractiveContext()),
-        usrAction(GUI_TYPES::ENUA_NO),
+        uiState(GUI_TYPES::ENUS_TASK_EDITING),
         botState(BotSocket::ENBS_FALL) {
         myMouseGestureMap.Clear();
         myMouseGestureMap.Bind(Aspect_VKeyMouse_LeftButton, AIS_MouseGesture_Pan);
@@ -241,12 +241,12 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
-    void setUserAction(const GUI_TYPES::EN_UserActions userAction) {
-        usrAction = userAction;
+    void setUiState(const GUI_TYPES::EN_UiStates state) {
+        uiState = state;
         context->hideAllAdditionalObjects();
-        switch(userAction) {
-            case GUI_TYPES::ENUA_CALIBRATION: context->showCalibObjects(); break;
-            case GUI_TYPES::ENUA_ADD_TASK   : context->showTaskObjects();  break;
+        switch(state) {
+            case GUI_TYPES::ENUS_CALIBRATION : context->showCalibObjects(); break;
+            case GUI_TYPES::ENUS_TASK_EDITING: context->showTaskObjects();  break;
             default: break;
         }
         view->Redraw();
@@ -278,7 +278,7 @@ class CMainViewportPrivate : public AIS_ViewController
     GUI_TYPES::SGuiSettings guiSettings;
     CInteractiveContext * const context;
 
-    GUI_TYPES::EN_UserActions usrAction;
+    GUI_TYPES::EN_UiStates uiState;
     QPoint rbPos;
 
     BotSocket::EN_BotState botState;
@@ -354,14 +354,14 @@ void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
     d_ptr->view->Redraw();
 }
 
-void CMainViewport::setUserAction(const GUI_TYPES::EN_UserActions usrAction)
+void CMainViewport::setUiState(const GUI_TYPES::EN_UiStates state)
 {
-    d_ptr->setUserAction(usrAction);
+    d_ptr->setUiState(state);
 }
 
-GUI_TYPES::EN_UserActions CMainViewport::getUsrAction() const
+GUI_TYPES::EN_UiStates CMainViewport::getUiState() const
 {
-    return d_ptr->usrAction;
+    return d_ptr->uiState;
 }
 
 void CMainViewport::setPartModel(const TopoDS_Shape &shape)
@@ -422,6 +422,24 @@ void CMainViewport::moveLsrhead(const BotSocket::SBotPosition &pos)
 void CMainViewport::moveGrip(const BotSocket::SBotPosition &pos)
 {
     d_ptr->moveGrip(pos);
+}
+
+std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
+{
+    std::vector <GUI_TYPES::SCalibPoint> res;
+    const size_t count = d_ptr->context->getCalibPointCount();
+    for(size_t i = 0; i < count; ++i)
+        res.push_back(d_ptr->context->getCalibPoint(i));
+    return res;
+}
+
+std::vector<GUI_TYPES::STaskPoint> CMainViewport::getTaskPoints() const
+{
+    std::vector <GUI_TYPES::STaskPoint> res;
+    const size_t count = d_ptr->context->getTaskPointCount();
+    for(size_t i = 0; i < count; ++i)
+        res.push_back(d_ptr->context->getTaskPoint(i));
+    return res;
 }
 
 QPaintEngine *CMainViewport::paintEngine() const
@@ -500,15 +518,16 @@ void CMainViewport::mouseReleaseEvent(QMouseEvent *event)
         d_ptr->rbPos = QPoint();
 
         QMenu menu;
-        switch(d_ptr->usrAction)
+        switch(d_ptr->uiState)
         {
             using namespace GUI_TYPES;
 
-            case ENUA_CALIBRATION:
+            case ENUS_CALIBRATION:
                 fillCalibCntxtMenu(menu);
                 break;
 
-            case ENUA_ADD_TASK:
+            case ENUS_TASK_EDITING:
+            case ENUS_BOT_WORKED:
                 fillTaskAddCntxtMenu(menu);
                 break;
 

@@ -37,8 +37,8 @@ public:
     void fitInView();
     void setCoord(const GUI_TYPES::TCoordSystem type);
 
-    void setUserAction(const GUI_TYPES::EN_UserActions usrAction);
-    GUI_TYPES::EN_UserActions getUsrAction() const;
+    void setUiState(const GUI_TYPES::EN_UiStates state);
+    GUI_TYPES::EN_UiStates getUiState() const;
 
     void setPartModel(const TopoDS_Shape &shape);
     void setDeskModel(const TopoDS_Shape &shape);
@@ -54,6 +54,9 @@ public:
     BotSocket::EN_BotState getBotState() const;
     void moveLsrhead(const BotSocket::SBotPosition &pos);
     void moveGrip(const BotSocket::SBotPosition &pos);
+
+    std::vector <GUI_TYPES::SCalibPoint> getCallibrationPoints() const;
+    std::vector <GUI_TYPES::STaskPoint>  getTaskPoints() const;
 
 protected:
     QPaintEngine* paintEngine() const final;

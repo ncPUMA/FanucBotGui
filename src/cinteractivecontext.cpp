@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cassert>
 #include <sstream>
+#include <map>
 
 #include <AIS_InteractiveContext.hxx>
 
