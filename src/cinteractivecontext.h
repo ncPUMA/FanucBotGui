@@ -35,8 +35,15 @@ public:
     void setPartMdlTransform(const gp_Trsf &trsf);
     void setDeskModel(const TopoDS_Shape &shape);
     void setDeskMdlTransform(const gp_Trsf &trsf);
+    void setLsrheadModel(const TopoDS_Shape &shape);
+    void setLsrheadMdlTransform(const gp_Trsf &trsf);
     void setGripModel(const TopoDS_Shape &shape);
     void setGripMdlTransform(const gp_Trsf &trsf);
+
+    const TopoDS_Shape& getPartShape() const;
+    const TopoDS_Shape& getDeskShape() const;
+    const TopoDS_Shape& getLsrHeadShape() const;
+    const TopoDS_Shape& getGripShape() const;
 
     void hideAllAdditionalObjects();
     void showCalibObjects();

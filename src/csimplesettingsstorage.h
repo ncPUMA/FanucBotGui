@@ -13,8 +13,8 @@ public:
 
     void setSettingsFName(const char *fname);
 
-    SGuiSettings loadGuiSettings();
-    void saveGuiSettings(const SGuiSettings &settings);
+    GUI_TYPES::SGuiSettings loadGuiSettings();
+    void saveGuiSettings(const GUI_TYPES::SGuiSettings &settings);
 
 private:
     CSimpleSettingsStoragePrivate * const d_ptr;

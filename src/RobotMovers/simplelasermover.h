@@ -4,7 +4,7 @@
 #include "../if/ipositionreceiver.hpp"
 #include "../if/irobotmover.hpp"
 #include "../if/ipartreferencer.hpp"
-#include "../BotSocket/fanucsocket.h"
+#include "fanucsocket.h"
 
 class SimpleLaserMover:
         public IPositionNotifier,

@@ -3,15 +3,18 @@
 
 #include <QWidget>
 
-#include "gui_types.h"
+#include "BotSocket/bot_socket_types.h"
 
 class QMenu;
 class OpenGl_GraphicDriver;
 class CMainViewportPrivate;
 class Quantity_Color;
 class TopoDS_Shape;
-class SGuiSettings;
 class CInteractiveContext;
+
+namespace GUI_TYPES {
+class SGuiSettings;
+}
 
 class CMainViewport : public QWidget
 {
@@ -24,8 +27,8 @@ public:
     ~CMainViewport();
 
     void init(OpenGl_GraphicDriver &driver);
-    void setGuiSettings(const SGuiSettings &settings);
-    SGuiSettings getGuiSettings() const;
+    void setGuiSettings(const GUI_TYPES::SGuiSettings &settings);
+    GUI_TYPES::SGuiSettings getGuiSettings() const;
 
     void setMSAA(const GUI_TYPES::TMSAA msaa);
     GUI_TYPES::TMSAA getMSAA() const;
@@ -34,12 +37,23 @@ public:
     void fitInView();
     void setCoord(const GUI_TYPES::TCoordSystem type);
 
-    void setUserAction(const GUI_TYPES::TUsrAction usrAction);
-    GUI_TYPES::TUsrAction getUsrAction() const;
+    void setUserAction(const GUI_TYPES::EN_UserActions usrAction);
+    GUI_TYPES::EN_UserActions getUsrAction() const;
 
     void setPartModel(const TopoDS_Shape &shape);
     void setDeskModel(const TopoDS_Shape &shape);
+    void setLsrheadModel(const TopoDS_Shape &shape);
     void setGripModel(const TopoDS_Shape &shape);
+
+    const TopoDS_Shape& getPartShape() const;
+    const TopoDS_Shape& getDeskShape() const;
+    const TopoDS_Shape& getLsrheadShape() const;
+    const TopoDS_Shape& getGripShape() const;
+
+    void setBotState(const BotSocket::EN_BotState state);
+    BotSocket::EN_BotState getBotState() const;
+    void moveLsrhead(const BotSocket::SBotPosition &pos);
+    void moveGrip(const BotSocket::SBotPosition &pos);
 
 protected:
     QPaintEngine* paintEngine() const final;

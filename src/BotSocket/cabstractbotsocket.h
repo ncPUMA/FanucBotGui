@@ -3,55 +3,37 @@
 
 #include "bot_socket_types.h"
 
-#include <cstdint>
-
-class CAbstractBotSocketPrivate;
 class CAbstractUi;
-class CAbstractBotSocketSettings;
+
+class TopoDS_Shape;
 
 class CAbstractBotSocket
 {
+    friend class CAbstractUi;
+
 public:
     virtual ~CAbstractBotSocket();
-
-    uint32_t getLocalIpV4() const;
-    uint16_t getLocalUdpPort() const;
-    uint32_t getRemoteBotIpV4() const;
-    uint16_t getRemoteBotUdpPort() const;
-
-    void setSettings(CAbstractBotSocketSettings &settings);
-    void setUi(CAbstractUi &gui);
-
-    BotSocket::TSocketError start();
-    void stop();
-    bool isStarted() const;
-
-    BotSocket::TSocketState state() const;
 
 protected:
     CAbstractBotSocket();
 
-    virtual void settingsChanged() { }
+    void socketStateChanged(const BotSocket::TBotState state);
+    void laserHeadPositionChanged(const BotSocket::SBotPosition &pos);
+    void gripPositionChanged(const BotSocket::SBotPosition &pos);
+    const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const;
 
-    virtual BotSocket::TSocketError startSocket() = 0;
-    virtual void stopSocket() = 0;
+    virtual void init(const GUI_TYPES::EN_UserActions curAction,
+                      const std::map <BotSocket::EN_ShapeType, TopoDS_Shape> &shapes) = 0;
+    virtual void shapeTransformChaged(const BotSocket::EN_ShapeType shType) = 0;
+    virtual void usrActionChanged(const GUI_TYPES::EN_UserActions action) = 0;
 
-    virtual BotSocket::TSocketState socketState() const = 0;
-
-    void transformModel(const BotSocket::TDistance trX,
-                        const BotSocket::TDistance trY,
-                        const BotSocket::TDistance trZ,
-                        const BotSocket::TDegree rX,
-                        const BotSocket::TDegree rY,
-                        const BotSocket::TDegree rZ);
-    void stateChanged(const BotSocket::TSocketState state);
 
 private:
     CAbstractBotSocket(const CAbstractBotSocket &) = delete;
     CAbstractBotSocket& operator=(const CAbstractBotSocket &) = delete;
 
 private:
-    CAbstractBotSocketPrivate * const d_ptr;
+    CAbstractUi *ui;
 };
 
 #endif // CABSTRACTBOTSOCKET_H

@@ -17,7 +17,7 @@ CGuiSettingsWidget::~CGuiSettingsWidget()
     delete ui;
 }
 
-void CGuiSettingsWidget::initFromGuiSettings(const SGuiSettings &settings)
+void CGuiSettingsWidget::initFromGuiSettings(const GUI_TYPES::SGuiSettings &settings)
 {
     //The Part
     ui->dsbPartTrX->setValue    (settings.partTrX      );
@@ -41,6 +41,17 @@ void CGuiSettingsWidget::initFromGuiSettings(const SGuiSettings &settings)
     ui->dsbDeskRotateY->setValue(settings.deskRotationY);
     ui->dsbDeskRotateZ->setValue(settings.deskRotationZ);
     ui->dsbDeskScale->setValue  (settings.deskScale    );
+    //The Laser Head
+    ui->dsbLHeadTrX->setValue    (settings.lheadTrX      );
+    ui->dsbLHeadTrY->setValue    (settings.lheadTrY      );
+    ui->dsbLHeadTrZ->setValue    (settings.lheadTrZ      );
+    ui->dsbLHeadCenterX->setValue(settings.lheadCenterX  );
+    ui->dsbLHeadCenterY->setValue(settings.lheadCenterY  );
+    ui->dsbLHeadCenterZ->setValue(settings.lheadCenterZ  );
+    ui->dsbLHeadRotateX->setValue(settings.lheadRotationX);
+    ui->dsbLHeadRotateY->setValue(settings.lheadRotationY);
+    ui->dsbLHeadRotateZ->setValue(settings.lheadRotationZ);
+    ui->dsbLHeadScale->setValue  (settings.lheadScale    );
     //The Grip
     ui->dsbGripTrX->setValue    (settings.gripTrX      );
     ui->dsbGripTrY->setValue    (settings.gripTrY      );
@@ -54,9 +65,9 @@ void CGuiSettingsWidget::initFromGuiSettings(const SGuiSettings &settings)
     ui->dsbGripScale->setValue  (settings.gripScale    );
 }
 
-SGuiSettings CGuiSettingsWidget::getChangedSettings() const
+GUI_TYPES::SGuiSettings CGuiSettingsWidget::getChangedSettings() const
 {
-    SGuiSettings settings;
+    GUI_TYPES::SGuiSettings settings;
     //The Part
     settings.partTrX       = ui->dsbPartTrX->value();
     settings.partTrY       = ui->dsbPartTrY->value();
@@ -79,6 +90,17 @@ SGuiSettings CGuiSettingsWidget::getChangedSettings() const
     settings.deskRotationY = ui->dsbDeskRotateY->value();
     settings.deskRotationZ = ui->dsbDeskRotateZ->value();
     settings.deskScale     = ui->dsbDeskScale->value();
+    //The Laser Head
+    settings.lheadTrX       = ui->dsbLHeadTrX->value();
+    settings.lheadTrY       = ui->dsbLHeadTrY->value();
+    settings.lheadTrZ       = ui->dsbLHeadTrZ->value();
+    settings.lheadCenterX   = ui->dsbLHeadCenterX->value();
+    settings.lheadCenterY   = ui->dsbLHeadCenterY->value();
+    settings.lheadCenterZ   = ui->dsbLHeadCenterZ->value();
+    settings.lheadRotationX = ui->dsbLHeadRotateX->value();
+    settings.lheadRotationY = ui->dsbLHeadRotateY->value();
+    settings.lheadRotationZ = ui->dsbLHeadRotateZ->value();
+    settings.lheadScale     = ui->dsbLHeadScale->value();
     //The Grip
     settings.gripTrX       = ui->dsbGripTrX->value();
     settings.gripTrY       = ui->dsbGripTrY->value();

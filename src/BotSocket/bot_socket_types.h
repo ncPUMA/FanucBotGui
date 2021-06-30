@@ -1,25 +1,47 @@
 #ifndef BOT_SOCKET_TYPES_H
 #define BOT_SOCKET_TYPES_H
 
+#include "../gui_types.h"
+
 namespace BotSocket
 {
 
-typedef double TDistance;
-typedef double TDegree;
-
-enum EN_SocketErrors
+enum EN_BotState
 {
-    ENSE_NO = 0
+    ENBS_FALL,
+    ENBS_NOT_ATTACHED,
+    ENBS_ATTACHED
 };
-typedef int TSocketError;
+typedef int TBotState;
 
-enum EN_SocketState
+typedef GUI_TYPES::TDistance      TDistance;
+typedef GUI_TYPES::TDegree        TDegree;
+typedef GUI_TYPES::SVertex        SPosition;
+typedef GUI_TYPES::SRotationAngle SRotationAngle;
+
+struct SBotPosition
 {
-    ENSS_FALL,
-    ENSS_NOT_ATTACHED,
-    ENSS_ATTACHED
+    SBotPosition() { }
+    SBotPosition(const TDistance X,
+                 const TDistance Y,
+                 const TDistance Z,
+                 const TDegree alpha,
+                 const TDegree beta,
+                 const TDegree gamma) :
+        globalPos(X, Y, Z),
+        globalRotation(alpha, beta, gamma) { }
+
+    SPosition        globalPos;
+    SRotationAngle   globalRotation;
 };
-typedef int TSocketState;
+
+enum EN_ShapeType
+{
+    ENST_DESK,
+    ENST_PART,
+    ENST_LSRHEAD,
+    ENST_GRIP
+};
 
 }
 

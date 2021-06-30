@@ -105,6 +105,8 @@ private:
         context->Redisplay(ais_part, Standard_False);
         context->SetDisplayMode(ais_desk, mode, Standard_False);
         context->Redisplay(ais_desk, Standard_False);
+        context->SetDisplayMode(ais_lsrhead, mode, Standard_False);
+        context->Redisplay(ais_lsrhead, Standard_False);
         context->SetDisplayMode(ais_grip, mode, Standard_False);
         context->Redisplay(ais_grip, Standard_False);
     }
@@ -196,6 +198,34 @@ private:
         }
     }
 
+    void setLsrheadModel(const TopoDS_Shape &shape) {
+        if (!ais_lsrhead.IsNull())
+            context->Remove(ais_lsrhead, Standard_False);
+        ais_lsrhead = new AIS_Shape(shape);
+
+        Handle(Prs3d_Drawer) drawer = new Prs3d_Drawer();
+        Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
+        aShAspect->SetColor(Quantity_Color(Quantity_NOC_STEELBLUE3));
+        drawer->SetShadingAspect(aShAspect);
+        context->SetLocalAttributes(ais_lsrhead, drawer, Standard_False);
+
+        Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
+        lAspect->SetColor(FACE_CLR);
+        drawer->SetFaceBoundaryAspect(lAspect);
+        drawer->SetFaceBoundaryDraw(Standard_True);
+
+        context->SetDisplayMode(ais_lsrhead, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
+        context->Display(ais_lsrhead, Standard_False);
+        context->Deactivate(ais_lsrhead);
+    }
+
+    void setLsrheadMdlTransform(const gp_Trsf &trsf) {
+        if (!ais_part.IsNull()) {
+            context->SetLocation(ais_lsrhead, trsf);
+            context->Redisplay(ais_lsrhead, Standard_False);
+        }
+    }
+
     void setGripModel(const TopoDS_Shape &shape) {
         if (!ais_grip.IsNull())
             context->Remove(ais_grip, Standard_False);
@@ -255,6 +285,17 @@ private:
             context->Display(stpnt.pntLbl, Standard_False);
             context->Deactivate(stpnt.pntLbl);
         }
+    }
+
+    Handle(AIS_InteractiveObject) curShape() const {
+        Handle(AIS_InteractiveObject) res = nullptr;
+        const Handle(SelectMgr_EntityOwner) detectedOwner = context->DetectedOwner();
+        if(!detectedOwner.IsNull()) {
+            Handle(SelectMgr_SelectableObject) selected = detectedOwner->Selectable();
+            if (!selected.IsNull())
+                res = Handle(AIS_InteractiveObject)::DownCast(selected);
+        }
+        return res;
     }
 
     GUI_TYPES::SCalibPoint getCalibPoint(const size_t index) const {
@@ -388,6 +429,7 @@ private:
     Handle(AIS_ViewCube) ais_axis_cube;
     Handle(AIS_Shape) ais_part;
     Handle(AIS_Shape) ais_desk;
+    Handle(AIS_Shape) ais_lsrhead;
     Handle(AIS_Shape) ais_grip;
 
     Handle(AIS_Trihedron) calibTrihedron;
@@ -476,6 +518,16 @@ void CInteractiveContext::setDeskMdlTransform(const gp_Trsf &trsf)
     d_ptr->setDeskMdlTransform(trsf);
 }
 
+void CInteractiveContext::setLsrheadModel(const TopoDS_Shape &shape)
+{
+    d_ptr->setLsrheadModel(shape);
+}
+
+void CInteractiveContext::setLsrheadMdlTransform(const gp_Trsf &trsf)
+{
+    d_ptr->setLsrheadMdlTransform(trsf);
+}
+
 void CInteractiveContext::setGripModel(const TopoDS_Shape &shape)
 {
     d_ptr->setGripModel(shape);
@@ -484,6 +536,26 @@ void CInteractiveContext::setGripModel(const TopoDS_Shape &shape)
 void CInteractiveContext::setGripMdlTransform(const gp_Trsf &trsf)
 {
     d_ptr->setGripMdlTransform(trsf);
+}
+
+const TopoDS_Shape &CInteractiveContext::getPartShape() const
+{
+    return d_ptr->ais_part->Shape();
+}
+
+const TopoDS_Shape &CInteractiveContext::getDeskShape() const
+{
+    return d_ptr->ais_desk->Shape();
+}
+
+const TopoDS_Shape &CInteractiveContext::getLsrHeadShape() const
+{
+    return d_ptr->ais_lsrhead->Shape();
+}
+
+const TopoDS_Shape &CInteractiveContext::getGripShape() const
+{
+    return d_ptr->ais_grip->Shape();
 }
 
 void CInteractiveContext::hideAllAdditionalObjects()
@@ -503,15 +575,12 @@ void CInteractiveContext::showTaskObjects()
 
 bool CInteractiveContext::isPartDetected() const
 {
-    Handle(AIS_InteractiveObject) curShape =
-            Handle(AIS_InteractiveObject)::DownCast(d_ptr->context->DetectedOwner()->Selectable());
-    return curShape == d_ptr->ais_part;
+    return d_ptr->curShape() == d_ptr->ais_part;
 }
 
 bool CInteractiveContext::isCalibPointDetected(size_t &index) const
 {
-    Handle(AIS_InteractiveObject) curShape =
-            Handle(AIS_InteractiveObject)::DownCast(d_ptr->context->DetectedOwner()->Selectable());
+    Handle(AIS_InteractiveObject) curShape = d_ptr->curShape();
     for (auto scpnt : d_ptr->calibPoints)
     {
         if (scpnt.pnt == curShape)
@@ -524,8 +593,7 @@ bool CInteractiveContext::isCalibPointDetected(size_t &index) const
 
 bool CInteractiveContext::isTaskPointDetected(size_t &index) const
 {
-    Handle(AIS_InteractiveObject) curShape =
-            Handle(AIS_InteractiveObject)::DownCast(d_ptr->context->DetectedOwner()->Selectable());
+    Handle(AIS_InteractiveObject) curShape = d_ptr->curShape();
     for (auto stpnt : d_ptr->taskPoints)
     {
         if (stpnt.pnt == curShape)

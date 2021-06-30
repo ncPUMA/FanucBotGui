@@ -9,6 +9,8 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    BotSocket/cabstractbotsocket.cpp \
+    BotSocket/cabstractui.cpp \
     Dialogs/caddcalibpointdialog.cpp \
     Dialogs/cbottaskdialogfacade.cpp \
     Dialogs/cdrillbottaskdialog.cpp \
@@ -32,6 +34,9 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    BotSocket/bot_socket_types.h \
+    BotSocket/cabstractbotsocket.h \
+    BotSocket/cabstractui.h \
     Dialogs/caddcalibpointdialog.h \
     Dialogs/cbottaskdialogfacade.h \
     Dialogs/cdrillbottaskdialog.h \
@@ -72,7 +77,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
-    .gitignore \
+    ../.gitignore \
     Data/Icons/fps-counter.png \
     Data/Icons/open.png \
     Data/Icons/play.png \
@@ -82,13 +87,14 @@ DISTFILES += \
     Data/Lamps/red.png \
     Data/Models/LDLSR30w.STEP \
     Data/Models/MHZ2_16D_grip.stp \
+    Data/Models/Neje tool 30W Laser Module.stp \
     Data/Models/WTTGA-001 - Configurable Table.stp \
     Data/Models/gripper_v1.step \
     Data/Models/plate.stp \
     Data/Models/turbine_blade.stp \
     Data/StyleSheets/style.qss \
-    LICENSE \
-    README.md
+    ../LICENSE \
+    ../README.md
 
 RESOURCES += \
     data.qrc
@@ -96,4 +102,3 @@ RESOURCES += \
 include(if/if.pri)
 include(PartReference/PartReference.pri)
 include(RobotMovers/RobotMovers.pri)
-include(BotSocket/BotSocket.pri)

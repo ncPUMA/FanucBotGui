@@ -3,6 +3,9 @@
 
 #include "gui_types.h"
 
+namespace GUI_TYPES
+{
+
 struct SGuiSettings
 {
     SGuiSettings() :
@@ -30,6 +33,17 @@ struct SGuiSettings
         deskRotationY(0.),
         deskRotationZ(0.),
         deskScale(1.),
+        //The Laser Head
+        lheadTrX(0.),
+        lheadTrY(0.),
+        lheadTrZ(0.),
+        lheadCenterX(0.),
+        lheadCenterY(0.),
+        lheadCenterZ(0.),
+        lheadRotationX(0.),
+        lheadRotationY(0.),
+        lheadRotationZ(0.),
+        lheadScale(1.),
         //The Grip
         gripTrX(0.),
         gripTrY(0.),
@@ -47,40 +61,54 @@ struct SGuiSettings
     GUI_TYPES::TMSAA msaa;
 
     //The Part
-    double partTrX;
-    double partTrY;
-    double partTrZ;
-    double partCenterX;
-    double partCenterY;
-    double partCenterZ;
-    double partRotationX;
-    double partRotationY;
-    double partRotationZ;
-    double partScale;
+    TDistance partTrX;
+    TDistance partTrY;
+    TDistance partTrZ;
+    TDistance partCenterX;
+    TDistance partCenterY;
+    TDistance partCenterZ;
+    TDegree partRotationX;
+    TDegree partRotationY;
+    TDegree partRotationZ;
+    TScale partScale;
 
     //The Desk
-    double deskTrX;
-    double deskTrY;
-    double deskTrZ;
-    double deskCenterX;
-    double deskCenterY;
-    double deskCenterZ;
-    double deskRotationX;
-    double deskRotationY;
-    double deskRotationZ;
-    double deskScale;
+    TDistance deskTrX;
+    TDistance deskTrY;
+    TDistance deskTrZ;
+    TDistance deskCenterX;
+    TDistance deskCenterY;
+    TDistance deskCenterZ;
+    TDegree deskRotationX;
+    TDegree deskRotationY;
+    TDegree deskRotationZ;
+    TScale deskScale;
 
     //The Grip
-    double gripTrX;
-    double gripTrY;
-    double gripTrZ;
-    double gripCenterX;
-    double gripCenterY;
-    double gripCenterZ;
-    double gripRotationX;
-    double gripRotationY;
-    double gripRotationZ;
-    double gripScale;
+    TDistance lheadTrX;
+    TDistance lheadTrY;
+    TDistance lheadTrZ;
+    TDistance lheadCenterX;
+    TDistance lheadCenterY;
+    TDistance lheadCenterZ;
+    TDegree lheadRotationX;
+    TDegree lheadRotationY;
+    TDegree lheadRotationZ;
+    TScale lheadScale;
+
+    //The Grip
+    TDistance gripTrX;
+    TDistance gripTrY;
+    TDistance gripTrZ;
+    TDistance gripCenterX;
+    TDistance gripCenterY;
+    TDistance gripCenterZ;
+    TDegree gripRotationX;
+    TDegree gripRotationY;
+    TDegree gripRotationZ;
+    TScale gripScale;
 };
+
+}
 
 #endif // SGUISETTINGS_H

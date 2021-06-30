@@ -11,12 +11,118 @@
 #include "ModelLoader/cmodelloaderfactorymethod.h"
 #include "ModelLoader/csteploader.h"
 
+#include "BotSocket/cabstractui.h"
+
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
+
+class CUiIface : public CAbstractUi
+{
+    friend class MainWindow;
+
+public:
+    CUiIface() :
+        stateLamp(new QLabel()),
+        attachLamp(new QLabel()),
+        viewport(nullptr) { }
+
+    void initToolBar(QToolBar *tBar) {
+        iconSize = tBar->iconSize();
+        const QPixmap red =
+                QPixmap(":/Lamps/Data/Lamps/red.png").scaled(iconSize,
+                                                             Qt::IgnoreAspectRatio,
+                                                             Qt::SmoothTransformation);
+        QFont fnt = tBar->font();
+        fnt.setPointSize(18);
+
+        QLabel * const txtState = new QLabel(MainWindow::tr("Соединение: "), tBar);
+        txtState->setFont(fnt);
+        txtState->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        tBar->addWidget(txtState);
+        stateLamp->setParent(tBar);
+        stateLamp->setPixmap(red);
+        tBar->addWidget(stateLamp);
+
+        QLabel * const txtAttach = new QLabel(MainWindow::tr(" Захват: "), tBar);
+        txtAttach->setFont(fnt);
+        txtAttach->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        tBar->addWidget(txtAttach);
+        attachLamp->setParent(tBar);
+        attachLamp->setPixmap(red);
+        tBar->addWidget(attachLamp);
+    }
+
+protected:
+    void socketStateChanged(const BotSocket::TBotState state) final {
+        static const QPixmap red =
+                QPixmap(":/Lamps/Data/Lamps/red.png").scaled(iconSize,
+                                                             Qt::IgnoreAspectRatio,
+                                                             Qt::SmoothTransformation);
+        static const QPixmap green =
+                QPixmap(":/Lamps/Data/Lamps/green.png").scaled(iconSize,
+                                                             Qt::IgnoreAspectRatio,
+                                                             Qt::SmoothTransformation);
+        switch(state) {
+            using namespace BotSocket;
+            case ENBS_FALL:
+                stateLamp->setPixmap(red);
+                stateLamp->setToolTip(MainWindow::tr("Авария"));
+                attachLamp->setPixmap(red);
+                attachLamp->setToolTip(MainWindow::tr("Нет данных"));
+                break;
+            case ENBS_NOT_ATTACHED:
+                stateLamp->setPixmap(green);
+                stateLamp->setToolTip(MainWindow::tr("ОК"));
+                attachLamp->setPixmap(red);
+                attachLamp->setToolTip(MainWindow::tr("Нет захвата"));
+                break;
+            case ENBS_ATTACHED:
+                stateLamp->setPixmap(green);
+                stateLamp->setToolTip(MainWindow::tr("ОК"));
+                attachLamp->setPixmap(green);
+                attachLamp->setToolTip(MainWindow::tr("Захват"));
+                break;
+            default:
+                break;
+        }
+    }
+
+    void laserHeadPositionChanged(const BotSocket::SBotPosition &pos) final {
+        viewport->moveLsrhead(pos);
+        shapeTransformChaged(BotSocket::ENST_LSRHEAD);
+    }
+
+    void gripPositionChanged(const BotSocket::SBotPosition &pos) final {
+        viewport->moveGrip(pos);
+        shapeTransformChaged(BotSocket::ENST_GRIP);
+        if (viewport->getBotState() == BotSocket::ENBS_ATTACHED)
+            shapeTransformChaged(BotSocket::ENST_PART);
+    }
+
+    const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const {
+        using namespace BotSocket;
+        switch(shType) {
+            case ENST_DESK   : return viewport->getDeskShape();
+            case ENST_PART   : return viewport->getPartShape();
+            case ENST_LSRHEAD: return viewport->getLsrheadShape();
+            case ENST_GRIP   : return viewport->getGripShape();
+            default: break;
+        }
+        static const TopoDS_Shape sh;
+        return sh;
+    }
+
+private:
+    QSize iconSize;
+    QLabel * const stateLamp, * const attachLamp;
+
+    CMainViewport *viewport;
+};
+
+
 
 class MainWindowPrivate
 {
     friend class MainWindow;
-    friend class CModelMover;
 
 private:
     MainWindowPrivate() :
@@ -37,6 +143,8 @@ private:
 
     CEmptySettingsStorage emptySettingsStorage;
     CAbstractSettingsStorage *settingsStorage;
+
+    CUiIface uiIface;
 };
 
 
@@ -47,6 +155,8 @@ MainWindow::MainWindow(QWidget *parent) :
     d_ptr(new MainWindowPrivate())
 {
     ui->setupUi(this);
+
+    d_ptr->uiIface.viewport = ui->mainView;
 
     configMenu();
     configToolBar();
@@ -63,43 +173,28 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+inline static TopoDS_Shape loadShape(const char *fName) {
+    TopoDS_Shape result;
+    QFile modelFile(fName);
+    if (modelFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        const QByteArray stepData = modelFile.readAll();
+        CStepLoader loader;
+        result = loader.loadFromBinaryData(stepData.constData(),
+                                           static_cast <size_t> (stepData.size()));
+    }
+    return result;
+}
+
 void MainWindow::init(OpenGl_GraphicDriver &driver)
 {
     ui->mainView->init(driver);
     ui->mainView->setStatsVisible(ui->actionFPS->isChecked());
 
-    //load default mainModel
-    QFile defaultModelFile(":/Models/Data/Models/turbine_blade.stp");
-    if (defaultModelFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        const QByteArray stepData = defaultModelFile.readAll();
-        CStepLoader loader;
-        const TopoDS_Shape mdl = loader.loadFromBinaryData(stepData.constData(),
-                                                           static_cast <size_t> (stepData.size()));
-        ui->mainView->setPartModel(mdl);
-    }
-
-    //load deskModel
-    QFile deskFile(":/Models/Data/Models/WTTGA-001 - Configurable Table.stp");
-    if (deskFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        const QByteArray stepData = deskFile.readAll();
-        CStepLoader loader;
-        const TopoDS_Shape mdl = loader.loadFromBinaryData(stepData.constData(),
-                                                           static_cast <size_t> (stepData.size()));
-        ui->mainView->setDeskModel(mdl);
-    }
-
-    //load gripModel
-    QFile gripFile(":/Models/Data/Models/LDLSR30w.STEP");
-    if (gripFile.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        const QByteArray stepData = gripFile.readAll();
-        CStepLoader loader;
-        const TopoDS_Shape mdl = loader.loadFromBinaryData(stepData.constData(),
-                                                           static_cast <size_t> (stepData.size()));
-        ui->mainView->setGripModel(mdl);
-    }
+    //load default models
+    ui->mainView->setPartModel(loadShape(":/Models/Data/Models/turbine_blade.stp"));
+    ui->mainView->setDeskModel(loadShape(":/Models/Data/Models/WTTGA-001 - Configurable Table.stp"));
+    ui->mainView->setLsrheadModel(loadShape(":/Models/Data/Models/Neje tool 30W Laser Module.stp"));
+    ui->mainView->setGripModel(loadShape(":/Models/Data/Models/LDLSR30w.STEP"));
 
     ui->mainView->setShading(true);
     ui->mainView->setUserAction(GUI_TYPES::ENUA_ADD_TASK);
@@ -108,7 +203,7 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
 void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
 {
     d_ptr->settingsStorage = &storage;
-    const SGuiSettings settings = storage.loadGuiSettings();
+    const GUI_TYPES::SGuiSettings settings = storage.loadGuiSettings();
     for(auto pair : d_ptr->mapMsaa) {
         pair.second->blockSignals(true);
         pair.second->setChecked(pair.first == settings.msaa);
@@ -117,6 +212,19 @@ void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
     ui->wSettings->initFromGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);
     ui->mainView->fitInView();
+}
+
+void MainWindow::setBotSocket(CAbstractBotSocket &botSocket)
+{
+    using namespace BotSocket;
+
+    d_ptr->uiIface.setBotSocket(botSocket);
+    std::map <BotSocket::EN_ShapeType, TopoDS_Shape> shapes;
+    shapes[ENST_DESK]    = ui->mainView->getDeskShape();
+    shapes[ENST_PART]    = ui->mainView->getPartShape();
+    shapes[ENST_LSRHEAD] = ui->mainView->getLsrheadShape();
+    shapes[ENST_GRIP]    = ui->mainView->getGripShape();
+    d_ptr->uiIface.init(ui->mainView->getUsrAction(), shapes);
 }
 
 void MainWindow::slImport()
@@ -134,6 +242,7 @@ void MainWindow::slImport()
         CAbstractModelLoader &loader = factory.loader(selectedFilter);
         const TopoDS_Shape shape = loader.load(fName.toStdString().c_str());
         ui->mainView->setPartModel(shape);
+        d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART);
         if (!shape.IsNull())
             ui->mainView->fitInView();
         else
@@ -156,7 +265,11 @@ void MainWindow::slShading(bool enabled)
 void MainWindow::slShowCalibWidget(bool enabled)
 {
     ui->dockSettings->setVisible(enabled);
-    ui->mainView->setUserAction(enabled ? GUI_TYPES::ENUA_CALIBRATION : GUI_TYPES::ENUA_ADD_TASK);
+    const GUI_TYPES::EN_UserActions action = enabled
+            ? GUI_TYPES::ENUA_CALIBRATION
+            : GUI_TYPES::ENUA_ADD_TASK;
+    ui->mainView->setUserAction(action);
+    d_ptr->uiIface.usrActionChanged(action);
 }
 
 void MainWindow::slMsaa()
@@ -191,10 +304,14 @@ void MainWindow::slClearJrnl()
 
 void MainWindow::slCallibApply()
 {
-    SGuiSettings settings = ui->wSettings->getChangedSettings();
+    GUI_TYPES::SGuiSettings settings = ui->wSettings->getChangedSettings();
     settings.msaa = ui->mainView->getMSAA();
     d_ptr->settingsStorage->saveGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_DESK   );
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_LSRHEAD);
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART   );
+    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   );
 }
 
 void MainWindow::configMenu()
@@ -239,5 +356,13 @@ void MainWindow::configToolBar()
                            tr("Счетчик FPS"),
                            ui->actionFPS,
                            SLOT(toggle()));
+
+    //Stretch
+    QLabel * const strech = new QLabel(" ", ui->toolBar);
+    strech->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    ui->toolBar->addWidget(strech);
+
+    //State and attach
+    d_ptr->uiIface.initToolBar(ui->toolBar);
 }
 

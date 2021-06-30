@@ -9,7 +9,9 @@ namespace Ui {
 class CGuiSettingsWidget;
 }
 
+namespace GUI_TYPES {
 class SGuiSettings;
+}
 
 class CGuiSettingsWidget : public QWidget
 {
@@ -19,8 +21,8 @@ public:
     explicit CGuiSettingsWidget(QWidget *parent = nullptr);
     ~CGuiSettingsWidget();
 
-    void initFromGuiSettings(const SGuiSettings &settings);
-    SGuiSettings getChangedSettings() const;
+    void initFromGuiSettings(const GUI_TYPES::SGuiSettings &settings);
+    GUI_TYPES::SGuiSettings getChangedSettings() const;
 
 signals:
     void sigApplyRequest();
