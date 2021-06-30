@@ -8,6 +8,7 @@ enum EN_GuiKeys
 {
     ENGK_FIRST = 0,
 
+    //Common
     ENGK_MSAA = ENGK_FIRST,
 
     //The Part
@@ -32,6 +33,17 @@ enum EN_GuiKeys
     ENGK_DESK_ROTATE_Y,
     ENGK_DESK_ROTATE_Z,
     ENGK_DESK_SCALE,
+    //The Laser Head
+    ENGK_LHEAD_TR_X,
+    ENGK_LHEAD_TR_Y,
+    ENGK_LHEAD_TR_Z,
+    ENGK_LHEAD_CENTER_X,
+    ENGK_LHEAD_CENTER_Y,
+    ENGK_LHEAD_CENTER_Z,
+    ENGK_LHEAD_ROTATE_X,
+    ENGK_LHEAD_ROTATE_Y,
+    ENGK_LHEAD_ROTATE_Z,
+    ENGK_LHEAD_SCALE,
     //The Grip
     ENGK_GRIP_TR_X,
     ENGK_GRIP_TR_Y,
@@ -72,6 +84,17 @@ static const std::map <TGuiKey, QString> guiKeyMap = {
     { ENGK_DESK_ROTATE_Y , "desk_rotate_y"  },
     { ENGK_DESK_ROTATE_Z , "desk_rotate_z"  },
     { ENGK_DESK_SCALE    , "desk_scale"     },
+    //The Laser Head
+    { ENGK_LHEAD_TR_X     , "lhead_tr_x"      },
+    { ENGK_LHEAD_TR_Y     , "lhead_tr_y"      },
+    { ENGK_LHEAD_TR_Z     , "lhead_tr_z"      },
+    { ENGK_LHEAD_CENTER_X , "lhead_center_x"  },
+    { ENGK_LHEAD_CENTER_Y , "lhead_center_y"  },
+    { ENGK_LHEAD_CENTER_Z , "lhead_center_z"  },
+    { ENGK_LHEAD_ROTATE_X , "lhead_rotate_x"  },
+    { ENGK_LHEAD_ROTATE_Y , "lhead_rotate_y"  },
+    { ENGK_LHEAD_ROTATE_Z , "lhead_rotate_z"  },
+    { ENGK_LHEAD_SCALE    , "lhead_scale"     },
     //The GRIP
     { ENGK_GRIP_TR_X     , "grip_tr_x"      },
     { ENGK_GRIP_TR_Y     , "grip_tr_y"      },
@@ -101,49 +124,61 @@ public:
         settingsFile = new QSettings(QString::fromLocal8Bit(fname), QSettings::IniFormat);
     }
 
-    SGuiSettings loadGuiSettings() {
+    GUI_TYPES::SGuiSettings loadGuiSettings() {
+        using namespace GUI_TYPES;
         SGuiSettings res;
         settingsFile->beginGroup(GUI_PREFIX);
         //Common
-        res.msaa          = readGuiValue <GUI_TYPES::TMSAA> (ENGK_MSAA);
+        res.msaa          = readGuiValue <TMSAA> (ENGK_MSAA);
         //The Part
-        res.partTrX       = readGuiValue <double> (ENGK_PART_TR_X);
-        res.partTrY       = readGuiValue <double> (ENGK_PART_TR_Y);
-        res.partTrZ       = readGuiValue <double> (ENGK_PART_TR_Z);
-        res.partCenterX   = readGuiValue <double> (ENGK_PART_CENTER_X);
-        res.partCenterY   = readGuiValue <double> (ENGK_PART_CENTER_Y);
-        res.partCenterZ   = readGuiValue <double> (ENGK_PART_CENTER_Z);
-        res.partRotationX = readGuiValue <double> (ENGK_PART_ROTATE_X);
-        res.partRotationY = readGuiValue <double> (ENGK_PART_ROTATE_Y);
-        res.partRotationZ = readGuiValue <double> (ENGK_PART_ROTATE_Z);
-        res.partScale     = readGuiValue <double> (ENGK_PART_SCALE);
+        res.partTrX       = readGuiValue <TDistance> (ENGK_PART_TR_X);
+        res.partTrY       = readGuiValue <TDistance> (ENGK_PART_TR_Y);
+        res.partTrZ       = readGuiValue <TDistance> (ENGK_PART_TR_Z);
+        res.partCenterX   = readGuiValue <TDistance> (ENGK_PART_CENTER_X);
+        res.partCenterY   = readGuiValue <TDistance> (ENGK_PART_CENTER_Y);
+        res.partCenterZ   = readGuiValue <TDistance> (ENGK_PART_CENTER_Z);
+        res.partRotationX = readGuiValue <TDegree>   (ENGK_PART_ROTATE_X);
+        res.partRotationY = readGuiValue <TDegree>   (ENGK_PART_ROTATE_Y);
+        res.partRotationZ = readGuiValue <TDegree>   (ENGK_PART_ROTATE_Z);
+        res.partScale     = readGuiValue <TScale>    (ENGK_PART_SCALE);
         //The Desk
-        res.deskTrX       = readGuiValue <double> (ENGK_DESK_TR_X);
-        res.deskTrY       = readGuiValue <double> (ENGK_DESK_TR_Y);
-        res.deskTrZ       = readGuiValue <double> (ENGK_DESK_TR_Z);
-        res.deskCenterX   = readGuiValue <double> (ENGK_DESK_CENTER_X);
-        res.deskCenterY   = readGuiValue <double> (ENGK_DESK_CENTER_Y);
-        res.deskCenterZ   = readGuiValue <double> (ENGK_DESK_CENTER_Z);
-        res.deskRotationX = readGuiValue <double> (ENGK_DESK_ROTATE_X);
-        res.deskRotationY = readGuiValue <double> (ENGK_DESK_ROTATE_Y);
-        res.deskRotationZ = readGuiValue <double> (ENGK_DESK_ROTATE_Z);
-        res.deskScale     = readGuiValue <double> (ENGK_DESK_SCALE);
+        res.deskTrX       = readGuiValue <TDistance> (ENGK_DESK_TR_X);
+        res.deskTrY       = readGuiValue <TDistance> (ENGK_DESK_TR_Y);
+        res.deskTrZ       = readGuiValue <TDistance> (ENGK_DESK_TR_Z);
+        res.deskCenterX   = readGuiValue <TDistance> (ENGK_DESK_CENTER_X);
+        res.deskCenterY   = readGuiValue <TDistance> (ENGK_DESK_CENTER_Y);
+        res.deskCenterZ   = readGuiValue <TDistance> (ENGK_DESK_CENTER_Z);
+        res.deskRotationX = readGuiValue <TDegree>   (ENGK_DESK_ROTATE_X);
+        res.deskRotationY = readGuiValue <TDegree>   (ENGK_DESK_ROTATE_Y);
+        res.deskRotationZ = readGuiValue <TDegree>   (ENGK_DESK_ROTATE_Z);
+        res.deskScale     = readGuiValue <TScale>    (ENGK_DESK_SCALE);
+        //The Laser Head
+        res.lheadTrX       = readGuiValue <TDistance> (ENGK_LHEAD_TR_X);
+        res.lheadTrY       = readGuiValue <TDistance> (ENGK_LHEAD_TR_Y);
+        res.lheadTrZ       = readGuiValue <TDistance> (ENGK_LHEAD_TR_Z);
+        res.lheadCenterX   = readGuiValue <TDistance> (ENGK_LHEAD_CENTER_X);
+        res.lheadCenterY   = readGuiValue <TDistance> (ENGK_LHEAD_CENTER_Y);
+        res.lheadCenterZ   = readGuiValue <TDistance> (ENGK_LHEAD_CENTER_Z);
+        res.lheadRotationX = readGuiValue <TDegree>   (ENGK_LHEAD_ROTATE_X);
+        res.lheadRotationY = readGuiValue <TDegree>   (ENGK_LHEAD_ROTATE_Y);
+        res.lheadRotationZ = readGuiValue <TDegree>   (ENGK_LHEAD_ROTATE_Z);
+        res.lheadScale     = readGuiValue <TScale>    (ENGK_LHEAD_SCALE);
         //The Grip
-        res.gripTrX       = readGuiValue <double> (ENGK_GRIP_TR_X);
-        res.gripTrY       = readGuiValue <double> (ENGK_GRIP_TR_Y);
-        res.gripTrZ       = readGuiValue <double> (ENGK_GRIP_TR_Z);
-        res.gripCenterX   = readGuiValue <double> (ENGK_GRIP_CENTER_X);
-        res.gripCenterY   = readGuiValue <double> (ENGK_GRIP_CENTER_Y);
-        res.gripCenterZ   = readGuiValue <double> (ENGK_GRIP_CENTER_Z);
-        res.gripRotationX = readGuiValue <double> (ENGK_GRIP_ROTATE_X);
-        res.gripRotationY = readGuiValue <double> (ENGK_GRIP_ROTATE_Y);
-        res.gripRotationZ = readGuiValue <double> (ENGK_GRIP_ROTATE_Z);
-        res.gripScale     = readGuiValue <double> (ENGK_GRIP_SCALE);
+        res.gripTrX       = readGuiValue <TDistance> (ENGK_GRIP_TR_X);
+        res.gripTrY       = readGuiValue <TDistance> (ENGK_GRIP_TR_Y);
+        res.gripTrZ       = readGuiValue <TDistance> (ENGK_GRIP_TR_Z);
+        res.gripCenterX   = readGuiValue <TDistance> (ENGK_GRIP_CENTER_X);
+        res.gripCenterY   = readGuiValue <TDistance> (ENGK_GRIP_CENTER_Y);
+        res.gripCenterZ   = readGuiValue <TDistance> (ENGK_GRIP_CENTER_Z);
+        res.gripRotationX = readGuiValue <TDegree>   (ENGK_GRIP_ROTATE_X);
+        res.gripRotationY = readGuiValue <TDegree>   (ENGK_GRIP_ROTATE_Y);
+        res.gripRotationZ = readGuiValue <TDegree>   (ENGK_GRIP_ROTATE_Z);
+        res.gripScale     = readGuiValue <TScale>    (ENGK_GRIP_SCALE);
         settingsFile->endGroup();
         return res;
     }
 
-    void saveGuiSettings(const SGuiSettings &settings) {
+    void saveGuiSettings(const GUI_TYPES::SGuiSettings &settings) {
         settingsFile->beginGroup(GUI_PREFIX);
         writeGuiValue(ENGK_MSAA         , settings.msaa);
         //The Part
@@ -168,6 +203,17 @@ public:
         writeGuiValue(ENGK_DESK_ROTATE_Y, settings.deskRotationY);
         writeGuiValue(ENGK_DESK_ROTATE_Z, settings.deskRotationZ);
         writeGuiValue(ENGK_DESK_SCALE   , settings.deskScale);
+        //The Laser Head
+        writeGuiValue(ENGK_LHEAD_TR_X    , settings.lheadTrX);
+        writeGuiValue(ENGK_LHEAD_TR_Y    , settings.lheadTrY);
+        writeGuiValue(ENGK_LHEAD_TR_Z    , settings.lheadTrZ);
+        writeGuiValue(ENGK_LHEAD_CENTER_X, settings.lheadCenterX);
+        writeGuiValue(ENGK_LHEAD_CENTER_Y, settings.lheadCenterY);
+        writeGuiValue(ENGK_LHEAD_CENTER_Z, settings.lheadCenterZ);
+        writeGuiValue(ENGK_LHEAD_ROTATE_X, settings.lheadRotationX);
+        writeGuiValue(ENGK_LHEAD_ROTATE_Y, settings.lheadRotationY);
+        writeGuiValue(ENGK_LHEAD_ROTATE_Z, settings.lheadRotationZ);
+        writeGuiValue(ENGK_LHEAD_SCALE   , settings.lheadScale);
         //The Grip
         writeGuiValue(ENGK_GRIP_TR_X    , settings.gripTrX);
         writeGuiValue(ENGK_GRIP_TR_Y    , settings.gripTrY);
@@ -222,12 +268,12 @@ void CSimpleSettingsStorage::setSettingsFName(const char *fname)
     d_ptr->setFName(fname);
 }
 
-SGuiSettings CSimpleSettingsStorage::loadGuiSettings()
+GUI_TYPES::SGuiSettings CSimpleSettingsStorage::loadGuiSettings()
 {
     return d_ptr->loadGuiSettings();
 }
 
-void CSimpleSettingsStorage::saveGuiSettings(const SGuiSettings &settings)
+void CSimpleSettingsStorage::saveGuiSettings(const GUI_TYPES::SGuiSettings &settings)
 {
     d_ptr->saveGuiSettings(settings);
 }

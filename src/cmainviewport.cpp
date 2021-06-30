@@ -49,7 +49,8 @@ class CMainViewportPrivate : public AIS_ViewController
     CMainViewportPrivate(CMainViewport * const qptr) :
         q_ptr(qptr),
         context(new CInteractiveContext()),
-        usrAction(GUI_TYPES::ENUA_NO) {
+        usrAction(GUI_TYPES::ENUA_NO),
+        botState(BotSocket::ENBS_FALL) {
         myMouseGestureMap.Clear();
         myMouseGestureMap.Bind(Aspect_VKeyMouse_LeftButton, AIS_MouseGesture_Pan);
         myMouseGestureMap.Bind(Aspect_VKeyMouse_RightButton, AIS_MouseGesture_RotateOrbit);
@@ -133,16 +134,20 @@ class CMainViewportPrivate : public AIS_ViewController
     }
 
     gp_Trsf calcPartTrsf() const {
-        return calc_transform(gp_Vec(guiSettings.partTrX,
-                                     guiSettings.partTrY,
-                                     guiSettings.partTrZ),
+        return calc_transform(gp_Vec(guiSettings.partTrX + partPos.globalPos.x,
+                                     guiSettings.partTrY + partPos.globalPos.y,
+                                     guiSettings.partTrZ + partPos.globalPos.z),
                               gp_Vec(guiSettings.partCenterX,
                                      guiSettings.partCenterY,
                                      guiSettings.partCenterZ),
                               guiSettings.partScale,
                               guiSettings.partRotationX,
                               guiSettings.partRotationY,
-                              guiSettings.partRotationZ);
+                              guiSettings.partRotationZ,
+                              partPos.globalRotation.x,
+                              partPos.globalRotation.y,
+                              partPos.globalRotation.z);
+
     }
 
     gp_Trsf calcDeskTrsf() const {
@@ -158,22 +163,39 @@ class CMainViewportPrivate : public AIS_ViewController
                               guiSettings.deskRotationZ);
     }
 
-    gp_Trsf calcLsrheadTrsf() const { return gp_Trsf(); }
+    gp_Trsf calcLsrheadTrsf() const {
+        return calc_transform(gp_Vec(guiSettings.lheadTrX + lheadPos.globalPos.x,
+                                     guiSettings.lheadTrY + lheadPos.globalPos.y,
+                                     guiSettings.lheadTrZ + lheadPos.globalPos.z),
+                              gp_Vec(guiSettings.lheadCenterX,
+                                     guiSettings.lheadCenterY,
+                                     guiSettings.lheadCenterZ),
+                              guiSettings.lheadScale,
+                              guiSettings.lheadRotationX,
+                              guiSettings.lheadRotationY,
+                              guiSettings.lheadRotationZ,
+                              lheadPos.globalRotation.x,
+                              lheadPos.globalRotation.y,
+                              lheadPos.globalRotation.z);
+    }
 
     gp_Trsf calcGripTrsf() const {
-        return calc_transform(gp_Vec(guiSettings.gripTrX,
-                                     guiSettings.gripTrY,
-                                     guiSettings.gripTrZ),
+        return calc_transform(gp_Vec(guiSettings.gripTrX + gripPos.globalPos.x,
+                                     guiSettings.gripTrY + gripPos.globalPos.y,
+                                     guiSettings.gripTrZ + gripPos.globalPos.z),
                               gp_Vec(guiSettings.gripCenterX,
                                      guiSettings.gripCenterY,
                                      guiSettings.gripCenterZ),
                               guiSettings.gripScale,
                               guiSettings.gripRotationX,
                               guiSettings.gripRotationY,
-                              guiSettings.gripRotationZ);
+                              guiSettings.gripRotationZ,
+                              gripPos.globalRotation.x,
+                              gripPos.globalRotation.y,
+                              gripPos.globalRotation.z);
     }
 
-    void setGuiSettings(const SGuiSettings &settings) {
+    void setGuiSettings(const GUI_TYPES::SGuiSettings &settings) {
         guiSettings = settings;
         view->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
         context->setPartMdlTransform(calcPartTrsf());
@@ -229,6 +251,22 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
+    void moveLsrhead(const BotSocket::SBotPosition &pos) {
+        lheadPos = pos;
+        context->setLsrheadMdlTransform(calcLsrheadTrsf());
+        view->Redraw();
+    }
+
+    void moveGrip(const BotSocket::SBotPosition &pos) {
+        gripPos = pos;
+        context->setGripMdlTransform(calcGripTrsf());
+        if (botState == BotSocket::ENBS_ATTACHED) {
+            partPos = pos;
+            context->setPartMdlTransform(calcPartTrsf());
+        }
+        view->Redraw();
+    }
+
 
     CMainViewport * const q_ptr;
 
@@ -236,11 +274,14 @@ class CMainViewportPrivate : public AIS_ViewController
     Handle(V3d_View)               view;
     Handle(CAspectWindow)          aspect;
 
-    SGuiSettings guiSettings;
+    GUI_TYPES::SGuiSettings guiSettings;
     CInteractiveContext * const context;
 
     GUI_TYPES::EN_UserActions usrAction;
     QPoint rbPos;
+
+    BotSocket::EN_BotState botState;
+    BotSocket::SBotPosition partPos, lheadPos, gripPos;
 };
 
 
@@ -266,12 +307,12 @@ void CMainViewport::init(OpenGl_GraphicDriver &driver)
     d_ptr->init(driver);
 }
 
-void CMainViewport::setGuiSettings(const SGuiSettings &settings)
+void CMainViewport::setGuiSettings(const GUI_TYPES::SGuiSettings &settings)
 {
     d_ptr->setGuiSettings(settings);
 }
 
-SGuiSettings CMainViewport::getGuiSettings() const
+GUI_TYPES::SGuiSettings CMainViewport::getGuiSettings() const
 {
     return d_ptr->guiSettings;
 }
@@ -362,14 +403,24 @@ const TopoDS_Shape& CMainViewport::getGripShape() const
     return d_ptr->context->getGripShape();
 }
 
-void CMainViewport::moveLsrhead(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle)
+void CMainViewport::setBotState(const BotSocket::EN_BotState state)
 {
-
+    d_ptr->botState = state;
 }
 
-void CMainViewport::moveGrip(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle)
+BotSocket::EN_BotState CMainViewport::getBotState() const
 {
+    return d_ptr->botState;
+}
 
+void CMainViewport::moveLsrhead(const BotSocket::SBotPosition &pos)
+{
+    d_ptr->moveLsrhead(pos);
+}
+
+void CMainViewport::moveGrip(const BotSocket::SBotPosition &pos)
+{
+    d_ptr->moveGrip(pos);
 }
 
 QPaintEngine *CMainViewport::paintEngine() const

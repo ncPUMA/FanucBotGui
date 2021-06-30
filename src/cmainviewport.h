@@ -3,15 +3,18 @@
 
 #include <QWidget>
 
-#include "gui_types.h"
+#include "BotSocket/bot_socket_types.h"
 
 class QMenu;
 class OpenGl_GraphicDriver;
 class CMainViewportPrivate;
 class Quantity_Color;
 class TopoDS_Shape;
-class SGuiSettings;
 class CInteractiveContext;
+
+namespace GUI_TYPES {
+class SGuiSettings;
+}
 
 class CMainViewport : public QWidget
 {
@@ -24,8 +27,8 @@ public:
     ~CMainViewport();
 
     void init(OpenGl_GraphicDriver &driver);
-    void setGuiSettings(const SGuiSettings &settings);
-    SGuiSettings getGuiSettings() const;
+    void setGuiSettings(const GUI_TYPES::SGuiSettings &settings);
+    GUI_TYPES::SGuiSettings getGuiSettings() const;
 
     void setMSAA(const GUI_TYPES::TMSAA msaa);
     GUI_TYPES::TMSAA getMSAA() const;
@@ -47,8 +50,10 @@ public:
     const TopoDS_Shape& getLsrheadShape() const;
     const TopoDS_Shape& getGripShape() const;
 
-    void moveLsrhead(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle);
-    void moveGrip(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle);
+    void setBotState(const BotSocket::EN_BotState state);
+    BotSocket::EN_BotState getBotState() const;
+    void moveLsrhead(const BotSocket::SBotPosition &pos);
+    void moveGrip(const BotSocket::SBotPosition &pos);
 
 protected:
     QPaintEngine* paintEngine() const final;

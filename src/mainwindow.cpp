@@ -87,11 +87,15 @@ protected:
     }
 
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos) final {
-        viewport->moveLsrhead(pos.globalPos, pos.globalRotation);
+        viewport->moveLsrhead(pos);
+        shapeTransformChaged(BotSocket::ENST_LSRHEAD, viewport->getLsrheadShape());
     }
 
     void gripPositionChanged(const BotSocket::SBotPosition &pos) final {
-        viewport->moveGrip(pos.globalPos, pos.globalRotation);
+        viewport->moveGrip(pos);
+        shapeTransformChaged(BotSocket::ENST_GRIP, viewport->getGripShape());
+        if (viewport->getBotState() == BotSocket::ENBS_ATTACHED)
+            shapeTransformChaged(BotSocket::ENST_PART, viewport->getPartShape());
     }
 
 private:
@@ -186,7 +190,7 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
 void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
 {
     d_ptr->settingsStorage = &storage;
-    const SGuiSettings settings = storage.loadGuiSettings();
+    const GUI_TYPES::SGuiSettings settings = storage.loadGuiSettings();
     for(auto pair : d_ptr->mapMsaa) {
         pair.second->blockSignals(true);
         pair.second->setChecked(pair.first == settings.msaa);
@@ -225,6 +229,7 @@ void MainWindow::slImport()
         CAbstractModelLoader &loader = factory.loader(selectedFilter);
         const TopoDS_Shape shape = loader.load(fName.toStdString().c_str());
         ui->mainView->setPartModel(shape);
+        d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART, ui->mainView->getPartShape());
         if (!shape.IsNull())
             ui->mainView->fitInView();
         else
@@ -286,7 +291,7 @@ void MainWindow::slClearJrnl()
 
 void MainWindow::slCallibApply()
 {
-    SGuiSettings settings = ui->wSettings->getChangedSettings();
+    GUI_TYPES::SGuiSettings settings = ui->wSettings->getChangedSettings();
     settings.msaa = ui->mainView->getMSAA();
     d_ptr->settingsStorage->saveGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);

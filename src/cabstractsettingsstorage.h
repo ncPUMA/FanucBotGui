@@ -8,8 +8,8 @@ class CAbstractSettingsStorage
 public:
     virtual ~CAbstractSettingsStorage() { }
 
-    virtual SGuiSettings loadGuiSettings() = 0;
-    virtual void saveGuiSettings(const SGuiSettings &settings) = 0;
+    virtual GUI_TYPES::SGuiSettings loadGuiSettings() = 0;
+    virtual void saveGuiSettings(const GUI_TYPES::SGuiSettings &settings) = 0;
 
 protected:
     CAbstractSettingsStorage() { }
@@ -21,8 +21,8 @@ class CEmptySettingsStorage : public CAbstractSettingsStorage
 public:
     CEmptySettingsStorage() : CAbstractSettingsStorage() { }
 
-    SGuiSettings loadGuiSettings() { return SGuiSettings(); }
-    void saveGuiSettings(const SGuiSettings &) { }
+    GUI_TYPES::SGuiSettings loadGuiSettings() { return GUI_TYPES::SGuiSettings(); }
+    void saveGuiSettings(const GUI_TYPES::SGuiSettings &) { }
 };
 
 #endif // CABSTRACTSETTINGSSTORAGE_H

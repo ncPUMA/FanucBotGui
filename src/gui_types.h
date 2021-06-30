@@ -39,6 +39,7 @@ typedef int TBotTaskType;
 
 typedef double TDistance;
 typedef double TDegree;
+typedef double TScale;
 
 struct SVertex
 {
