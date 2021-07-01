@@ -19,8 +19,6 @@
 #include <Geom_CartesianPoint.hxx>
 #include <Geom_Axis2Placement.hxx>
 
-#include <IntCurvesFace_ShapeIntersector.hxx>
-
 #include "gui_types.h"
 
 #include "Primitives/claservec.h"
@@ -36,6 +34,7 @@ private:
     CInteractiveContextPrivate() :
         depthTestOffZlayer(Graphic3d_ZLayerId_UNKNOWN),
         bShading(false),
+        lsrClip(true),
         bCursorIsVisible(false),
         cursorPnt(new AIS_Point(new Geom_CartesianPoint(gp_Pnt()))),
         cursorLbl(new AIS_TextLabel())
@@ -237,6 +236,26 @@ private:
             context->SetLocation(ais_lsrhead, trsf);
             context->Redisplay(ais_lsrhead, Standard_False);
         }
+        if (!ais_laser.IsNull()) {
+            context->SetLocation(ais_laser, trsf);
+            context->Redisplay(ais_laser, Standard_False);
+        }
+        updateLaserLine();
+    }
+
+    void setLaserLine(const gp_Pnt &pnt, const gp_Dir &dir,
+                      const double lenght, const bool clipping) {
+        if (!ais_laser.IsNull())
+            context->Remove(ais_laser, Standard_False);
+
+        lsrClip = clipping;
+        if (lenght > 0) {
+            ais_laser = new CLaserVec(pnt, dir);
+            ais_laser->setLenght(lenght);
+            context->SetDisplayMode(ais_laser, AIS_Shaded, Standard_False);
+            context->Display(ais_laser, Standard_False);
+            context->Deactivate(ais_laser);
+        }
         updateLaserLine();
     }
 
@@ -435,45 +454,14 @@ private:
     }
 
     void updateLaserLine() {
-        if (!lsrLine.ais_laser.IsNull())
-            context->Remove(lsrLine.ais_laser, Standard_False);
-
-        if (ais_lsrhead.IsNull())
-            return;
-
-        const gp_Trsf trsf = context->Location(ais_lsrhead);
-        const gp_Pnt trP = lsrLine.start.Transformed(trsf);
-        const gp_Dir trD = lsrLine.dir.Transformed(trsf);
-        gp_Vec aVec(trD);
-        aVec *= 200;
-
-        std::vector <Handle (AIS_Shape)> objects = {
-                ais_part,
-                ais_grip,
-                ais_desk,
-        };
-
-        IntCurvesFace_ShapeIntersector intersector;
-        for(auto i : objects) {
-            if (i.IsNull())
-                continue;
-            const TopoDS_Shape shape = i->Shape().Located(context->Location(i));
-            intersector.Load(shape, Precision::Confusion());
-            const gp_Lin lin = gp_Lin(trP, aVec);
-            intersector.PerformNearest(lin, 0, RealLast());
-            if (intersector.IsDone() && intersector.NbPnt() > 0) {
-                gp_Pnt aPnt3 = intersector.Pnt(1);
-                if (!trP.IsEqual(aPnt3, gp::Resolution())) {
-                    const gp_Vec newVec(trP, aPnt3);
-                    if (newVec.Magnitude() < aVec.Magnitude())
-                        aVec = gp_Vec(trP, aPnt3);
-                }
-            }
+        if (lsrClip && !ais_laser.IsNull()) {
+            NCollection_Vector <Handle(AIS_Shape)> vecObj;
+            vecObj.Append(ais_part);
+            vecObj.Append(ais_grip);
+            vecObj.Append(ais_desk);
+            ais_laser->clipLenght(context, vecObj);
+            context->Redisplay(ais_laser, Standard_False);
         }
-        lsrLine.ais_laser = new CLaserVec(trP, aVec, 1.);
-        context->SetDisplayMode(lsrLine.ais_laser, AIS_Shaded, Standard_False);
-        context->Display(lsrLine.ais_laser, Standard_False);
-        context->Deactivate(lsrLine.ais_laser);
     }
 
 private:
@@ -488,12 +476,8 @@ private:
     Handle(AIS_Shape) ais_desk;
     Handle(AIS_Shape) ais_lsrhead;
     Handle(AIS_Shape) ais_grip;
-    struct SLaser
-    {
-        gp_Pnt start;
-        gp_Dir dir;
-        Handle(CLaserVec) ais_laser;
-    } lsrLine;
+    Handle(CLaserVec) ais_laser;
+    bool lsrClip;
 
     Handle(AIS_Trihedron) calibTrihedron;
     bool bCursorIsVisible;
@@ -566,13 +550,6 @@ gp_Pnt CInteractiveContext::lastCursorPosition() const
     return d_ptr->cursorPnt->Component()->Pnt();
 }
 
-void CInteractiveContext::setLaserLine(const gp_Pnt &pnt, const gp_Dir &dir)
-{
-    d_ptr->lsrLine.start = pnt;
-    d_ptr->lsrLine.dir = dir;
-    d_ptr->updateLaserLine();
-}
-
 void CInteractiveContext::setPartModel(const TopoDS_Shape &shape)
 {
     d_ptr->setPartModel(shape);
@@ -601,6 +578,12 @@ void CInteractiveContext::setLsrheadModel(const TopoDS_Shape &shape)
 void CInteractiveContext::setLsrheadMdlTransform(const gp_Trsf &trsf)
 {
     d_ptr->setLsrheadMdlTransform(trsf);
+}
+
+void CInteractiveContext::setLaserLine(const gp_Pnt &pnt, const gp_Dir &dir,
+                                       const double lenght, const bool clipping)
+{
+    d_ptr->setLaserLine(pnt, dir, lenght, clipping);
 }
 
 void CInteractiveContext::setGripModel(const TopoDS_Shape &shape)

@@ -50,6 +50,8 @@ enum EN_GuiKeys
     ENGK_LHEAD_LSR_NRML_X,
     ENGK_LHEAD_LSR_NRML_Y,
     ENGK_LHEAD_LSR_NRML_Z,
+    ENGK_LHEAD_LSR_LENGHT,
+    ENGK_LHEAD_LSR_CLIP,
     //The Grip
     ENGK_GRIP_TR_X,
     ENGK_GRIP_TR_Y,
@@ -108,6 +110,8 @@ static const std::map <TGuiKey, QString> guiKeyMap = {
     { ENGK_LHEAD_LSR_NRML_X, "lhead_lsr_nrml_x" },
     { ENGK_LHEAD_LSR_NRML_Y, "lhead_lsr_nrml_y" },
     { ENGK_LHEAD_LSR_NRML_Z, "lhead_lsr_nrml_z" },
+    { ENGK_LHEAD_LSR_LENGHT, "lhead_lsr_lenght" },
+    { ENGK_LHEAD_LSR_CLIP  , "lhead_lsr_clip"   },
     //The GRIP
     { ENGK_GRIP_TR_X     , "grip_tr_x"     },
     { ENGK_GRIP_TR_Y     , "grip_tr_y"     },
@@ -183,6 +187,8 @@ public:
         res.lheadLsrNormalX = readGuiValue <TDistance> (ENGK_LHEAD_LSR_NRML_X);
         res.lheadLsrNormalY = readGuiValue <TDistance> (ENGK_LHEAD_LSR_NRML_Y);
         res.lheadLsrNormalZ = readGuiValue <TDistance> (ENGK_LHEAD_LSR_NRML_Z);
+        res.lheadLsrLenght  = readGuiValue <TDistance> (ENGK_LHEAD_LSR_LENGHT);
+        res.lheadLsrClip    = readGuiValue <bool>      (ENGK_LHEAD_LSR_CLIP);
         //The Grip
         res.gripTrX       = readGuiValue <TDistance> (ENGK_GRIP_TR_X);
         res.gripTrY       = readGuiValue <TDistance> (ENGK_GRIP_TR_Y);
@@ -241,6 +247,8 @@ public:
         writeGuiValue(ENGK_LHEAD_LSR_NRML_X, settings.lheadLsrNormalX);
         writeGuiValue(ENGK_LHEAD_LSR_NRML_Y, settings.lheadLsrNormalY);
         writeGuiValue(ENGK_LHEAD_LSR_NRML_Z, settings.lheadLsrNormalZ);
+        writeGuiValue(ENGK_LHEAD_LSR_LENGHT, settings.lheadLsrLenght);
+        writeGuiValue(ENGK_LHEAD_LSR_CLIP  , settings.lheadLsrClip);
         //The Grip
         writeGuiValue(ENGK_GRIP_TR_X    , settings.gripTrX);
         writeGuiValue(ENGK_GRIP_TR_Y    , settings.gripTrY);

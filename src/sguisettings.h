@@ -50,6 +50,8 @@ struct SGuiSettings
         lheadLsrNormalX(0.),
         lheadLsrNormalY(0.),
         lheadLsrNormalZ(0.),
+        lheadLsrLenght(200.),
+        lheadLsrClip(true),
         //The Grip
         gripTrX(0.),
         gripTrY(0.),
@@ -108,6 +110,8 @@ struct SGuiSettings
     TDistance lheadLsrNormalX;
     TDistance lheadLsrNormalY;
     TDistance lheadLsrNormalZ;
+    TDistance lheadLsrLenght;
+    bool lheadLsrClip;
 
     //The Grip
     TDistance gripTrX;

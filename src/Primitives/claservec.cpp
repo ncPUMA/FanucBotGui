@@ -6,6 +6,10 @@
 #include <Prs3d_Arrow.hxx>
 #include <Prs3d_Text.hxx>
 
+#include <AIS_InteractiveContext.hxx>
+#include <AIS_Shape.hxx>
+#include <IntCurvesFace_ShapeIntersector.hxx>
+
 CLaserVec::CLaserVec(const gp_Pnt2d& thePnt1,
                      const gp_Pnt2d& thePnt2,
                      Standard_Real theArrowLength)
@@ -16,6 +20,36 @@ CLaserVec::CLaserVec(const gp_Pnt2d& thePnt1,
   gp_Vec aVec (thePnt2.X() - thePnt1.X(), thePnt2.Y() - thePnt1.Y(), 0.0);
   myDir = gp_Dir(aVec);
   myLength = aVec.Magnitude();
+  clippedLenght = myLength;
+}
+
+void CLaserVec::clipLenght(Handle(AIS_InteractiveContext) context,
+                           const NCollection_Vector<Handle(AIS_Shape)>& theObjects)
+{
+    clippedLenght = myLength;
+    IntCurvesFace_ShapeIntersector intersector;
+    const gp_Trsf myTrsf = context->Location(this).Transformation();
+    const gp_Pnt trP = myPnt.Transformed(myTrsf);
+    const gp_Lin lin = gp_Lin(trP, myDir.Transformed(myTrsf));
+    clippedLenght = myLength;
+    for(NCollection_Vector<Handle(AIS_Shape)>::Iterator anIter(theObjects);
+        anIter.More(); anIter.Next())
+    {
+        const Handle(AIS_Shape)& anObject = anIter.Value();
+        const TopoDS_Shape shape = anObject->Shape().Located(context->Location(anObject));
+        intersector.Load(shape, Precision::Confusion());
+
+        intersector.PerformNearest(lin, 0, RealLast());
+        if (intersector.IsDone() && intersector.NbPnt() > 0) {
+            gp_Pnt aPnt = intersector.Pnt(1);
+            if (!trP.IsEqual(aPnt, gp::Resolution())) {
+                const gp_Vec newVec(trP, aPnt);
+                const Standard_Real dist = newVec.Magnitude();
+                if (dist < clippedLenght)
+                    clippedLenght = dist;
+            }
+        }
+    }
 }
 
 void CLaserVec::Compute (const Handle(PrsMgr_PresentationManager3d)& ,
@@ -32,7 +66,7 @@ void CLaserVec::Compute (const Handle(PrsMgr_PresentationManager3d)& ,
     anArrowAspect->SetLength(myArrowLength);
 
     gp_Pnt aLastPoint = myPnt;
-    aLastPoint.Translate(myLength*gp_Vec(myDir));
+    aLastPoint.Translate(clippedLenght * gp_Vec(myDir));
 
     // Draw Line
     {

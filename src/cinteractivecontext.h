@@ -33,14 +33,14 @@ public:
     void resetCursorPosition();
     gp_Pnt lastCursorPosition() const;
 
-    void setLaserLine(const gp_Pnt &pnt, const gp_Dir &dir);
-
     void setPartModel(const TopoDS_Shape &shape);
     void setPartMdlTransform(const gp_Trsf &trsf);
     void setDeskModel(const TopoDS_Shape &shape);
     void setDeskMdlTransform(const gp_Trsf &trsf);
     void setLsrheadModel(const TopoDS_Shape &shape);
     void setLsrheadMdlTransform(const gp_Trsf &trsf);
+    void setLaserLine(const gp_Pnt &pnt, const gp_Dir &dir,
+                      const double lenght, const bool clipping);
     void setGripModel(const TopoDS_Shape &shape);
     void setGripMdlTransform(const gp_Trsf &trsf);
 

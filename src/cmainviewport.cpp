@@ -212,7 +212,7 @@ class CMainViewportPrivate : public AIS_ViewController
             dir = gp_Dir(guiSettings.lheadLsrNormalX,
                          guiSettings.lheadLsrNormalY,
                          guiSettings.lheadLsrNormalZ);
-        context->setLaserLine(start, dir);
+        context->setLaserLine(start, dir, guiSettings.lheadLsrLenght, guiSettings.lheadLsrClip);
         context->setGripMdlTransform(calcGripTrsf());
         context->setGripVisible(guiSettings.gripVis);
         view->Redraw();
