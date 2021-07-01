@@ -1,8 +1,8 @@
-QT       += core gui network
+QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++14
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -11,6 +11,7 @@ CONFIG += c++11
 SOURCES += \
     BotSocket/cabstractbotsocket.cpp \
     BotSocket/cabstractui.cpp \
+    BotSocket/cbotsocketemulator.cpp \
     Dialogs/caddcalibpointdialog.cpp \
     Dialogs/cbottaskdialogfacade.cpp \
     Dialogs/cdrillbottaskdialog.cpp \
@@ -37,6 +38,7 @@ HEADERS += \
     BotSocket/bot_socket_types.h \
     BotSocket/cabstractbotsocket.h \
     BotSocket/cabstractui.h \
+    BotSocket/cbotsocketemulator.h \
     Dialogs/caddcalibpointdialog.h \
     Dialogs/cbottaskdialogfacade.h \
     Dialogs/cdrillbottaskdialog.h \
@@ -69,15 +71,7 @@ FORMS += \
     cguisettingswidget.ui \
     mainwindow.ui
 
-INCLUDEPATH += $$quote($$(CSF_OCCTIncludePath))
-LIBS += -L$$quote($$(CSF_OCCTLibPath))
-
-LIBS += -lTKernel -lTKMath -lTKService -lTKV3d -lTKOpenGl \
-        -lTKBRep -lTKIGES -lTKSTL -lTKVRML -lTKSTEP -lTKSTEPAttr -lTKSTEP209 \
-        -lTKSTEPBase -lTKGeomBase -lTKGeomAlgo -lTKG3d -lTKG2d \
-        -lTKXSBase -lTKShHealing -lTKHLR -lTKTopAlgo -lTKMesh -lTKPrim \
-        -lTKCDF -lTKBool -lTKBO -lTKFillet -lTKOffset -lTKLCAF -lTKCAF -lTKVCAF \
-                -lTKBin -lTKXml -lTKRWMesh
+include(opencascade.pri)
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -97,7 +91,6 @@ DISTFILES += \
     Data/Models/MHZ2_16D_grip.stp \
     Data/Models/Neje tool 30W Laser Module.stp \
     Data/Models/WTTGA-001 - Configurable Table.stp \
-    Data/Models/WTTGA-001 - Configurable Table.stp \
     Data/Models/gripper_v1.step \
     Data/Models/plate.stp \
     Data/Models/turbine_blade.stp \
@@ -107,3 +100,7 @@ DISTFILES += \
 
 RESOURCES += \
     data.qrc
+
+include(if/if.pri)
+include(PartReference/PartReference.pri)
+include(RobotMovers/RobotMovers.pri)

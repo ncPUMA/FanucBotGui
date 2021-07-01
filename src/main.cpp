@@ -9,6 +9,8 @@
 
 #include "csimplesettingsstorage.h"
 
+#include "BotSocket/cbotsocketemulator.h"
+
 int main(int argc, char *argv[])
 {
     //arg parsing
@@ -38,9 +40,13 @@ int main(int argc, char *argv[])
 #else
     settings.setSettingsFName("conf.cfg");
 #endif
+
+    CBotSocketEmulator emulator(false, 5.0f, 10.0, 90.0);
+
     MainWindow w;
     w.init(*aGraphicDriver);
     w.setSettingsStorage(settings);
+    w.setBotSocket(emulator);
     if (bStyleSheet)
     {
         QFile f(":/Styles/Data/StyleSheets/style.qss");

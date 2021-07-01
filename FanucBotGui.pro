@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS += \
-    MainApp
+    MainApp \
+    test
 
 MainApp.file = src/MainApp.pro

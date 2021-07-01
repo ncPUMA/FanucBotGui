@@ -20,7 +20,7 @@ protected:
     CAbstractBotSocket();
 
     virtual void uiStateChanged(const GUI_TYPES::EN_UiStates state) = 0;
-    virtual void shapeTransformChaged(const BotSocket::EN_ShapeType shType) = 0;
+    virtual void shapeTransformChanged(const BotSocket::EN_ShapeType shType) = 0;
 
     void socketStateChanged(const BotSocket::TBotState state);
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos);

@@ -9,7 +9,7 @@ public:
 
 protected:
     void uiStateChanged(const GUI_TYPES::EN_UiStates) final { }
-    void shapeTransformChaged(const BotSocket::EN_ShapeType) final { }
+    void shapeTransformChanged(const BotSocket::EN_ShapeType) final { }
 
 } emptySocket;
 
@@ -49,5 +49,6 @@ void CAbstractUi::uiStateChanged(const GUI_TYPES::EN_UiStates state)
 
 void CAbstractUi::shapeTransformChaged(const BotSocket::EN_ShapeType shType)
 {
-    d_ptr->bot->shapeTransformChaged(shType);
+    d_ptr->bot->shapeTransformChanged(shType);
 }
+
