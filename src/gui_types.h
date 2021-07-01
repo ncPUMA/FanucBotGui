@@ -1,6 +1,8 @@
 #ifndef GUI_TYPES_H
 #define GUI_TYPES_H
 
+#include <cmath>
+
 namespace GUI_TYPES
 {
 
@@ -44,6 +46,15 @@ struct SVertex
     SVertex(const TDistance X = 0., const TDistance Y = 0, const TDistance Z = 0) :
         x(X), y(Y), z(Z) { }
 
+    inline bool isEqual(const SVertex &other,
+                        const TDistance precision = 0.) const {
+        if (precision < std::abs(x - other.x) &&
+                precision < std::abs(y - other.y) &&
+                precision < std::abs(z - other.z))
+                return true;
+        return false;
+    }
+
     TDistance x, y, z;
 };
 
@@ -51,6 +62,15 @@ struct SRotationAngle
 {
     SRotationAngle(const TDegree alpha = 0., const TDegree beta = 0, const TDegree gamma = 0) :
         x(alpha), y(beta), z(gamma) { }
+
+    inline bool isEqual(const SRotationAngle &other,
+                        const TDegree precision = 0.) const {
+        if (precision < std::abs(x - other.x) &&
+                precision < std::abs(y - other.y) &&
+                precision < std::abs(z - other.z))
+                return true;
+        return false;
+    }
 
     TDistance x, y, z;
 };

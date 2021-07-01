@@ -239,8 +239,8 @@ private:
         if (!ais_laser.IsNull()) {
             context->SetLocation(ais_laser, trsf);
             context->Redisplay(ais_laser, Standard_False);
+            updateLaserLine();
         }
-        updateLaserLine();
     }
 
     void setLaserLine(const gp_Pnt &pnt, const gp_Dir &dir,
@@ -255,8 +255,8 @@ private:
             context->SetDisplayMode(ais_laser, AIS_Shaded, Standard_False);
             context->Display(ais_laser, Standard_False);
             context->Deactivate(ais_laser);
+            updateLaserLine();
         }
-        updateLaserLine();
     }
 
     void setGripModel(const TopoDS_Shape &shape) {

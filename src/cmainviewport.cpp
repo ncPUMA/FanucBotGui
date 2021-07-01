@@ -3,7 +3,6 @@
 #include <vector>
 #include <map>
 
-#include <QDebug>
 #include <QMouseEvent>
 #include <QMenu>
 #include <QAction>
@@ -41,6 +40,9 @@ static constexpr double DEGREE_K = M_PI / 180.;
 
 static const Quantity_Color BG_CLR   = Quantity_Color( .7765,  .9 , 1.  , Quantity_TOC_RGB);
 static const Graphic3d_ZLayerId Z_LAYER_ID_WITHOUT_DEPTH_TEST_DEFAULT = 100;
+
+static const GUI_TYPES::TDistance DISTANCE_PRECITION = 0.000005;
+static const GUI_TYPES::TDegree   ROTATION_PRECITION = 0.000005;
 
 class CMainViewportPrivate : public AIS_ViewController
 {
@@ -267,9 +269,11 @@ class CMainViewportPrivate : public AIS_ViewController
     }
 
     void moveLsrhead(const BotSocket::SBotPosition &pos) {
-        lheadPos = pos;
-        context->setLsrheadMdlTransform(calcLsrheadTrsf());
-        view->Redraw();
+        if (!pos.isEqual(lheadPos, DISTANCE_PRECITION, ROTATION_PRECITION)) {
+            lheadPos = pos;
+            context->setLsrheadMdlTransform(calcLsrheadTrsf());
+            view->Redraw();
+        }
     }
 
     void moveGrip(const BotSocket::SBotPosition &pos) {
