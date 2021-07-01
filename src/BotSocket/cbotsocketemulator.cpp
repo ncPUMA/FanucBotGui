@@ -68,18 +68,12 @@ const TopoDS_Shape &CBotSocketEmulator::getShape(ShapeType type)
     return CAbstractBotSocket::getShape(shape_type_conv[type]);
 }
 
-void CBotSocketEmulator::init(const GUI_TYPES::EN_UserActions curAction,
-                              const std::map <BotSocket::EN_ShapeType, TopoDS_Shape> &)
-{
-    usrActionChanged(curAction);
-}
-
 void CBotSocketEmulator::shapeTransformChanged(const BotSocket::EN_ShapeType)
 {}
 
-void CBotSocketEmulator::usrActionChanged(const GUI_TYPES::EN_UserActions action)
+void CBotSocketEmulator::uiStateChanged(const GUI_TYPES::EN_UiStates state)
 {
-    if(action == GUI_TYPES::ENUA_CALIBRATION && point_pair_part_referencer_)
+    if(state == GUI_TYPES::ENUS_CALIBRATION && point_pair_part_referencer_)
     {
         // TODO: distinguish calibration by point pairs/fixture
 
@@ -90,7 +84,7 @@ void CBotSocketEmulator::usrActionChanged(const GUI_TYPES::EN_UserActions action
         QFuture<bool> res = point_pair_part_referencer_->referencePart();
         reference_watcher_.setFuture(res);
     }
-    else if(action == GUI_TYPES::ENUA_ADD_TASK && robot_mover_)
+    else if(state == GUI_TYPES::ENUS_BOT_WORKED && robot_mover_)
     {
         // TODO: distinguish movement to point/along path
         IRobotMover::path_point_t p;

@@ -8,10 +8,9 @@ public:
     CEmptyBotSocket() : CAbstractBotSocket() { }
 
 protected:
-    void init(const GUI_TYPES::EN_UserActions,
-              const std::map <BotSocket::EN_ShapeType, TopoDS_Shape> &) final { }
+    void uiStateChanged(const GUI_TYPES::EN_UiStates) final { }
     void shapeTransformChanged(const BotSocket::EN_ShapeType) final { }
-    void usrActionChanged(const GUI_TYPES::EN_UserActions) final { }
+
 } emptySocket;
 
 
@@ -43,10 +42,9 @@ void CAbstractUi::setBotSocket(CAbstractBotSocket &socket)
     d_ptr->bot->ui = this;
 }
 
-void CAbstractUi::init(const GUI_TYPES::EN_UserActions curAction,
-                       const std::map<BotSocket::EN_ShapeType, TopoDS_Shape> &shapes)
+void CAbstractUi::uiStateChanged(const GUI_TYPES::EN_UiStates state)
 {
-    d_ptr->bot->init(curAction, shapes);
+    d_ptr->bot->uiStateChanged(state);
 }
 
 void CAbstractUi::shapeTransformChaged(const BotSocket::EN_ShapeType shType)
@@ -54,7 +52,3 @@ void CAbstractUi::shapeTransformChaged(const BotSocket::EN_ShapeType shType)
     d_ptr->bot->shapeTransformChanged(shType);
 }
 
-void CAbstractUi::usrActionChanged(const GUI_TYPES::EN_UserActions action)
-{
-    d_ptr->bot->usrActionChanged(action);
-}

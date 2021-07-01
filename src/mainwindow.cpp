@@ -23,7 +23,8 @@ public:
     CUiIface() :
         stateLamp(new QLabel()),
         attachLamp(new QLabel()),
-        viewport(nullptr) { }
+        viewport(nullptr),
+        jrnl(nullptr) { }
 
     void initToolBar(QToolBar *tBar) {
         iconSize = tBar->iconSize();
@@ -87,18 +88,42 @@ protected:
     }
 
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos) final {
+        const QString jrnlTxt = MainWindow::tr(" Lsr: %1\t-->\tx: %2 y: %3 z: %4 "
+                                               "α: %5 β: %6 γ: %7")
+                .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
+                .arg(pos.globalPos.x     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.y     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.z     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
+        jrnl->append(jrnlTxt);
         viewport->moveLsrhead(pos);
         shapeTransformChaged(BotSocket::ENST_LSRHEAD);
     }
 
     void gripPositionChanged(const BotSocket::SBotPosition &pos) final {
+        const QString jrnlTxt = MainWindow::tr("Grip: %1\t-->\tx: %2 y: %3 z: %4 "
+                                               "α: %5 β: %6 γ: %7")
+                .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
+                .arg(pos.globalPos.x     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.y     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.z     , 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
+        jrnl->append(jrnlTxt);
         viewport->moveGrip(pos);
         shapeTransformChaged(BotSocket::ENST_GRIP);
         if (viewport->getBotState() == BotSocket::ENBS_ATTACHED)
             shapeTransformChaged(BotSocket::ENST_PART);
     }
 
-    const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const {
+    GUI_TYPES::EN_UiStates getUiState() const final {
+        return viewport->getUiState();
+    }
+
+    const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const final {
         using namespace BotSocket;
         switch(shType) {
             case ENST_DESK   : return viewport->getDeskShape();
@@ -111,11 +136,20 @@ protected:
         return sh;
     }
 
+    std::vector <GUI_TYPES::SCalibPoint> getCalibPoints() const final {
+        return viewport->getCallibrationPoints();
+    }
+
+    std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const {
+        return viewport->getTaskPoints();
+    }
+
 private:
     QSize iconSize;
     QLabel * const stateLamp, * const attachLamp;
 
     CMainViewport *viewport;
+    QTextEdit *jrnl;
 };
 
 
@@ -157,6 +191,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     d_ptr->uiIface.viewport = ui->mainView;
+    d_ptr->uiIface.jrnl = ui->teJrnl;
 
     configMenu();
     configToolBar();
@@ -197,7 +232,7 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
     ui->mainView->setGripModel(loadShape(":/Models/Data/Models/LDLSR30w.STEP"));
 
     ui->mainView->setShading(true);
-    ui->mainView->setUserAction(GUI_TYPES::ENUA_ADD_TASK);
+    ui->mainView->setUiState(GUI_TYPES::ENUS_TASK_EDITING);
 }
 
 void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
@@ -224,7 +259,6 @@ void MainWindow::setBotSocket(CAbstractBotSocket &botSocket)
     shapes[ENST_PART]    = ui->mainView->getPartShape();
     shapes[ENST_LSRHEAD] = ui->mainView->getLsrheadShape();
     shapes[ENST_GRIP]    = ui->mainView->getGripShape();
-    d_ptr->uiIface.init(ui->mainView->getUsrAction(), shapes);
 }
 
 void MainWindow::slImport()
@@ -265,11 +299,11 @@ void MainWindow::slShading(bool enabled)
 void MainWindow::slShowCalibWidget(bool enabled)
 {
     ui->dockSettings->setVisible(enabled);
-    const GUI_TYPES::EN_UserActions action = enabled
-            ? GUI_TYPES::ENUA_CALIBRATION
-            : GUI_TYPES::ENUA_ADD_TASK;
-    ui->mainView->setUserAction(action);
-    d_ptr->uiIface.usrActionChanged(action);
+    const GUI_TYPES::EN_UiStates state = enabled
+            ? GUI_TYPES::ENUS_CALIBRATION
+            : GUI_TYPES::ENUS_TASK_EDITING;
+    ui->mainView->setUiState(state);
+    d_ptr->uiIface.uiStateChanged(state);
 }
 
 void MainWindow::slMsaa()
@@ -312,6 +346,21 @@ void MainWindow::slCallibApply()
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_LSRHEAD);
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART   );
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   );
+}
+
+void MainWindow::slStart()
+{
+    ui->mainView->setUiState(GUI_TYPES::ENUS_BOT_WORKED);
+    d_ptr->uiIface.uiStateChanged(GUI_TYPES::ENUS_BOT_WORKED);
+}
+
+void MainWindow::slStop()
+{
+    const GUI_TYPES::EN_UiStates state = ui->actionCalib->isChecked()
+            ? GUI_TYPES::ENUS_CALIBRATION
+            : GUI_TYPES::ENUS_TASK_EDITING;
+    ui->mainView->setUiState(state);
+    d_ptr->uiIface.uiStateChanged(state);
 }
 
 void MainWindow::configMenu()
@@ -361,6 +410,14 @@ void MainWindow::configToolBar()
     QLabel * const strech = new QLabel(" ", ui->toolBar);
     strech->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     ui->toolBar->addWidget(strech);
+    ui->toolBar->addAction(QIcon(":/icons/Data/Icons/play.png"),
+                           tr("Старт"),
+                           this,
+                           SLOT(slStart()));
+    ui->toolBar->addAction(QIcon(":/icons/Data/Icons/stop.png"),
+                           tr("Стоп"),
+                           this,
+                           SLOT(slStop()));
 
     //State and attach
     d_ptr->uiIface.initToolBar(ui->toolBar);

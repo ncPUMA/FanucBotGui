@@ -31,10 +31,8 @@ protected:
     const TopoDS_Shape &getShape(ShapeType type) override;
 
     // CAbstractBotSocket
-    void init(const GUI_TYPES::EN_UserActions curAction,
-              const std::map <BotSocket::EN_ShapeType, TopoDS_Shape> &shapes) override;
     void shapeTransformChanged(const BotSocket::EN_ShapeType shType) override;
-    void usrActionChanged(const GUI_TYPES::EN_UserActions action) override;
+    void uiStateChanged(const GUI_TYPES::EN_UiStates state) override;
 
 private slots:
     void reference_finished();
