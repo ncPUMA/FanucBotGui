@@ -12,7 +12,6 @@ enum EN_BotState
     ENBS_NOT_ATTACHED,
     ENBS_ATTACHED
 };
-typedef int TBotState;
 
 typedef GUI_TYPES::TDistance      TDistance;
 typedef GUI_TYPES::TDegree        TDegree;

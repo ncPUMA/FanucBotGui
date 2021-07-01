@@ -47,7 +47,7 @@ void CBotSocketEmulator::updatePosition(const position_t &pos)
 void CBotSocketEmulator::updateConnectionState(PositionState state)
 {
     // TODO: single enum type
-    std::map<IPositionReceiver::PositionState, BotSocket::TBotState> state_conv {
+    std::map<IPositionReceiver::PositionState, BotSocket::EN_BotState> state_conv {
         {POSITION_STATE_FALL,            BotSocket::ENBS_FALL},
         {POSITION_STATE_NOT_ATTACHED,    BotSocket::ENBS_NOT_ATTACHED},
         {POSITION_STATE_ATTACHED,        BotSocket::ENBS_ATTACHED}

@@ -22,7 +22,7 @@ protected:
 
     void setBotSocket(CAbstractBotSocket &socket);
 
-    virtual void socketStateChanged(const BotSocket::TBotState state) = 0;
+    virtual void socketStateChanged(const BotSocket::EN_BotState state) = 0;
     virtual void laserHeadPositionChanged(const BotSocket::SBotPosition &pos) = 0;
     virtual void gripPositionChanged(const BotSocket::SBotPosition &pos) = 0;
     virtual GUI_TYPES::EN_UiStates getUiState() const = 0;

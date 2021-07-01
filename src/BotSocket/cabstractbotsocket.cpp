@@ -9,7 +9,7 @@ static class CEmptyUi : public CAbstractUi
     friend class CAbstractBotSocket;
 
 protected:
-    void socketStateChanged(const BotSocket::TBotState) final { }
+    void socketStateChanged(const BotSocket::EN_BotState) final { }
     void laserHeadPositionChanged(const BotSocket::SBotPosition &) final { }
     void gripPositionChanged(const BotSocket::SBotPosition &) final { }
     GUI_TYPES::EN_UiStates getUiState() const final { return GUI_TYPES::ENUS_TASK_EDITING; }
@@ -39,7 +39,7 @@ CAbstractBotSocket::CAbstractBotSocket() :
 
 }
 
-void CAbstractBotSocket::socketStateChanged(const BotSocket::TBotState state)
+void CAbstractBotSocket::socketStateChanged(const BotSocket::EN_BotState state)
 {
     ui->socketStateChanged(state);
 }

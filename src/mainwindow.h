@@ -46,6 +46,9 @@ private slots:
     void slStart();
     void slStop();
 
+    //For LBot
+    void slUpdateBotLamps();
+
 private:
     void configMenu();
     void configToolBar();

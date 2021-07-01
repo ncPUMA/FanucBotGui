@@ -6,6 +6,7 @@
 #include <QMessageBox>
 #include <QTime>
 #include <QLabel>
+#include <QTimer>
 
 #include "cabstractsettingsstorage.h"
 #include "ModelLoader/cmodelloaderfactorymethod.h"
@@ -14,6 +15,7 @@
 #include "BotSocket/cabstractui.h"
 
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
+static const int STATE_LAMP_UPDATE_INTERVAL = 200;
 
 class CUiIface : public CAbstractUi
 {
@@ -21,70 +23,12 @@ class CUiIface : public CAbstractUi
 
 public:
     CUiIface() :
-        stateLamp(new QLabel()),
-        attachLamp(new QLabel()),
         viewport(nullptr),
         jrnl(nullptr) { }
 
-    void initToolBar(QToolBar *tBar) {
-        iconSize = tBar->iconSize();
-        const QPixmap red =
-                QPixmap(":/Lamps/Data/Lamps/red.png").scaled(iconSize,
-                                                             Qt::IgnoreAspectRatio,
-                                                             Qt::SmoothTransformation);
-        QFont fnt = tBar->font();
-        fnt.setPointSize(18);
-
-        QLabel * const txtState = new QLabel(MainWindow::tr("Соединение: "), tBar);
-        txtState->setFont(fnt);
-        txtState->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        tBar->addWidget(txtState);
-        stateLamp->setParent(tBar);
-        stateLamp->setPixmap(red);
-        tBar->addWidget(stateLamp);
-
-        QLabel * const txtAttach = new QLabel(MainWindow::tr(" Захват: "), tBar);
-        txtAttach->setFont(fnt);
-        txtAttach->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        tBar->addWidget(txtAttach);
-        attachLamp->setParent(tBar);
-        attachLamp->setPixmap(red);
-        tBar->addWidget(attachLamp);
-    }
-
 protected:
-    void socketStateChanged(const BotSocket::TBotState state) final {
-        static const QPixmap red =
-                QPixmap(":/Lamps/Data/Lamps/red.png").scaled(iconSize,
-                                                             Qt::IgnoreAspectRatio,
-                                                             Qt::SmoothTransformation);
-        static const QPixmap green =
-                QPixmap(":/Lamps/Data/Lamps/green.png").scaled(iconSize,
-                                                             Qt::IgnoreAspectRatio,
-                                                             Qt::SmoothTransformation);
-        switch(state) {
-            using namespace BotSocket;
-            case ENBS_FALL:
-                stateLamp->setPixmap(red);
-                stateLamp->setToolTip(MainWindow::tr("Авария"));
-                attachLamp->setPixmap(red);
-                attachLamp->setToolTip(MainWindow::tr("Нет данных"));
-                break;
-            case ENBS_NOT_ATTACHED:
-                stateLamp->setPixmap(green);
-                stateLamp->setToolTip(MainWindow::tr("ОК"));
-                attachLamp->setPixmap(red);
-                attachLamp->setToolTip(MainWindow::tr("Нет захвата"));
-                break;
-            case ENBS_ATTACHED:
-                stateLamp->setPixmap(green);
-                stateLamp->setToolTip(MainWindow::tr("ОК"));
-                attachLamp->setPixmap(green);
-                attachLamp->setToolTip(MainWindow::tr("Захват"));
-                break;
-            default:
-                break;
-        }
+    void socketStateChanged(const BotSocket::EN_BotState state) final {
+        viewport->setBotState(state);
     }
 
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos) final {
@@ -145,9 +89,6 @@ protected:
     }
 
 private:
-    QSize iconSize;
-    QLabel * const stateLamp, * const attachLamp;
-
     CMainViewport *viewport;
     QTextEdit *jrnl;
 };
@@ -160,8 +101,18 @@ class MainWindowPrivate
 
 private:
     MainWindowPrivate() :
-        settingsStorage(&emptySettingsStorage)
-    { }
+        settingsStorage(&emptySettingsStorage),
+        stateLamp(new QLabel()),
+        attachLamp(new QLabel()),
+        lampTm(new QTimer()) {
+        lampTm->setSingleShot(false);
+        lampTm->setInterval(STATE_LAMP_UPDATE_INTERVAL);
+        lampTm->start();
+    }
+
+    ~MainWindowPrivate() {
+        delete lampTm;
+    }
 
     void setMSAA(const GUI_TYPES::TMSAA value, CMainViewport &view) {
         for(auto pair : mapMsaa) {
@@ -172,12 +123,74 @@ private:
         view.setMSAA(value);
     }
 
+    void initToolBar(QToolBar *tBar) {
+        const QPixmap red =
+                QPixmap(":/Lamps/Data/Lamps/red.png").scaled(tBar->iconSize(),
+                                                             Qt::IgnoreAspectRatio,
+                                                             Qt::SmoothTransformation);
+        QFont fnt = tBar->font();
+        fnt.setPointSize(18);
+
+        QLabel * const txtState = new QLabel(MainWindow::tr("Соединение: "), tBar);
+        txtState->setFont(fnt);
+        txtState->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        tBar->addWidget(txtState);
+        stateLamp->setParent(tBar);
+        stateLamp->setPixmap(red);
+        tBar->addWidget(stateLamp);
+
+        QLabel * const txtAttach = new QLabel(MainWindow::tr(" Захват: "), tBar);
+        txtAttach->setFont(fnt);
+        txtAttach->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        tBar->addWidget(txtAttach);
+        attachLamp->setParent(tBar);
+        attachLamp->setPixmap(red);
+        tBar->addWidget(attachLamp);
+    }
+
+    void updateBotLamps(const QSize iconSize, const BotSocket::EN_BotState state)
+    {
+        static const QPixmap red =
+                QPixmap(":/Lamps/Data/Lamps/red.png").scaled(iconSize,
+                                                             Qt::IgnoreAspectRatio,
+                                                             Qt::SmoothTransformation);
+        static const QPixmap green =
+                QPixmap(":/Lamps/Data/Lamps/green.png").scaled(iconSize,
+                                                             Qt::IgnoreAspectRatio,
+                                                             Qt::SmoothTransformation);
+        switch(state) {
+            using namespace BotSocket;
+            case ENBS_FALL:
+                stateLamp->setPixmap(red);
+                stateLamp->setToolTip(MainWindow::tr("Авария"));
+                attachLamp->setPixmap(red);
+                attachLamp->setToolTip(MainWindow::tr("Нет данных"));
+                break;
+            case ENBS_NOT_ATTACHED:
+                stateLamp->setPixmap(green);
+                stateLamp->setToolTip(MainWindow::tr("ОК"));
+                attachLamp->setPixmap(red);
+                attachLamp->setToolTip(MainWindow::tr("Нет захвата"));
+                break;
+            case ENBS_ATTACHED:
+                stateLamp->setPixmap(green);
+                stateLamp->setToolTip(MainWindow::tr("ОК"));
+                attachLamp->setPixmap(green);
+                attachLamp->setToolTip(MainWindow::tr("Захват"));
+                break;
+            default:
+                break;
+        }
+    }
+
 private:
     std::map <GUI_TYPES::TMSAA, QAction *> mapMsaa;
 
     CEmptySettingsStorage emptySettingsStorage;
     CAbstractSettingsStorage *settingsStorage;
 
+    QLabel * const stateLamp, * const attachLamp;
+    QTimer * const lampTm;
     CUiIface uiIface;
 };
 
@@ -192,6 +205,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     d_ptr->uiIface.viewport = ui->mainView;
     d_ptr->uiIface.jrnl = ui->teJrnl;
+    connect(d_ptr->lampTm, &QTimer::timeout, this, &MainWindow::slUpdateBotLamps);
 
     configMenu();
     configToolBar();
@@ -363,6 +377,11 @@ void MainWindow::slStop()
     d_ptr->uiIface.uiStateChanged(state);
 }
 
+void MainWindow::slUpdateBotLamps()
+{
+    d_ptr->updateBotLamps(ui->toolBar->iconSize(), ui->mainView->getBotState());
+}
+
 void MainWindow::configMenu()
 {
     //Menu "File"
@@ -420,6 +439,6 @@ void MainWindow::configToolBar()
                            SLOT(slStop()));
 
     //State and attach
-    d_ptr->uiIface.initToolBar(ui->toolBar);
+    d_ptr->initToolBar(ui->toolBar);
 }
 

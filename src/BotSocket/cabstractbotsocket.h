@@ -22,7 +22,7 @@ protected:
     virtual void uiStateChanged(const GUI_TYPES::EN_UiStates state) = 0;
     virtual void shapeTransformChanged(const BotSocket::EN_ShapeType shType) = 0;
 
-    void socketStateChanged(const BotSocket::TBotState state);
+    void socketStateChanged(const BotSocket::EN_BotState state);
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos);
     void gripPositionChanged(const BotSocket::SBotPosition &pos);
     GUI_TYPES::EN_UiStates getUiState() const;
