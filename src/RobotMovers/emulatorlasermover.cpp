@@ -1,9 +1,7 @@
 #include "emulatorlasermover.h"
 #include <QtConcurrent/QtConcurrentRun>
 
-int TIMER_MSEC = 100;
-
-EmulatorLaserMover::EmulatorLaserMover(double linear_speed, double angular_speed):
+EmulatorLaserMover::EmulatorLaserMover(float update_frequency, double linear_speed, double angular_speed):
     aborted_(false),
     moving_(false),
     linear_speed_(linear_speed),
@@ -12,11 +10,11 @@ EmulatorLaserMover::EmulatorLaserMover(double linear_speed, double angular_speed
     QObject::connect(&position_notify_timer_, &QTimer::timeout, [this](){
         updatePosition();
     });
-    position_notify_timer_.start(TIMER_MSEC);
+    position_notify_timer_.start(1000/update_frequency);
 }
 
-EmulatorLaserMover::EmulatorLaserMover(IPositionReceiver *receiver, IPartReferencer *part_referencer, double linear_speed, double angular_speed):
-    EmulatorLaserMover(linear_speed, angular_speed)
+EmulatorLaserMover::EmulatorLaserMover(IPositionReceiver *receiver, IPartReferencer *part_referencer, float update_frequency, double linear_speed, double angular_speed):
+    EmulatorLaserMover(update_frequency, linear_speed, angular_speed)
 {
     setPositionReceiver(receiver);
     setPartReferencer(part_referencer);
@@ -65,7 +63,7 @@ void EmulatorLaserMover::updatePosition()
     position_t diff = {goal_.t - cur_.t, goal_.r - cur_.r};
     if(linear_speed_ > 0.0)
     {
-        double max_move = linear_speed_ * TIMER_MSEC / 1000.0;
+        double max_move = linear_speed_ * position_notify_timer_.interval() / 1000.0;
 
         diff.t.SetX(std::max(-max_move, std::min(diff.t.X(), max_move)));
         diff.t.SetY(std::max(-max_move, std::min(diff.t.Y(), max_move)));
@@ -74,7 +72,7 @@ void EmulatorLaserMover::updatePosition()
 
     if(angular_speed_ > 0.0)
     {
-        double max_move = angular_speed_*M_PI / 180 * TIMER_MSEC / 1000.0;
+        double max_move = angular_speed_*M_PI / 180 * position_notify_timer_.interval() / 1000.0;
 
         diff.r.Set(std::max(-max_move, std::min(diff.r.X(), max_move)),
                    std::max(-max_move, std::min(diff.r.Y(), max_move)),

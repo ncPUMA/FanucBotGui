@@ -26,6 +26,9 @@ QFuture<bool> PointPairsPartReferencer::referencePart()
 
 bool PointPairsPartReferencer::referencePartAsync()
 {
+    if(point_pairs_.size() < 3)
+        return false;
+
     const bool with_scaling = true;
     const double max_error = 0.01;
 

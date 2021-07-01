@@ -5,10 +5,10 @@
 #include "../RobotMovers/emulatorlasermover.h"
 #include "../PartReference/pointpairspartreferencer.h"
 
-CBotSocketEmulator::CBotSocketEmulator(bool grip_attached, double linear_speed, double angular_speed):
+CBotSocketEmulator::CBotSocketEmulator(bool grip_attached, float update_frequency, double linear_speed, double angular_speed):
     CAbstractBotSocket(),
     point_pair_part_referencer_(std::make_unique<PointPairsPartReferencer>()),
-    robot_mover_(std::move(std::make_unique<EmulatorLaserMover>(this, point_pair_part_referencer_.get(), linear_speed, angular_speed))),
+    robot_mover_(std::move(std::make_unique<EmulatorLaserMover>(this, point_pair_part_referencer_.get(), update_frequency, linear_speed, angular_speed))),
     grip_attached_(grip_attached)
 {
     connect(&move_watcher_, &QFutureWatcher<IRobotMover::MOVE_RESULT>::finished, this, &CBotSocketEmulator::move_finished);
@@ -24,12 +24,12 @@ BotSocket::SBotPosition position2botposition(const position_t &pos)
     return BotSocket::SBotPosition(pos.t.X(), pos.t.Y(), pos.t.Z(), r.x, r.y, r.z);
 }
 
-position_t botposition2position(const BotSocket::SBotPosition &bpos)
+position_t botposition2position(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle)
 {
     //TODO: quaternion in sbotposition
-    position_t pos = {gp_Vec{bpos.globalPos.x, bpos.globalPos.y, bpos.globalPos.z}, gp_Quaternion()};
-    pos.r.SetEulerAngles(gp_Extrinsic_XYZ, bpos.globalRotation.x, bpos.globalRotation.y, bpos.globalRotation.z);
-    return pos;
+    position_t p = {gp_Vec{pos.x, pos.y, pos.z}, gp_Quaternion()};
+    p.r.SetEulerAngles(gp_Extrinsic_XYZ, angle.x, angle.y, angle.z);
+    return p;
 }
 
 void CBotSocketEmulator::updatePosition(const position_t &pos)
@@ -73,23 +73,41 @@ void CBotSocketEmulator::shapeTransformChanged(const BotSocket::EN_ShapeType)
 
 void CBotSocketEmulator::uiStateChanged(const GUI_TYPES::EN_UiStates state)
 {
-    if(state == GUI_TYPES::ENUS_CALIBRATION && point_pair_part_referencer_)
+    if(state != GUI_TYPES::ENUS_BOT_WORKED && robot_mover_ && robot_mover_->isMoving())
+        robot_mover_->abortMove();
+
+
+    if(state == GUI_TYPES::ENUS_CALIBRATION && point_pair_part_referencer_ )
     {
         // TODO: distinguish calibration by point pairs/fixture
-
         std::vector<IPointPairsPartReferencer::point_pair_t> point_pairs;
-        // FIXME: fill point_pairs
-        point_pair_part_referencer_->setPointPairs(point_pairs);
 
-        QFuture<bool> res = point_pair_part_referencer_->referencePart();
-        reference_watcher_.setFuture(res);
+        std::vector <GUI_TYPES::SCalibPoint> calib_points = getCalibPoints();
+        if(calib_points.size() > 3)
+        {
+            point_pairs.reserve(calib_points.size());
+            for(GUI_TYPES::SCalibPoint p : calib_points)
+                point_pairs.emplace_back(IPointPairsPartReferencer::point_pair_t{
+                                             gp_Vec(p.globalPos.x, p.globalPos.y, p.globalPos.z),
+                                             gp_Vec(p.botPos.x, p.botPos.y, p.botPos.z)
+                                         });
+
+            point_pair_part_referencer_->setPointPairs(point_pairs);
+
+            QFuture<bool> res = point_pair_part_referencer_->referencePart();
+            reference_watcher_.setFuture(res);
+        }
     }
     else if(state == GUI_TYPES::ENUS_BOT_WORKED && robot_mover_)
     {
-        // TODO: distinguish movement to point/along path
-        IRobotMover::path_point_t p;
-        // FIXME: fill path_point_t
-        QFuture<IRobotMover::MOVE_RESULT> res = robot_mover_->moveToPosition(p);
+        IRobotMover::path_t path;
+
+        std::vector<GUI_TYPES::STaskPoint> task_points = getTaskPoints();
+        path.reserve(task_points.size());
+        for(GUI_TYPES::STaskPoint p : task_points)
+            path.emplace_back(IRobotMover::path_point_t{botposition2position(p.globalPos, p.angle), 0, ""});
+
+        QFuture<IRobotMover::MOVE_RESULT> res = robot_mover_->moveAlongPath(path);
         move_watcher_.setFuture(res);
     }
 }
@@ -104,6 +122,12 @@ void CBotSocketEmulator::reference_finished()
 void CBotSocketEmulator::move_finished()
 {
     IRobotMover::MOVE_RESULT move_ok = move_watcher_.future().result();
-    qDebug() << "BotSocketEmulator::reference_finished. Result: " << move_ok;
+    std::map<IRobotMover::MOVE_RESULT, QString> move_result_map = {
+        {IRobotMover::MOVE_OK, "MOVE_OK"},
+        {IRobotMover::MOVE_USER_ABORT, "MOVE_USER_ABORT"},
+        {IRobotMover::MOVE_FAILURE, "MOVE_FAILURE"},
+        {IRobotMover::MOVE_UNACHIEVABLE, "MOVE_UNACHIEVABLE"}
+    };
+    qDebug() << "BotSocketEmulator::reference_finished. Result: " << move_result_map[move_ok];
     // TODO: notify GUI about move finished
 }

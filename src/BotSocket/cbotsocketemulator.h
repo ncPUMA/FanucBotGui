@@ -20,7 +20,7 @@ class CBotSocketEmulator :
     Q_OBJECT
 
 public:
-    CBotSocketEmulator(bool grip_attached = false, double linear_speed = 1.0, double angular_speed = 90.0);
+    CBotSocketEmulator(bool grip_attached = false, float update_frequency = 10.0, double linear_speed = 1.0, double angular_speed = 90.0);
 
 protected:
     // IPositionReceiver
