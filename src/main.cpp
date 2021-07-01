@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     settings.setSettingsFName("conf.cfg");
 #endif
 
-    CBotSocketEmulator emulator(false, 5.0f, 10.0, 90.0);
+    CBotSocketEmulator emulator(false, 50.0f, 10.0, 90.0);
 
     MainWindow w;
     w.init(*aGraphicDriver);
