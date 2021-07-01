@@ -12,9 +12,9 @@ CAddCalibPointDialog::CAddCalibPointDialog(QWidget *parent, const GUI_TYPES::SCa
     ui->dsbGlobalX->setValue(initData.globalPos.x);
     ui->dsbGlobalY->setValue(initData.globalPos.y);
     ui->dsbGlobalZ->setValue(initData.globalPos.z);
-    ui->dsbBotX->setValue(initData.globalPos.x);
-    ui->dsbBotY->setValue(initData.globalPos.y);
-    ui->dsbBotZ->setValue(initData.globalPos.z);
+    ui->dsbBotX->setValue(initData.botPos.x);
+    ui->dsbBotY->setValue(initData.botPos.y);
+    ui->dsbBotZ->setValue(initData.botPos.z);
 
     connect(ui->pbOk, &QAbstractButton::clicked, this, &QDialog::accept);
     connect(ui->pbCancel, &QAbstractButton::clicked, this, &QDialog::reject);

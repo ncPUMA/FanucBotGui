@@ -285,7 +285,6 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
-
     CMainViewport * const q_ptr;
 
     Handle(V3d_Viewer)             viewer;
@@ -662,6 +661,7 @@ void CMainViewport::slAddCalibPoint()
     initPoint.globalPos.x = cursorPos.X();
     initPoint.globalPos.y = cursorPos.Y();
     initPoint.globalPos.z = cursorPos.Z();
+    initPoint.botPos      = d_ptr->lheadPos.globalPos;
     CAddCalibPointDialog dialog(this, initPoint);
     if (dialog.exec() == QDialog::Accepted)
     {

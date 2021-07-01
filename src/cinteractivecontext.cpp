@@ -108,11 +108,11 @@ private:
         context->SetDisplayMode(ais_part, mode, Standard_False);
         context->Redisplay(ais_part, Standard_False);
         context->SetDisplayMode(ais_desk, mode, Standard_False);
-        context->Redisplay(ais_desk, Standard_False);
+        context->RecomputePrsOnly(ais_desk, Standard_False);
         context->SetDisplayMode(ais_lsrhead, mode, Standard_False);
-        context->Redisplay(ais_lsrhead, Standard_False);
+        context->RecomputePrsOnly(ais_lsrhead, Standard_False);
         context->SetDisplayMode(ais_grip, mode, Standard_False);
-        context->Redisplay(ais_grip, Standard_False);
+        context->RecomputePrsOnly(ais_grip, Standard_False);
     }
 
     void updateCursorPosition() {
@@ -126,7 +126,9 @@ private:
             if (selector->NbPicked() > 0) {
                 //cross
                 const gp_Pnt pick = selector->PickedPoint(1);
-                cursorPnt->SetComponent(new Geom_CartesianPoint(pick));
+                gp_Trsf transform;
+                transform.SetTranslation(gp_Pnt(), pick);
+                context->SetLocation(cursorPnt, transform);
 
                 //label
                 std::stringstream stream;
@@ -143,8 +145,7 @@ private:
 
         if (bLastVisible) {
             if (bCursorIsVisible) {
-                context->Redisplay(cursorPnt, Standard_False);
-                context->Redisplay(cursorLbl, Standard_False);
+                context->RecomputePrsOnly(cursorLbl, Standard_False);
             }
             else {
                 context->Erase(cursorPnt, Standard_False);
@@ -174,10 +175,8 @@ private:
     }
 
     void setPartMdlTransform(const gp_Trsf &trsf) {
-        if (!ais_part.IsNull()) {
+        if (!ais_part.IsNull())
             context->SetLocation(ais_part, trsf);
-            context->Redisplay(ais_part, Standard_False);
-        }
         updateLaserLine();
     }
 
@@ -203,10 +202,8 @@ private:
     }
 
     void setDeskMdlTransform(const gp_Trsf &trsf) {
-        if (!ais_desk.IsNull()) {
+        if (!ais_desk.IsNull())
             context->SetLocation(ais_desk, trsf);
-            context->Redisplay(ais_desk, Standard_False);
-        }
         updateLaserLine();
     }
 
@@ -232,13 +229,11 @@ private:
     }
 
     void setLsrheadMdlTransform(const gp_Trsf &trsf) {
-        if (!ais_part.IsNull()) {
+        if (!ais_part.IsNull())
             context->SetLocation(ais_lsrhead, trsf);
-            context->Redisplay(ais_lsrhead, Standard_False);
-        }
+
         if (!ais_laser.IsNull()) {
             context->SetLocation(ais_laser, trsf);
-            context->Redisplay(ais_laser, Standard_False);
             updateLaserLine();
         }
     }
@@ -281,10 +276,8 @@ private:
     }
 
     void setGripMdlTransform(const gp_Trsf &trsf) {
-        if (!ais_part.IsNull()) {
+        if (!ais_part.IsNull())
             context->SetLocation(ais_grip, trsf);
-            context->Redisplay(ais_grip, Standard_False);
-        }
         updateLaserLine();
     }
 
@@ -368,8 +361,8 @@ private:
         const gp_Pnt globalPos(calibPoint.globalPos.x, calibPoint.globalPos.x, calibPoint.globalPos.x);
         scpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
         scpnt.pntLbl->SetPosition(globalPos);
-        context->Redisplay(scpnt.pnt, Standard_False);
-        context->Redisplay(scpnt.pntLbl, Standard_False);
+        context->RecomputePrsOnly(scpnt.pnt, Standard_False);
+        context->RecomputePrsOnly(scpnt.pntLbl, Standard_False);
     }
 
     void removeCalibPoint(const size_t index) {
@@ -382,7 +375,7 @@ private:
             std::stringstream ss;
             ss << "C" << i + 1;
             calibPoints[i].pntLbl->SetText(TCollection_ExtendedString(ss.str().c_str(), Standard_True));
-            context->Redisplay(calibPoints[i].pntLbl, Standard_False);
+            context->RecomputePrsOnly(calibPoints[i].pntLbl, Standard_False);
         }
     }
 
@@ -435,8 +428,8 @@ private:
         const gp_Pnt globalPos(taskPoint.globalPos.x, taskPoint.globalPos.y, taskPoint.globalPos.z);
         stpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
         stpnt.pntLbl->SetPosition(globalPos);
-        context->Redisplay(stpnt.pnt, Standard_False);
-        context->Redisplay(stpnt.pntLbl, Standard_False);
+        context->RecomputePrsOnly(stpnt.pnt, Standard_False);
+        context->RecomputePrsOnly(stpnt.pntLbl, Standard_False);
     }
 
     void removeTaskPoint(const size_t index) {
@@ -449,7 +442,7 @@ private:
         {
             const std::string txt = taskPointName(i, taskPoints[i].taskType);
             taskPoints[i].pntLbl->SetText(TCollection_ExtendedString(txt.c_str(), Standard_True));
-            context->Redisplay(taskPoints[i].pntLbl, Standard_False);
+            context->RecomputePrsOnly(taskPoints[i].pntLbl, Standard_False);
         }
     }
 
@@ -460,7 +453,7 @@ private:
             vecObj.Append(ais_grip);
             vecObj.Append(ais_desk);
             ais_laser->clipLenght(context, vecObj);
-            context->Redisplay(ais_laser, Standard_False);
+            context->RecomputePrsOnly(ais_laser, Standard_False);
         }
     }
 
@@ -547,7 +540,9 @@ void CInteractiveContext::resetCursorPosition()
 
 gp_Pnt CInteractiveContext::lastCursorPosition() const
 {
-    return d_ptr->cursorPnt->Component()->Pnt();
+    const gp_Trsf transform =
+            d_ptr->context->Location(d_ptr->cursorPnt).Transformation();
+    return d_ptr->cursorPnt->Component()->Pnt().Transformed(transform);
 }
 
 void CInteractiveContext::setPartModel(const TopoDS_Shape &shape)
