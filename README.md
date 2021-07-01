@@ -11,6 +11,8 @@ Build:
    example: /usr/include/opencascade
 2. Add CSF_OCCTLibPath - path to opencascade lib files;
    example: /usr/lib
+3. Add EIGEN_INCLUDE_DIRS - path to eigen3 includes (libeigen3-dev.deb in Debian)
+   example: /usr/include/eigen3
    
 Using:</br>
 Общие требования к интерфейсу
