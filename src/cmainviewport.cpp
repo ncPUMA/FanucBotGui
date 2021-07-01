@@ -202,8 +202,6 @@ class CMainViewportPrivate : public AIS_ViewController
         view->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
         context->setPartMdlTransform(calcPartTrsf());
         context->setDeskMdlTransform(calcDeskTrsf());
-        const gp_Trsf trsf = calcLsrheadTrsf();
-        context->setLsrheadMdlTransform(trsf);
         const gp_Pnt start = gp_Pnt(guiSettings.lheadLsrTrX,
                                     guiSettings.lheadLsrTrY,
                                     guiSettings.lheadLsrTrZ);
@@ -215,6 +213,7 @@ class CMainViewportPrivate : public AIS_ViewController
                          guiSettings.lheadLsrNormalY,
                          guiSettings.lheadLsrNormalZ);
         context->setLaserLine(start, dir, guiSettings.lheadLsrLenght, guiSettings.lheadLsrClip);
+        context->setLsrheadMdlTransform(calcLsrheadTrsf());
         context->setGripMdlTransform(calcGripTrsf());
         context->setGripVisible(guiSettings.gripVis);
         view->Redraw();

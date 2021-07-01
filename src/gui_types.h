@@ -48,9 +48,9 @@ struct SVertex
 
     inline bool isEqual(const SVertex &other,
                         const TDistance precision = 0.) const {
-        if (precision < std::abs(x - other.x) &&
-                precision < std::abs(y - other.y) &&
-                precision < std::abs(z - other.z))
+        if (std::abs(x - other.x) < precision &&
+                std::abs(y - other.y) < precision &&
+                std::abs(z - other.z) < precision)
                 return true;
         return false;
     }
@@ -65,9 +65,9 @@ struct SRotationAngle
 
     inline bool isEqual(const SRotationAngle &other,
                         const TDegree precision = 0.) const {
-        if (precision < std::abs(x - other.x) &&
-                precision < std::abs(y - other.y) &&
-                precision < std::abs(z - other.z))
+        if (std::abs(x - other.x) < precision &&
+                std::abs(y - other.y) < precision &&
+                std::abs(z - other.z) < precision)
                 return true;
         return false;
     }
