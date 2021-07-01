@@ -457,8 +457,9 @@ private:
         for(auto i : objects) {
             if (i.IsNull())
                 continue;
-            intersector.Load(i->Shape(), Precision::Confusion());
-            const gp_Lin lin = gp_Lin(trP, trD);
+            const TopoDS_Shape shape = i->Shape().Located(context->Location(i));
+            intersector.Load(shape, Precision::Confusion());
+            const gp_Lin lin = gp_Lin(trP, aVec);
             intersector.PerformNearest(lin, 0, RealLast());
             if (intersector.IsDone() && intersector.NbPnt() > 0) {
                 gp_Pnt aPnt3 = intersector.Pnt(1);
@@ -469,7 +470,6 @@ private:
                 }
             }
         }
-
         lsrLine.ais_laser = new CLaserVec(trP, aVec, 1.);
         context->SetDisplayMode(lsrLine.ais_laser, AIS_Shaded, Standard_False);
         context->Display(lsrLine.ais_laser, Standard_False);
