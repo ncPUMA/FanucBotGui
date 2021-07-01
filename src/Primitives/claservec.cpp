@@ -1,5 +1,7 @@
 #include "claservec.h"
 
+#include <cmath>
+
 #include <Graphic3d_ArrayOfSegments.hxx>
 #include <Prs3d_ArrowAspect.hxx>
 #include <Prs3d_LineAspect.hxx>
@@ -22,7 +24,7 @@ CLaserVec::CLaserVec(const gp_Pnt2d& thePnt1,
   myLength = aVec.Magnitude();
   clippedLenght = myLength;
 }
-
+#include <QDebug>
 void CLaserVec::clipLenght(Handle(AIS_InteractiveContext) context,
                            const NCollection_Vector<Handle(AIS_Shape)>& theObjects)
 {
@@ -30,23 +32,25 @@ void CLaserVec::clipLenght(Handle(AIS_InteractiveContext) context,
     IntCurvesFace_ShapeIntersector intersector;
     const gp_Trsf myTrsf = context->Location(this).Transformation();
     const gp_Pnt trP = myPnt.Transformed(myTrsf);
-    const gp_Lin lin = gp_Lin(trP, myDir.Transformed(myTrsf));
-    clippedLenght = myLength;
-    for(NCollection_Vector<Handle(AIS_Shape)>::Iterator anIter(theObjects);
-        anIter.More(); anIter.Next())
+    if (trP.X() == trP.X() && (trP.Y() == trP.Y()) && (trP.Z() == trP.Z())) //check NaN
     {
-        const Handle(AIS_Shape)& anObject = anIter.Value();
-        const TopoDS_Shape shape = anObject->Shape().Located(context->Location(anObject));
-        intersector.Load(shape, Precision::Confusion());
+        const gp_Lin lin = gp_Lin(trP, myDir.Transformed(myTrsf));
+        for(NCollection_Vector<Handle(AIS_Shape)>::Iterator anIter(theObjects);
+            anIter.More(); anIter.Next())
+        {
+            const Handle(AIS_Shape)& anObject = anIter.Value();
+            const TopoDS_Shape shape = anObject->Shape().Located(context->Location(anObject));
+            intersector.Load(shape, Precision::Confusion());
 
-        intersector.PerformNearest(lin, 0, RealLast());
-        if (intersector.IsDone() && intersector.NbPnt() > 0) {
-            gp_Pnt aPnt = intersector.Pnt(1);
-            if (!trP.IsEqual(aPnt, gp::Resolution())) {
-                const gp_Vec newVec(trP, aPnt);
-                const Standard_Real dist = newVec.Magnitude();
-                if (dist < clippedLenght)
-                    clippedLenght = dist;
+            intersector.PerformNearest(lin, 0, RealLast());
+            if (intersector.IsDone() && intersector.NbPnt() > 0) {
+                gp_Pnt aPnt = intersector.Pnt(1);
+                if (!trP.IsEqual(aPnt, gp::Resolution())) {
+                    const gp_Vec newVec(trP, aPnt);
+                    const Standard_Real dist = newVec.Magnitude();
+                    if (dist < clippedLenght)
+                        clippedLenght = dist;
+                }
             }
         }
     }

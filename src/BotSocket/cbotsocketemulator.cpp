@@ -68,49 +68,56 @@ const TopoDS_Shape &CBotSocketEmulator::getShape(ShapeType type)
     return CAbstractBotSocket::getShape(shape_type_conv[type]);
 }
 
-void CBotSocketEmulator::shapeTransformChanged(const BotSocket::EN_ShapeType)
-{}
-
-void CBotSocketEmulator::uiStateChanged(const GUI_TYPES::EN_UiStates state)
+BotSocket::EN_CalibResult CBotSocketEmulator::execCalibration(const std::vector<GUI_TYPES::SCalibPoint> &points)
 {
-    if(state != GUI_TYPES::ENUS_BOT_WORKED && robot_mover_ && robot_mover_->isMoving())
+    if(robot_mover_ && robot_mover_->isMoving())
         robot_mover_->abortMove();
 
+    // TODO: distinguish calibration by point pairs/fixture
+    std::vector<IPointPairsPartReferencer::point_pair_t> point_pairs;
 
-    if(state == GUI_TYPES::ENUS_CALIBRATION && point_pair_part_referencer_ )
+    BotSocket::EN_CalibResult result = BotSocket::ENCR_FALL;
+    if(points.size() > 3)
     {
-        // TODO: distinguish calibration by point pairs/fixture
-        std::vector<IPointPairsPartReferencer::point_pair_t> point_pairs;
+        point_pairs.reserve(points.size());
+        for(GUI_TYPES::SCalibPoint p : points)
+            point_pairs.emplace_back(IPointPairsPartReferencer::point_pair_t{
+                                         gp_Vec(p.globalPos.x, p.globalPos.y, p.globalPos.z),
+                                         gp_Vec(p.botPos.x, p.botPos.y, p.botPos.z)
+                                     });
 
-        std::vector <GUI_TYPES::SCalibPoint> calib_points = getCalibPoints();
-        if(calib_points.size() > 3)
-        {
-            point_pairs.reserve(calib_points.size());
-            for(GUI_TYPES::SCalibPoint p : calib_points)
-                point_pairs.emplace_back(IPointPairsPartReferencer::point_pair_t{
-                                             gp_Vec(p.globalPos.x, p.globalPos.y, p.globalPos.z),
-                                             gp_Vec(p.botPos.x, p.botPos.y, p.botPos.z)
-                                         });
+        point_pair_part_referencer_->setPointPairs(point_pairs);
 
-            point_pair_part_referencer_->setPointPairs(point_pairs);
-
-            QFuture<bool> res = point_pair_part_referencer_->referencePart();
-            reference_watcher_.setFuture(res);
-        }
+        QFuture<bool> res = point_pair_part_referencer_->referencePart();
+        reference_watcher_.setFuture(res);
+        result = BotSocket::ENCR_OK;
     }
-    else if(state == GUI_TYPES::ENUS_BOT_WORKED && robot_mover_)
-    {
-        IRobotMover::path_t path;
-
-        std::vector<GUI_TYPES::STaskPoint> task_points = getTaskPoints();
-        path.reserve(task_points.size());
-        for(GUI_TYPES::STaskPoint p : task_points)
-            path.emplace_back(IRobotMover::path_point_t{botposition2position(p.globalPos, p.angle), 0, ""});
-
-        QFuture<IRobotMover::MOVE_RESULT> res = robot_mover_->moveAlongPath(path);
-        move_watcher_.setFuture(res);
-    }
+    return result;
 }
+
+void CBotSocketEmulator::startTasks(const std::vector<GUI_TYPES::STaskPoint> &points)
+{
+    if(robot_mover_ && robot_mover_->isMoving())
+        robot_mover_->abortMove();
+
+    IRobotMover::path_t path;
+
+    path.reserve(points.size());
+    for(GUI_TYPES::STaskPoint p : points)
+        path.emplace_back(IRobotMover::path_point_t{botposition2position(p.globalPos, p.angle), 0, ""});
+
+    QFuture<IRobotMover::MOVE_RESULT> res = robot_mover_->moveAlongPath(path);
+    move_watcher_.setFuture(res);
+}
+
+void CBotSocketEmulator::stopTasks()
+{
+    if(robot_mover_ && robot_mover_->isMoving())
+        robot_mover_->abortMove();
+}
+
+void CBotSocketEmulator::shapeTransformChanged(const BotSocket::EN_ShapeType)
+{}
 
 void CBotSocketEmulator::reference_finished()
 {
@@ -128,6 +135,9 @@ void CBotSocketEmulator::move_finished()
         {IRobotMover::MOVE_FAILURE, "MOVE_FAILURE"},
         {IRobotMover::MOVE_UNACHIEVABLE, "MOVE_UNACHIEVABLE"}
     };
-    qDebug() << "BotSocketEmulator::reference_finished. Result: " << move_result_map[move_ok];
-    // TODO: notify GUI about move finished
+    const BotSocket::EN_WorkResult res = ((move_result_map[move_ok] == IRobotMover::MOVE_OK) ||
+                                          (move_result_map[move_ok] == IRobotMover::MOVE_USER_ABORT))
+                                           ? BotSocket::ENWR_OK
+                                           : BotSocket::ENWR_ERROR;
+    tasksComplete(res);
 }

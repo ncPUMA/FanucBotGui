@@ -44,6 +44,20 @@ static const Graphic3d_ZLayerId Z_LAYER_ID_WITHOUT_DEPTH_TEST_DEFAULT = 100;
 static const GUI_TYPES::TDistance DISTANCE_PRECITION = 0.000005;
 static const GUI_TYPES::TDegree   ROTATION_PRECITION = 0.000005;
 
+static class CEmptySubscriber : public CAbstractMainViewportSubscriber
+{
+public:
+    CEmptySubscriber() : CAbstractMainViewportSubscriber() { }
+
+protected:
+    void uiStateChanged() final { }
+    void calibrationChanged() final { }
+    void tasksChanged() final { }
+
+} emptySub;
+
+
+
 class CMainViewportPrivate : public AIS_ViewController
 {
     friend class CMainViewport;
@@ -52,6 +66,7 @@ class CMainViewportPrivate : public AIS_ViewController
         q_ptr(qptr),
         context(new CInteractiveContext()),
         uiState(GUI_TYPES::ENUS_TASK_EDITING),
+        calibResult(BotSocket::ENCR_FALL),
         botState(BotSocket::ENBS_FALL) {
         myMouseGestureMap.Clear();
         myMouseGestureMap.Bind(Aspect_VKeyMouse_LeftButton, AIS_MouseGesture_Pan);
@@ -285,7 +300,9 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
+
     CMainViewport * const q_ptr;
+    std::vector <CAbstractMainViewportSubscriber *> subs;
 
     Handle(V3d_Viewer)             viewer;
     Handle(V3d_View)               view;
@@ -297,6 +314,7 @@ class CMainViewportPrivate : public AIS_ViewController
     GUI_TYPES::EN_UiStates uiState;
     QPoint rbPos;
 
+    BotSocket::EN_CalibResult calibResult;
     BotSocket::EN_BotState botState;
     BotSocket::SBotPosition partPos, lheadPos, gripPos;
 };
@@ -317,6 +335,17 @@ CMainViewport::CMainViewport(QWidget *parent) :
 CMainViewport::~CMainViewport()
 {
     delete d_ptr;
+}
+
+void CMainViewport::addSubscriber(CAbstractMainViewportSubscriber * const subscriber)
+{
+    d_ptr->subs.push_back(subscriber);
+    subscriber->calibrationChanged();
+}
+
+void CMainViewport::clearSubscribers()
+{
+    d_ptr->subs.clear();
 }
 
 void CMainViewport::init(OpenGl_GraphicDriver &driver)
@@ -373,6 +402,8 @@ void CMainViewport::setCoord(const GUI_TYPES::TCoordSystem type)
 void CMainViewport::setUiState(const GUI_TYPES::EN_UiStates state)
 {
     d_ptr->setUiState(state);
+    for(auto s : d_ptr->subs)
+        s->uiStateChanged();
 }
 
 GUI_TYPES::EN_UiStates CMainViewport::getUiState() const
@@ -418,6 +449,21 @@ const TopoDS_Shape& CMainViewport::getLsrheadShape() const
 const TopoDS_Shape& CMainViewport::getGripShape() const
 {
     return d_ptr->context->getGripShape();
+}
+
+void CMainViewport::setCalibResult(const BotSocket::EN_CalibResult val)
+{
+    if (val != d_ptr->calibResult)
+    {
+        d_ptr->calibResult = val;
+        for(auto s : d_ptr->subs)
+            s->calibrationChanged();
+    }
+}
+
+BotSocket::EN_CalibResult CMainViewport::getCalibResult() const
+{
+    return d_ptr->calibResult;
 }
 
 void CMainViewport::setBotState(const BotSocket::EN_BotState state)
@@ -654,6 +700,12 @@ void CMainViewport::fillTaskAddCntxtMenu(QMenu &menu)
     }
 }
 
+void CMainViewport::taskPointsChanged()
+{
+    for(auto s : d_ptr->subs)
+        s->tasksChanged();
+}
+
 void CMainViewport::slAddCalibPoint()
 {
     const gp_Pnt cursorPos = d_ptr->context->lastCursorPosition();
@@ -661,10 +713,12 @@ void CMainViewport::slAddCalibPoint()
     initPoint.globalPos.x = cursorPos.X();
     initPoint.globalPos.y = cursorPos.Y();
     initPoint.globalPos.z = cursorPos.Z();
-    initPoint.botPos      = d_ptr->lheadPos.globalPos;
+//    initPoint.botPos      = d_ptr->lheadPos.globalPos;
+    initPoint.botPos = initPoint.globalPos;
     CAddCalibPointDialog dialog(this, initPoint);
     if (dialog.exec() == QDialog::Accepted)
     {
+        setCalibResult(BotSocket::ENCR_FALL);
         d_ptr->context->appendCalibPoint(dialog.getCalibPoint());
         d_ptr->viewer->Redraw();
     }
@@ -681,6 +735,7 @@ void CMainViewport::slChangeCalibPoint()
         CAddCalibPointDialog dialog(this, calibPnt);
         if (dialog.exec() == QDialog::Accepted)
         {
+            setCalibResult(BotSocket::ENCR_FALL);
             d_ptr->context->changeCalibPoint(index, dialog.getCalibPoint());
             d_ptr->viewer->Redraw();
         }
@@ -694,6 +749,7 @@ void CMainViewport::slRemoveCalibPoint()
     const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
     if (index < d_ptr->context->getCalibPointCount())
     {
+        setCalibResult(BotSocket::ENCR_FALL);
         d_ptr->context->removeCalibPoint(index);
         d_ptr->viewer->Redraw();
     }
@@ -715,6 +771,7 @@ void CMainViewport::slAddTaskPoint()
     if (dialog.exec() == QDialog::Accepted)
     {
         d_ptr->context->appendTaskPoint(dialog.getTaskPoint());
+        taskPointsChanged();
         d_ptr->viewer->Redraw();
     }
 }
@@ -731,6 +788,7 @@ void CMainViewport::slChangeTaskPoint()
         if (dialog.exec() == QDialog::Accepted)
         {
             d_ptr->context->changeTaskPoint(index, dialog.getTaskPoint());
+            taskPointsChanged();
             d_ptr->viewer->Redraw();
         }
     }
@@ -744,6 +802,7 @@ void CMainViewport::slRemoveTaskPoint()
     if (index < d_ptr->context->getTaskPointCount())
     {
         d_ptr->context->removeTaskPoint(index);
+        taskPointsChanged();
         d_ptr->viewer->Redraw();
     }
 }

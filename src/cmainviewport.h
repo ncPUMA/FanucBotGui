@@ -16,6 +16,26 @@ namespace GUI_TYPES {
 class SGuiSettings;
 }
 
+class CAbstractMainViewportSubscriber
+{
+    friend class CMainViewport;
+
+public:
+    virtual ~CAbstractMainViewportSubscriber() { }
+
+protected:
+    CAbstractMainViewportSubscriber() { }
+
+    virtual void uiStateChanged() = 0;
+    virtual void calibrationChanged() = 0;
+    virtual void tasksChanged() = 0;
+
+private:
+    CAbstractMainViewportSubscriber(const CAbstractMainViewportSubscriber &) = delete;
+    CAbstractMainViewportSubscriber& operator =(const CAbstractMainViewportSubscriber &) = delete;
+};
+
+
 class CMainViewport : public QWidget
 {
     Q_OBJECT
@@ -26,6 +46,8 @@ public:
     explicit CMainViewport(QWidget *parent = nullptr);
     ~CMainViewport();
 
+    void addSubscriber(CAbstractMainViewportSubscriber * const subscriber);
+    void clearSubscribers();
     void init(OpenGl_GraphicDriver &driver);
     void setGuiSettings(const GUI_TYPES::SGuiSettings &settings);
     GUI_TYPES::SGuiSettings getGuiSettings() const;
@@ -50,6 +72,8 @@ public:
     const TopoDS_Shape& getLsrheadShape() const;
     const TopoDS_Shape& getGripShape() const;
 
+    void setCalibResult(const BotSocket::EN_CalibResult val);
+    BotSocket::EN_CalibResult getCalibResult() const;
     void setBotState(const BotSocket::EN_BotState state);
     BotSocket::EN_BotState getBotState() const;
     void moveLsrhead(const BotSocket::SBotPosition &pos);
@@ -72,6 +96,7 @@ private:
     QString taskName(const GUI_TYPES::TBotTaskType taskType) const;
     void fillCalibCntxtMenu(QMenu &menu);
     void fillTaskAddCntxtMenu(QMenu &menu);
+    void taskPointsChanged();
 
 private slots:
     void slAddCalibPoint();

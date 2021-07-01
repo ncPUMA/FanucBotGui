@@ -9,17 +9,12 @@ static class CEmptyUi : public CAbstractUi
     friend class CAbstractBotSocket;
 
 protected:
+    void prepareComplete(const BotSocket::EN_PrepareResult) final { }
+    void tasksComplete(const BotSocket::EN_WorkResult) final { }
     void socketStateChanged(const BotSocket::EN_BotState) final { }
     void laserHeadPositionChanged(const BotSocket::SBotPosition &) final { }
     void gripPositionChanged(const BotSocket::SBotPosition &) final { }
-    GUI_TYPES::EN_UiStates getUiState() const final { return GUI_TYPES::ENUS_TASK_EDITING; }
     const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType) const final { return shape; }
-    std::vector <GUI_TYPES::SCalibPoint> getCalibPoints() const final {
-        return std::vector <GUI_TYPES::SCalibPoint> ();
-    }
-    std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const final {
-        return std::vector <GUI_TYPES::STaskPoint> ();
-    }
 
 private:
     TopoDS_Shape shape;
@@ -39,6 +34,16 @@ CAbstractBotSocket::CAbstractBotSocket() :
 
 }
 
+void CAbstractBotSocket::prepareComplete(const BotSocket::EN_PrepareResult result)
+{
+    ui->prepareComplete(result);
+}
+
+void CAbstractBotSocket::tasksComplete(const BotSocket::EN_WorkResult result)
+{
+    ui->tasksComplete(result);
+}
+
 void CAbstractBotSocket::socketStateChanged(const BotSocket::EN_BotState state)
 {
     ui->socketStateChanged(state);
@@ -54,22 +59,7 @@ void CAbstractBotSocket::gripPositionChanged(const BotSocket::SBotPosition &pos)
     ui->gripPositionChanged(pos);
 }
 
-GUI_TYPES::EN_UiStates CAbstractBotSocket::getUiState() const
-{
-    return ui->getUiState();
-}
-
 const TopoDS_Shape &CAbstractBotSocket::getShape(const BotSocket::EN_ShapeType shType) const
 {
     return ui->getShape(shType);
-}
-
-std::vector<GUI_TYPES::SCalibPoint> CAbstractBotSocket::getCalibPoints() const
-{
-    return ui->getCalibPoints();
-}
-
-std::vector<GUI_TYPES::STaskPoint> CAbstractBotSocket::getTaskPoints() const
-{
-    return ui->getTaskPoints();
 }

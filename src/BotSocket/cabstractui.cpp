@@ -8,7 +8,12 @@ public:
     CEmptyBotSocket() : CAbstractBotSocket() { }
 
 protected:
-    void uiStateChanged(const GUI_TYPES::EN_UiStates) final { }
+    BotSocket::EN_CalibResult execCalibration(const std::vector <GUI_TYPES::SCalibPoint> &) final {
+        return BotSocket::ENCR_FALL;
+    }
+    void prepare(const std::vector <GUI_TYPES::STaskPoint> &) final { }
+    void startTasks(const std::vector <GUI_TYPES::STaskPoint> &) final { }
+    void stopTasks() final { }
     void shapeTransformChanged(const BotSocket::EN_ShapeType) final { }
 
 } emptySocket;
@@ -42,9 +47,24 @@ void CAbstractUi::setBotSocket(CAbstractBotSocket &socket)
     d_ptr->bot->ui = this;
 }
 
-void CAbstractUi::uiStateChanged(const GUI_TYPES::EN_UiStates state)
+BotSocket::EN_CalibResult CAbstractUi::execCalibration(const std::vector<GUI_TYPES::SCalibPoint> &points)
 {
-    d_ptr->bot->uiStateChanged(state);
+    return d_ptr->bot->execCalibration(points);
+}
+
+void CAbstractUi::prepare(const std::vector<GUI_TYPES::STaskPoint> &points)
+{
+    d_ptr->bot->prepare(points);
+}
+
+void CAbstractUi::startTasks(const std::vector<GUI_TYPES::STaskPoint> &points)
+{
+    d_ptr->bot->startTasks(points);
+}
+
+void CAbstractUi::stopTasks()
+{
+    d_ptr->bot->stopTasks();
 }
 
 void CAbstractUi::shapeTransformChaged(const BotSocket::EN_ShapeType shType)

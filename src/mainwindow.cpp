@@ -17,7 +17,7 @@
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
 static const int STATE_LAMP_UPDATE_INTERVAL = 200;
 
-class CUiIface : public CAbstractUi
+class CUiIface : public CAbstractUi, public CAbstractMainViewportSubscriber
 {
     friend class MainWindow;
 
@@ -27,6 +27,14 @@ public:
         jrnl(nullptr) { }
 
 protected:
+    void prepareComplete(const BotSocket::EN_PrepareResult) {
+
+    }
+
+    void tasksComplete(const BotSocket::EN_WorkResult) {
+        viewport->setUiState(GUI_TYPES::ENUS_TASK_EDITING);
+    }
+
     void socketStateChanged(const BotSocket::EN_BotState state) final {
         viewport->setBotState(state);
     }
@@ -41,7 +49,14 @@ protected:
                 .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
                 .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
                 .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
-        jrnl->append(jrnlTxt);
+        if(!usrText.isEmpty()) {
+            jrnl->clear();
+            jrnl->append(jrnlTxt);
+            jrnl->append(QString());
+            jrnl->append(usrText);
+        }
+        else
+            jrnl->append(jrnlTxt);
         viewport->moveLsrhead(pos);
         shapeTransformChaged(BotSocket::ENST_LSRHEAD);
     }
@@ -56,15 +71,18 @@ protected:
                 .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
                 .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
                 .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
-        jrnl->append(jrnlTxt);
+        if(!usrText.isEmpty()) {
+            jrnl->clear();
+            jrnl->append(jrnlTxt);
+            jrnl->append(QString());
+            jrnl->append(usrText);
+        }
+        else
+            jrnl->append(jrnlTxt);
         viewport->moveGrip(pos);
         shapeTransformChaged(BotSocket::ENST_GRIP);
         if (viewport->getBotState() == BotSocket::ENBS_ATTACHED)
             shapeTransformChaged(BotSocket::ENST_PART);
-    }
-
-    GUI_TYPES::EN_UiStates getUiState() const final {
-        return viewport->getUiState();
     }
 
     const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const final {
@@ -80,17 +98,76 @@ protected:
         return sh;
     }
 
-    std::vector <GUI_TYPES::SCalibPoint> getCalibPoints() const final {
-        return viewport->getCallibrationPoints();
+    void updateUiState() {
+        jrnl->clear();
+        switch(viewport->getUiState())
+        {
+            using namespace GUI_TYPES;
+
+            case ENUS_CALIBRATION:
+            case ENUS_TASK_EDITING:
+                if (viewport->getCalibResult() == BotSocket::ENCR_FALL) {
+                    usrText = MainWindow::tr(" Выполните калибровку");
+                    jrnl->setText(usrText);
+                    btnStart->setEnabled(false);
+                    btnStart->setToolTip(usrText);
+                }
+                else if (viewport->getTaskPoints().empty()) {
+                    usrText = MainWindow::tr(" Добавьте задание");
+                    jrnl->setText(usrText);
+                    btnStart->setEnabled(false);
+                    btnStart->setToolTip(usrText);
+                }
+                else {
+                    usrText = MainWindow::tr(" Готов");
+                    btnStart->setEnabled(true);
+                    btnStart->setToolTip(MainWindow::tr("Пуск"));
+                }
+                break;
+
+            case ENUS_BOT_WORKED:
+            default:
+                btnStart->setEnabled(false);
+                btnStart->setToolTip(MainWindow::tr("Занят"));
+                break;
+        }
+
+        if (viewport->getCalibResult() == BotSocket::ENCR_FALL) {
+            usrText = MainWindow::tr(" Выполните калибровку");
+            jrnl->setText(usrText);
+            btnStart->setEnabled(false);
+            btnStart->setToolTip(usrText);
+        }
+        else if (viewport->getTaskPoints().empty()) {
+            usrText = MainWindow::tr(" Добавьте задание");
+            jrnl->setText(usrText);
+            btnStart->setEnabled(false);
+            btnStart->setToolTip(usrText);
+        }
+        else if (viewport->getUiState() == GUI_TYPES::ENUS_TASK_EDITING) {
+            usrText = MainWindow::tr(" Готов");
+            btnStart->setEnabled(true);
+            btnStart->setToolTip(MainWindow::tr("Пуск"));
+        }
     }
 
-    std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const {
-        return viewport->getTaskPoints();
+    void uiStateChanged() final {
+        updateUiState();
+    }
+
+    void calibrationChanged() final {
+        updateUiState();
+    }
+
+    void tasksChanged() final {
+        updateUiState();
     }
 
 private:
     CMainViewport *viewport;
     QTextEdit *jrnl;
+    QAction *btnStart;
+    QString usrText;
 };
 
 
@@ -247,6 +324,8 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
 
     ui->mainView->setShading(true);
     ui->mainView->setUiState(GUI_TYPES::ENUS_TASK_EDITING);
+
+    ui->mainView->addSubscriber(&d_ptr->uiIface);
 }
 
 void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
@@ -317,7 +396,6 @@ void MainWindow::slShowCalibWidget(bool enabled)
             ? GUI_TYPES::ENUS_CALIBRATION
             : GUI_TYPES::ENUS_TASK_EDITING;
     ui->mainView->setUiState(state);
-    d_ptr->uiIface.uiStateChanged(state);
 }
 
 void MainWindow::slMsaa()
@@ -360,21 +438,24 @@ void MainWindow::slCallibApply()
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_LSRHEAD);
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART   );
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   );
+    const BotSocket::EN_CalibResult calibRes =
+            d_ptr->uiIface.execCalibration(ui->mainView->getCallibrationPoints());
+    ui->mainView->setCalibResult(calibRes);
 }
 
 void MainWindow::slStart()
 {
     ui->mainView->setUiState(GUI_TYPES::ENUS_BOT_WORKED);
-    d_ptr->uiIface.uiStateChanged(GUI_TYPES::ENUS_BOT_WORKED);
+    d_ptr->uiIface.startTasks(ui->mainView->getTaskPoints());
 }
 
 void MainWindow::slStop()
 {
+    d_ptr->uiIface.stopTasks();
     const GUI_TYPES::EN_UiStates state = ui->actionCalib->isChecked()
             ? GUI_TYPES::ENUS_CALIBRATION
             : GUI_TYPES::ENUS_TASK_EDITING;
     ui->mainView->setUiState(state);
-    d_ptr->uiIface.uiStateChanged(state);
 }
 
 void MainWindow::slUpdateBotLamps()
@@ -429,10 +510,10 @@ void MainWindow::configToolBar()
     QLabel * const strech = new QLabel(" ", ui->toolBar);
     strech->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     ui->toolBar->addWidget(strech);
-    ui->toolBar->addAction(QIcon(":/icons/Data/Icons/play.png"),
-                           tr("Старт"),
-                           this,
-                           SLOT(slStart()));
+    d_ptr->uiIface.btnStart = ui->toolBar->addAction(QIcon(":/icons/Data/Icons/play.png"),
+                                                     tr("Старт"),
+                                                     this,
+                                                     SLOT(slStart()));
     ui->toolBar->addAction(QIcon(":/icons/Data/Icons/stop.png"),
                            tr("Стоп"),
                            this,

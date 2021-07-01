@@ -50,6 +50,24 @@ enum EN_ShapeType
     ENST_GRIP
 };
 
+enum EN_CalibResult
+{
+    ENCR_OK,
+    ENCR_FALL
+};
+
+enum EN_PrepareResult
+{
+    ENPR_OK,
+    ENPR_ERROR,
+};
+
+enum EN_WorkResult
+{
+    ENWR_OK,
+    ENWR_ERROR
+};
+
 }
 
 #endif // BOT_SOCKET_TYPES_H

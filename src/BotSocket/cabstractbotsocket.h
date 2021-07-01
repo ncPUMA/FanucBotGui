@@ -19,16 +19,19 @@ public:
 protected:
     CAbstractBotSocket();
 
-    virtual void uiStateChanged(const GUI_TYPES::EN_UiStates state) = 0;
+    virtual BotSocket::EN_CalibResult execCalibration(const std::vector <GUI_TYPES::SCalibPoint> &points) = 0;
+    virtual void prepare(const std::vector <GUI_TYPES::STaskPoint> &points) = 0;
+    virtual void startTasks(const std::vector <GUI_TYPES::STaskPoint> &points) = 0;
+    virtual void stopTasks() = 0;
     virtual void shapeTransformChanged(const BotSocket::EN_ShapeType shType) = 0;
 
+    void prepareComplete(const BotSocket::EN_PrepareResult result);
+    void tasksComplete(const BotSocket::EN_WorkResult result);
     void socketStateChanged(const BotSocket::EN_BotState state);
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos);
     void gripPositionChanged(const BotSocket::SBotPosition &pos);
     GUI_TYPES::EN_UiStates getUiState() const;
     const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const;
-    std::vector <GUI_TYPES::SCalibPoint> getCalibPoints() const;
-    std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const;
 
 private:
     CAbstractBotSocket(const CAbstractBotSocket &) = delete;

@@ -31,8 +31,11 @@ protected:
     const TopoDS_Shape &getShape(ShapeType type) override;
 
     // CAbstractBotSocket
+    BotSocket::EN_CalibResult execCalibration(const std::vector <GUI_TYPES::SCalibPoint> &points) override;
+    void prepare(const std::vector <GUI_TYPES::STaskPoint> &) override { }
+    void startTasks(const std::vector <GUI_TYPES::STaskPoint> &points) override;
+    void stopTasks();
     void shapeTransformChanged(const BotSocket::EN_ShapeType shType) override;
-    void uiStateChanged(const GUI_TYPES::EN_UiStates state) override;
 
 private slots:
     void reference_finished();
