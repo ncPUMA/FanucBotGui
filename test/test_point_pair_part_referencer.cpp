@@ -4,6 +4,7 @@
 
 TEST_CASE( "point pair reference ok", "[point_pairs_part_referencer]" )
 {
+    typedef PointPairsPartReferencer::position_t position_t;
     const int TESTS_COUNT = 4;
     std::vector<PointPairsPartReferencer::point_pair_t> train_points[TESTS_COUNT] = {
         {{gp_Vec(0,0,0), gp_Vec(0,0,0)}, // unity
@@ -37,7 +38,7 @@ TEST_CASE( "point pair reference ok", "[point_pairs_part_referencer]" )
         {{{gp_Vec(3,3,3), gp_Quaternion()}, {gp_Vec(6,6,6), gp_Quaternion()}}} // scale + noise
     };
     double max_error[TESTS_COUNT] = {1e-6, 1e-6, 1e-6, 1e-3};
-    int i = GENERATE(range(0, 3));
+    int i = GENERATE(range(1,2));
 
     PointPairsPartReferencer pr;
 
@@ -46,11 +47,9 @@ TEST_CASE( "point pair reference ok", "[point_pairs_part_referencer]" )
     CHECK_FALSE(pr.isReferenced());
 
     SECTION("reference") {
-        QFuture<bool> ref_result = pr.referencePart();
+        bool ref_result = pr.referencePart();
 
-        ref_result.waitForFinished();
-
-        CHECK(ref_result.result());
+        CHECK(ref_result);
         CHECK(pr.isReferenced());
 
         SECTION("reference_robot_to_part_train")

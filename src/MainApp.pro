@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -11,7 +11,9 @@ CONFIG += c++14
 SOURCES += \
     BotSocket/cabstractbotsocket.cpp \
     BotSocket/cabstractui.cpp \
-    BotSocket/cbotsocketemulator.cpp \
+    BotSocket/cfanucbotsocket.cpp \
+    BotSocket/fanuc_relay_socket.cpp \
+    BotSocket/fanuc_state_socket.cpp \
     Dialogs/caddcalibpointdialog.cpp \
     Dialogs/cbottaskdialogfacade.cpp \
     Dialogs/cdrillbottaskdialog.cpp \
@@ -38,7 +40,11 @@ HEADERS += \
     BotSocket/bot_socket_types.h \
     BotSocket/cabstractbotsocket.h \
     BotSocket/cabstractui.h \
-    BotSocket/cbotsocketemulator.h \
+    BotSocket/cfanucbotsocket.h \
+    BotSocket/fanuc_relay_socket.h \
+    BotSocket/fanuc_state_socket.h \
+    BotSocket/fanuc_types.h \
+    BotSocket/simple_message.h \
     Dialogs/caddcalibpointdialog.h \
     Dialogs/cbottaskdialogfacade.h \
     Dialogs/cdrillbottaskdialog.h \
@@ -101,6 +107,4 @@ DISTFILES += \
 RESOURCES += \
     data.qrc
 
-include(if/if.pri)
 include(PartReference/PartReference.pri)
-include(RobotMovers/RobotMovers.pri)
