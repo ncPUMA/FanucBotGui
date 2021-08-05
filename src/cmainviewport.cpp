@@ -294,7 +294,7 @@ class CMainViewportPrivate : public AIS_ViewController
             partPos = pos;
             context->setPartMdlTransform(calcPartTrsf());
         }
-        view->Redraw();
+//        view->Redraw();
     }
 
     void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
