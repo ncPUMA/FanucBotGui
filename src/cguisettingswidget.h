@@ -26,6 +26,7 @@ public:
 
 signals:
     void sigApplyRequest();
+    void sigCalcCalibration();
 
 private:
     Ui::CGuiSettingsWidget *ui;

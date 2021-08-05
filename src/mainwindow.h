@@ -41,6 +41,7 @@ private slots:
 
     //callib
     void slCallibApply();
+    void slCallibCalc();
 
     //start/stop
     void slStart();

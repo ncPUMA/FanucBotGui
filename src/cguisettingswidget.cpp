@@ -10,6 +10,7 @@ CGuiSettingsWidget::CGuiSettingsWidget(QWidget *parent) :
     ui->setupUi(this);
 
     connect(ui->pbApply, SIGNAL(clicked(bool)), this, SIGNAL(sigApplyRequest()));
+    connect(ui->pbCalc, SIGNAL(clicked(bool)), this, SIGNAL(sigCalcCalibration()));
 }
 
 CGuiSettingsWidget::~CGuiSettingsWidget()

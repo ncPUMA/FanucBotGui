@@ -41,9 +41,8 @@ int main(int argc, char *argv[])
     settings.setSettingsFName("conf.cfg");
 #endif
 
-    CFanucBotSocket bot_socket;
-
     MainWindow w;
+    CFanucBotSocket bot_socket;
     w.init(*aGraphicDriver);
     w.setSettingsStorage(settings);
     w.setBotSocket(bot_socket);
