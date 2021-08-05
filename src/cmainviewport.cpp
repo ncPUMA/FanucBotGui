@@ -297,6 +297,85 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
+    void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
+    {
+        using namespace BotSocket;
+        switch(shType) {
+            case ENST_DESK   : {
+                guiSettings.deskTrX = pos.globalPos.x;
+                guiSettings.deskTrY = pos.globalPos.y;
+                guiSettings.deskTrZ = pos.globalPos.z;
+                guiSettings.deskRotationX = pos.globalRotation.x;
+                guiSettings.deskRotationY = pos.globalRotation.y;
+                guiSettings.deskRotationZ = pos.globalRotation.z;
+                context->setDeskMdlTransform(calcDeskTrsf());
+                view->Redraw();
+                break;
+            }
+            case ENST_PART   : {
+                guiSettings.partTrX = pos.globalPos.x;
+                guiSettings.partTrY = pos.globalPos.y;
+                guiSettings.partTrZ = pos.globalPos.z;
+                guiSettings.partRotationX = pos.globalRotation.x;
+                guiSettings.partRotationY = pos.globalRotation.y;
+                guiSettings.partRotationZ = pos.globalRotation.z;
+                context->setPartMdlTransform(calcPartTrsf());
+                view->Redraw();
+                break;
+            }
+            case ENST_LSRHEAD: {
+                guiSettings.lheadTrX = pos.globalPos.x;
+                guiSettings.lheadTrY = pos.globalPos.y;
+                guiSettings.lheadTrZ = pos.globalPos.z;
+                guiSettings.lheadRotationX = pos.globalRotation.x;
+                guiSettings.lheadRotationY = pos.globalRotation.y;
+                guiSettings.lheadRotationZ = pos.globalRotation.z;
+                context->setLsrheadMdlTransform(calcLsrheadTrsf());
+                view->Redraw();
+                break;
+            }
+            case ENST_GRIP   : {
+                guiSettings.gripTrX = pos.globalPos.x;
+                guiSettings.gripTrY = pos.globalPos.y;
+                guiSettings.gripTrZ = pos.globalPos.z;
+                guiSettings.gripRotationX = pos.globalRotation.x;
+                guiSettings.gripRotationY = pos.globalRotation.y;
+                guiSettings.gripRotationZ = pos.globalRotation.z;
+                context->setGripMdlTransform(calcGripTrsf());
+                view->Redraw();
+                break;
+            }
+            default: break;
+        }
+    }
+
+    void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
+    {
+        using namespace BotSocket;
+        switch(shType) {
+            case ENST_DESK   : {
+                context->setDeskMdlTransform(transform);
+                view->Redraw();
+                break;
+            }
+            case ENST_PART   : {
+                context->setPartMdlTransform(transform);
+                view->Redraw();
+                break;
+            }
+            case ENST_LSRHEAD: {
+                context->setLsrheadMdlTransform(transform);
+                view->Redraw();
+                break;
+            }
+            case ENST_GRIP   : {
+                context->setGripMdlTransform(transform);
+                view->Redraw();
+                break;
+            }
+            default: break;
+        }
+    }
 
     CMainViewport * const q_ptr;
     std::vector <CAbstractMainViewportSubscriber *> subs;
@@ -481,6 +560,16 @@ void CMainViewport::moveLsrhead(const BotSocket::SBotPosition &pos)
 void CMainViewport::moveGrip(const BotSocket::SBotPosition &pos)
 {
     d_ptr->moveGrip(pos);
+}
+
+void CMainViewport::shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
+{
+    d_ptr->shapeCalibrationChanged(shType, pos);
+}
+
+void CMainViewport::shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
+{
+    d_ptr->shapeTransformChanged(shType, transform);
 }
 
 std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
@@ -710,7 +799,7 @@ void CMainViewport::slAddCalibPoint()
     initPoint.globalPos.x = cursorPos.X();
     initPoint.globalPos.y = cursorPos.Y();
     initPoint.globalPos.z = cursorPos.Z();
-    initPoint.botPos      = d_ptr->lheadPos.globalPos;
+    initPoint.botPos      = d_ptr->gripPos.globalPos;
     CAddCalibPointDialog dialog(this, initPoint);
     if (dialog.exec() == QDialog::Accepted)
     {

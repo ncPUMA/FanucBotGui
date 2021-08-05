@@ -2,6 +2,7 @@
 #define CABSTRACTBOTSOCKET_H
 
 #include <vector>
+#include <gp_Trsf.hxx>
 
 #include "bot_socket_types.h"
 
@@ -30,6 +31,8 @@ protected:
     void socketStateChanged(const BotSocket::EN_BotState state);
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos);
     void gripPositionChanged(const BotSocket::SBotPosition &pos);
+    void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos);
+    void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform);
     GUI_TYPES::EN_UiStates getUiState() const;
     const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const;
 
