@@ -358,7 +358,7 @@ private:
         assert(index < calibPoints.size());
         SCalibPoint &scpnt = calibPoints[index];
         scpnt.botPos = calibPoint.botPos;
-        const gp_Pnt globalPos(calibPoint.globalPos.x, calibPoint.globalPos.x, calibPoint.globalPos.x);
+        const gp_Pnt globalPos(calibPoint.globalPos.x, calibPoint.globalPos.y, calibPoint.globalPos.z);
         scpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
         scpnt.pntLbl->SetPosition(globalPos);
         context->RecomputePrsOnly(scpnt.pnt, Standard_False);
