@@ -117,24 +117,13 @@ class CMainViewportPrivate : public AIS_ViewController
                                   double scaleFactor,
                                   double alpha_off, double beta_off, double gamma_off,
                                   double alpha_cur = 0.0, double beta_cur = 0.0, double gamma_cur = 0.0) {
-        gp_Trsf trsfTr3;
-        trsfTr3.SetTranslation(model_translation + model_center);
+        gp_Trsf trsfTr2;
+        trsfTr2.SetTranslation(model_translation + model_center);
 
         gp_Trsf trsfSc;
         if (scaleFactor == 0.)
             scaleFactor = 1.;
         trsfSc.SetScale(gp_Pnt(), scaleFactor);
-
-        gp_Trsf trsfTr2;
-        trsfTr2.SetTranslation(model_center);
-
-        gp_Trsf trsfRoff;
-        gp_Quaternion qoff;
-        qoff.SetEulerAngles(gp_Extrinsic_XYZ,
-                         alpha_off * DEGREE_K,
-                         beta_off  * DEGREE_K,
-                         gamma_off * DEGREE_K);
-        trsfRoff.SetRotation(qoff);
 
         gp_Trsf trsfRcur;
         gp_Quaternion qcur;
@@ -144,10 +133,18 @@ class CMainViewportPrivate : public AIS_ViewController
                          gamma_cur * DEGREE_K);
         trsfRcur.SetRotation(qcur);
 
+        gp_Trsf trsfRoff;
+        gp_Quaternion qoff;
+        qoff.SetEulerAngles(gp_Extrinsic_XYZ,
+                         alpha_off * DEGREE_K,
+                         beta_off  * DEGREE_K,
+                         gamma_off * DEGREE_K);
+        trsfRoff.SetRotation(qoff);
+
         gp_Trsf trsfTr1;
         trsfTr1.SetTranslation(-model_center);
 
-        return trsfTr3 * trsfSc * trsfTr2 * trsfRcur * trsfRoff * trsfTr1;
+        return trsfTr2 * trsfSc * trsfRcur * trsfRoff * trsfTr1;
     }
 
     gp_Trsf calcPartTrsf() const {
