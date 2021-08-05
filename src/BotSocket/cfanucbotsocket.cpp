@@ -56,7 +56,7 @@ void CFanucBotSocket::updateConnectionState()
 BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI_TYPES::SCalibPoint> &points)
 {
     BotSocket::EN_CalibResult result = BotSocket::ENCR_FALL;
-    if(points.size() > 3)
+    if(points.size() >= 3)
     {
         std::vector<PointPairsPartReferencer::point_pair_t> point_pairs;
         point_pairs.reserve(points.size());
@@ -75,14 +75,23 @@ BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI
             return BotSocket::ENCR_FALL;
 
         gp_Trsf transform = point_pair_part_referencer.getPartToRobotTransformation();
+
+        // This one is simpler, but cannot change values in GUI settings
+//        CAbstractBotSocket::shapeTransformChanged(BotSocket::ENST_PART, transform);
+
         gp_Vec translation = transform.TranslationPart();
         gp_Quaternion rotation = transform.GetRotation();
 
         GUI_TYPES::SRotationAngle r;
         rotation.GetEulerAngles(gp_Extrinsic_XYZ, r.x, r.y, r.z);
+        r.x *= 180. / M_PI;
+        r.y *= 180. / M_PI;
+        r.z *= 180. / M_PI;
 
         // TODO: update part model here
         BotSocket::SBotPosition part_position(translation.X(), translation.Y(), translation.Z(), r.x, r.y, r.z);
+
+        shapeCalibrationChanged(BotSocket::ENST_PART, part_position);
 
         return BotSocket::ENCR_OK;
     }
@@ -91,8 +100,6 @@ BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI
 
 void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::STaskPoint> &points)
 {
-    fanuc_relay_.stop();
-
     std::vector<xyzwpr_data> path;
     path.reserve(points.size());
     for(GUI_TYPES::STaskPoint p : points)

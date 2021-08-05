@@ -25,7 +25,7 @@ bool PointPairsPartReferencer::referencePart()
         return false;
 
     const bool with_scaling = true;
-    const double max_error = 0.01;
+    const double max_error = 10.0;
 
     transform_part_to_robot_ = gp_Trsf();
     transform_robot_to_part_ = gp_Trsf();
@@ -47,7 +47,8 @@ bool PointPairsPartReferencer::referencePart()
     Eigen::Matrix4d model2robot = Eigen::umeyama (cloud_model, cloud_robot, with_scaling);
     Eigen::Matrix4d robot2model = model2robot.inverse();
 
-    double error = (model2robot * cloud_model.colwise().homogeneous() - cloud_robot.colwise().homogeneous()).norm();
+    Eigen::Matrix<Standard_Real, 3, Eigen::Dynamic> error_matrix = (model2robot * cloud_model.colwise().homogeneous() - cloud_robot.colwise().homogeneous()).topRows<3>();
+    double error = error_matrix.norm();
 
     qDebug() << "PointPairsPartReferencer: error is " << error;
 

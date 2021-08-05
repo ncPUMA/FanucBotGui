@@ -152,8 +152,8 @@ void FanucStateSocket::on_readyread()
                 joint_data_received(msg->joint_data, msg->sequence);
                 if(msg->xyz_data.prefix1 != prefix1)
                     qDebug() << "prefix1: received " << msg->xyz_data.prefix1 <<", expected " << prefix1;
-                if(msg->xyz_data.prefix2 != prefix2)
-                    qDebug() << "prefix2: received " << msg->xyz_data.prefix2 <<", expected " << prefix2;
+//                if(msg->xyz_data.prefix2 != prefix2)
+//                    qDebug() << "prefix2: received " << msg->xyz_data.prefix2 <<", expected " << prefix2;
                 xyzwpr_data_received(msg->xyz_data.xyzwpr, msg->xyz_data.config, msg->sequence);
 
                 break;
@@ -165,7 +165,7 @@ void FanucStateSocket::on_readyread()
                 }
 
                 struct status_t *msg = reinterpret_cast<struct status_t *>(packet.data());
-                qDebug() << "STATUS: " << msg->in_motion << msg->drives_powered << msg->motion_possible << msg->mode << msg->e_stopped << msg->in_error << msg->error_code;
+//                qDebug() << "STATUS: " << msg->in_motion << msg->drives_powered << msg->motion_possible << msg->mode << msg->e_stopped << msg->in_error << msg->error_code;
                 emit status_received(msg->in_motion == TRI_STATE_ON,
                                      msg->drives_powered == TRI_STATE_ON && msg->motion_possible == TRI_STATE_ON,
                                      msg->in_error == TRI_STATE_ON || msg->e_stopped == TRI_STATE_ON);
@@ -183,12 +183,12 @@ void FanucStateSocket::joint_data_received(const simple_message::real_t   joint[
     joint_data pos(6);
     for(int i=0; i<6; i++)
         pos[i] = joint[i] * 180/M_PI;
-    qDebug() << "JOINT POSITION: i=" << sequence << " J1" << pos[0]
-                                                 << " J2" << pos[1]
-                                                 << " J3" << pos[2]
-                                                 << " J4" << pos[3]
-                                                 << " J5" << pos[4]
-                                                 << " J6" << pos[5];
+//    qDebug() << "JOINT POSITION: i=" << sequence << " J1" << pos[0]
+//                                                 << " J2" << pos[1]
+//                                                 << " J3" << pos[2]
+//                                                 << " J4" << pos[3]
+//                                                 << " J5" << pos[4]
+//                                                 << " J6" << pos[5];
     emit joint_position_received(pos);
 }
 void FanucStateSocket::xyzwpr_data_received(const simple_message::real_t   xyzwpr[6], int config, int sequence)
@@ -200,13 +200,13 @@ void FanucStateSocket::xyzwpr_data_received(const simple_message::real_t   xyzwp
     if(bigendian_) // config is not byte-swapped
         config = bswap(config);
     fanuc_config_parse(config, pos);
-    qDebug() << "XYZWPR POSITION: i=" << sequence << " X" << pos.xyzwpr[0]
-                                                  << " Y" << pos.xyzwpr[1]
-                                                  << " Z" << pos.xyzwpr[2]
-                                                  << " W" << pos.xyzwpr[3]
-                                                  << " P" << pos.xyzwpr[4]
-                                                  << " R" << pos.xyzwpr[5]
-                                                  << " C" << pos.flip << pos.up << pos.top << pos.t1 << pos.t2 << pos.t3;
+//    qDebug() << "XYZWPR POSITION: i=" << sequence << " X" << pos.xyzwpr[0]
+//                                                  << " Y" << pos.xyzwpr[1]
+//                                                  << " Z" << pos.xyzwpr[2]
+//                                                  << " W" << pos.xyzwpr[3]
+//                                                  << " P" << pos.xyzwpr[4]
+//                                                  << " R" << pos.xyzwpr[5]
+//                                                  << " C" << pos.flip << pos.up << pos.top << pos.t1 << pos.t2 << pos.t3;
     emit xyzwpr_position_received(pos);
 }
 
