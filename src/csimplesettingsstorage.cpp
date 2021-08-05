@@ -72,58 +72,58 @@ typedef int TGuiKey;
 static const std::map <TGuiKey, QString> guiKeyMap = {
     { ENGK_MSAA          , "msaa"           },
     //The Part
-    { ENGK_PART_TR_X     , "part_tr_x"     },
-    { ENGK_PART_TR_Y     , "part_tr_y"     },
-    { ENGK_PART_TR_Z     , "part_tr_z"     },
-    { ENGK_PART_CENTER_X , "part_center_x" },
-    { ENGK_PART_CENTER_Y , "part_center_y" },
-    { ENGK_PART_CENTER_Z , "part_center_z" },
-    { ENGK_PART_ROTATE_X , "part_rotate_x" },
-    { ENGK_PART_ROTATE_Y , "part_rotate_y" },
-    { ENGK_PART_ROTATE_Z , "part_rotate_z" },
-    { ENGK_PART_SCALE    , "part_scale"    },
+    { ENGK_PART_TR_X     , "part/tr_x"     },
+    { ENGK_PART_TR_Y     , "part/tr_y"     },
+    { ENGK_PART_TR_Z     , "part/tr_z"     },
+    { ENGK_PART_CENTER_X , "part/center_x" },
+    { ENGK_PART_CENTER_Y , "part/center_y" },
+    { ENGK_PART_CENTER_Z , "part/center_z" },
+    { ENGK_PART_ROTATE_X , "part/rotate_x" },
+    { ENGK_PART_ROTATE_Y , "part/rotate_y" },
+    { ENGK_PART_ROTATE_Z , "part/rotate_z" },
+    { ENGK_PART_SCALE    , "part/scale"    },
     //The Desk
-    { ENGK_DESK_TR_X     , "desk_tr_x"     },
-    { ENGK_DESK_TR_Y     , "desk_tr_y"     },
-    { ENGK_DESK_TR_Z     , "desk_tr_z"     },
-    { ENGK_DESK_CENTER_X , "desk_center_x" },
-    { ENGK_DESK_CENTER_Y , "desk_center_y" },
-    { ENGK_DESK_CENTER_Z , "desk_center_z" },
-    { ENGK_DESK_ROTATE_X , "desk_rotate_x" },
-    { ENGK_DESK_ROTATE_Y , "desk_rotate_y" },
-    { ENGK_DESK_ROTATE_Z , "desk_rotate_z" },
-    { ENGK_DESK_SCALE    , "desk_scale"    },
+    { ENGK_DESK_TR_X     , "desk/tr_x"     },
+    { ENGK_DESK_TR_Y     , "desk/tr_y"     },
+    { ENGK_DESK_TR_Z     , "desk/tr_z"     },
+    { ENGK_DESK_CENTER_X , "desk/center_x" },
+    { ENGK_DESK_CENTER_Y , "desk/center_y" },
+    { ENGK_DESK_CENTER_Z , "desk/center_z" },
+    { ENGK_DESK_ROTATE_X , "desk/rotate_x" },
+    { ENGK_DESK_ROTATE_Y , "desk/rotate_y" },
+    { ENGK_DESK_ROTATE_Z , "desk/rotate_z" },
+    { ENGK_DESK_SCALE    , "desk/scale"    },
     //The Laser Head
-    { ENGK_LHEAD_TR_X      , "lhead_tr_x"       },
-    { ENGK_LHEAD_TR_Y      , "lhead_tr_y"       },
-    { ENGK_LHEAD_TR_Z      , "lhead_tr_z"       },
-    { ENGK_LHEAD_CENTER_X  , "lhead_center_x"   },
-    { ENGK_LHEAD_CENTER_Y  , "lhead_center_y"   },
-    { ENGK_LHEAD_CENTER_Z  , "lhead_center_z"   },
-    { ENGK_LHEAD_ROTATE_X  , "lhead_rotate_x"   },
-    { ENGK_LHEAD_ROTATE_Y  , "lhead_rotate_y"   },
-    { ENGK_LHEAD_ROTATE_Z  , "lhead_rotate_z"   },
-    { ENGK_LHEAD_SCALE     , "lhead_scale"      },
-    { ENGK_LHEAD_LSR_TR_X  , "lhead_lsr_tr_x"   },
-    { ENGK_LHEAD_LSR_TR_Y  , "lhead_lsr_tr_y"   },
-    { ENGK_LHEAD_LSR_TR_Z  , "lhead_lsr_tr_z"   },
-    { ENGK_LHEAD_LSR_NRML_X, "lhead_lsr_nrml_x" },
-    { ENGK_LHEAD_LSR_NRML_Y, "lhead_lsr_nrml_y" },
-    { ENGK_LHEAD_LSR_NRML_Z, "lhead_lsr_nrml_z" },
-    { ENGK_LHEAD_LSR_LENGHT, "lhead_lsr_lenght" },
-    { ENGK_LHEAD_LSR_CLIP  , "lhead_lsr_clip"   },
+    { ENGK_LHEAD_TR_X      , "lhead/tr_x"       },
+    { ENGK_LHEAD_TR_Y      , "lhead/tr_y"       },
+    { ENGK_LHEAD_TR_Z      , "lhead/tr_z"       },
+    { ENGK_LHEAD_CENTER_X  , "lhead/center_x"   },
+    { ENGK_LHEAD_CENTER_Y  , "lhead/center_y"   },
+    { ENGK_LHEAD_CENTER_Z  , "lhead/center_z"   },
+    { ENGK_LHEAD_ROTATE_X  , "lhead/rotate_x"   },
+    { ENGK_LHEAD_ROTATE_Y  , "lhead/rotate_y"   },
+    { ENGK_LHEAD_ROTATE_Z  , "lhead/rotate_z"   },
+    { ENGK_LHEAD_SCALE     , "lhead/scale"      },
+    { ENGK_LHEAD_LSR_TR_X  , "lhead/lsr_tr_x"   },
+    { ENGK_LHEAD_LSR_TR_Y  , "lhead/lsr_tr_y"   },
+    { ENGK_LHEAD_LSR_TR_Z  , "lhead/lsr_tr_z"   },
+    { ENGK_LHEAD_LSR_NRML_X, "lhead/lsr_nrml_x" },
+    { ENGK_LHEAD_LSR_NRML_Y, "lhead/lsr_nrml_y" },
+    { ENGK_LHEAD_LSR_NRML_Z, "lhead/lsr_nrml_z" },
+    { ENGK_LHEAD_LSR_LENGHT, "lhead/lsr_lenght" },
+    { ENGK_LHEAD_LSR_CLIP  , "lhead/lsr_clip"   },
     //The GRIP
-    { ENGK_GRIP_TR_X     , "grip_tr_x"     },
-    { ENGK_GRIP_TR_Y     , "grip_tr_y"     },
-    { ENGK_GRIP_TR_Z     , "grip_tr_z"     },
-    { ENGK_GRIP_CENTER_X , "grip_center_x" },
-    { ENGK_GRIP_CENTER_Y , "grip_center_y" },
-    { ENGK_GRIP_CENTER_Z , "grip_center_z" },
-    { ENGK_GRIP_ROTATE_X , "grip_rotate_x" },
-    { ENGK_GRIP_ROTATE_Y , "grip_rotate_y" },
-    { ENGK_GRIP_ROTATE_Z , "grip_rotate_z" },
-    { ENGK_GRIP_SCALE    , "grip_scale"    },
-    { ENGK_GRIP_VIS      , "grip_vis"      }
+    { ENGK_GRIP_TR_X     , "grip/tr_x"     },
+    { ENGK_GRIP_TR_Y     , "grip/tr_y"     },
+    { ENGK_GRIP_TR_Z     , "grip/tr_z"     },
+    { ENGK_GRIP_CENTER_X , "grip/center_x" },
+    { ENGK_GRIP_CENTER_Y , "grip/center_y" },
+    { ENGK_GRIP_CENTER_Z , "grip/center_z" },
+    { ENGK_GRIP_ROTATE_X , "grip/rotate_x" },
+    { ENGK_GRIP_ROTATE_Y , "grip/rotate_y" },
+    { ENGK_GRIP_ROTATE_Z , "grip/rotate_z" },
+    { ENGK_GRIP_SCALE    , "grip/scale"    },
+    { ENGK_GRIP_VIS      , "grip/vis"      }
 };
 
 class CSimpleSettingsStoragePrivate
@@ -148,6 +148,8 @@ public:
         settingsFile->beginGroup(GUI_PREFIX);
         //Common
         res.msaa          = readGuiValue <TMSAA> (ENGK_MSAA);
+        settingsFile->endGroup();
+
         //The Part
         res.partTrX       = readGuiValue <TDistance> (ENGK_PART_TR_X);
         res.partTrY       = readGuiValue <TDistance> (ENGK_PART_TR_Y);
@@ -201,13 +203,13 @@ public:
         res.gripRotationZ = readGuiValue <TDegree>   (ENGK_GRIP_ROTATE_Z);
         res.gripScale     = readGuiValue <TScale>    (ENGK_GRIP_SCALE);
         res.gripVis       = readGuiValue <bool>      (ENGK_GRIP_VIS);
-        settingsFile->endGroup();
         return res;
     }
 
     void saveGuiSettings(const GUI_TYPES::SGuiSettings &settings) {
         settingsFile->beginGroup(GUI_PREFIX);
         writeGuiValue(ENGK_MSAA         , settings.msaa);
+        settingsFile->endGroup();
         //The Part
         writeGuiValue(ENGK_PART_TR_X    , settings.partTrX);
         writeGuiValue(ENGK_PART_TR_Y    , settings.partTrY);
@@ -261,7 +263,6 @@ public:
         writeGuiValue(ENGK_GRIP_ROTATE_Z, settings.gripRotationZ);
         writeGuiValue(ENGK_GRIP_SCALE   , settings.gripScale);
         writeGuiValue(ENGK_GRIP_VIS     , settings.gripVis);
-        settingsFile->endGroup();
     }
 
 private:
