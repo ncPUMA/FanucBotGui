@@ -66,7 +66,7 @@ class CMainViewportPrivate : public AIS_ViewController
         q_ptr(qptr),
         context(new CInteractiveContext()),
         uiState(GUI_TYPES::ENUS_TASK_EDITING),
-        calibResult(BotSocket::ENCR_FALL),
+        calibResult(BotSocket::ENCR_OK),
         botState(BotSocket::ENBS_FALL) {
         myMouseGestureMap.Clear();
         myMouseGestureMap.Bind(Aspect_VKeyMouse_LeftButton, AIS_MouseGesture_Pan);
@@ -82,6 +82,7 @@ class CMainViewportPrivate : public AIS_ViewController
         //Viewer
         viewer = new V3d_Viewer(&driver);
         viewer->SetDefaultViewSize(1000.);
+        viewer->SetDefaultViewProj(V3d_XposYposZpos);
         viewer->SetComputedMode(Standard_True);
         viewer->SetDefaultComputedMode(Standard_True);
         viewer->SetDefaultLights();
