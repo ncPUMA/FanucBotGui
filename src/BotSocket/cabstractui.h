@@ -2,6 +2,7 @@
 #define CABSTRACTUI_H
 
 #include <vector>
+#include <gp_Trsf.hxx>
 
 #include "bot_socket_types.h"
 
@@ -27,6 +28,8 @@ protected:
     virtual void socketStateChanged(const BotSocket::EN_BotState state) = 0;
     virtual void laserHeadPositionChanged(const BotSocket::SBotPosition &pos) = 0;
     virtual void gripPositionChanged(const BotSocket::SBotPosition &pos) = 0;
+    virtual void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos) = 0;
+    virtual void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform) = 0;
     virtual const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const = 0;
 
     BotSocket::EN_CalibResult execCalibration(const std::vector <GUI_TYPES::SCalibPoint> &points);

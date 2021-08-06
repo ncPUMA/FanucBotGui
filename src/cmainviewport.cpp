@@ -66,7 +66,7 @@ class CMainViewportPrivate : public AIS_ViewController
         q_ptr(qptr),
         context(new CInteractiveContext()),
         uiState(GUI_TYPES::ENUS_TASK_EDITING),
-        calibResult(BotSocket::ENCR_FALL),
+        calibResult(BotSocket::ENCR_OK),
         botState(BotSocket::ENBS_FALL) {
         myMouseGestureMap.Clear();
         myMouseGestureMap.Bind(Aspect_VKeyMouse_LeftButton, AIS_MouseGesture_Pan);
@@ -82,6 +82,7 @@ class CMainViewportPrivate : public AIS_ViewController
         //Viewer
         viewer = new V3d_Viewer(&driver);
         viewer->SetDefaultViewSize(1000.);
+        viewer->SetDefaultViewProj(V3d_XposYposZpos);
         viewer->SetComputedMode(Standard_True);
         viewer->SetDefaultComputedMode(Standard_True);
         viewer->SetDefaultLights();
@@ -117,24 +118,13 @@ class CMainViewportPrivate : public AIS_ViewController
                                   double scaleFactor,
                                   double alpha_off, double beta_off, double gamma_off,
                                   double alpha_cur = 0.0, double beta_cur = 0.0, double gamma_cur = 0.0) {
-        gp_Trsf trsfTr3;
-        trsfTr3.SetTranslation(model_translation + model_center);
+        gp_Trsf trsfTr2;
+        trsfTr2.SetTranslation(model_translation + model_center);
 
         gp_Trsf trsfSc;
         if (scaleFactor == 0.)
             scaleFactor = 1.;
         trsfSc.SetScale(gp_Pnt(), scaleFactor);
-
-        gp_Trsf trsfTr2;
-        trsfTr2.SetTranslation(model_center);
-
-        gp_Trsf trsfRoff;
-        gp_Quaternion qoff;
-        qoff.SetEulerAngles(gp_Extrinsic_XYZ,
-                         alpha_off * DEGREE_K,
-                         beta_off  * DEGREE_K,
-                         gamma_off * DEGREE_K);
-        trsfRoff.SetRotation(qoff);
 
         gp_Trsf trsfRcur;
         gp_Quaternion qcur;
@@ -144,10 +134,18 @@ class CMainViewportPrivate : public AIS_ViewController
                          gamma_cur * DEGREE_K);
         trsfRcur.SetRotation(qcur);
 
+        gp_Trsf trsfRoff;
+        gp_Quaternion qoff;
+        qoff.SetEulerAngles(gp_Extrinsic_XYZ,
+                         alpha_off * DEGREE_K,
+                         beta_off  * DEGREE_K,
+                         gamma_off * DEGREE_K);
+        trsfRoff.SetRotation(qoff);
+
         gp_Trsf trsfTr1;
         trsfTr1.SetTranslation(-model_center);
 
-        return trsfTr3 * trsfSc * trsfTr2 * trsfRcur * trsfRoff * trsfTr1;
+        return trsfTr2 * trsfSc * trsfRcur * trsfRoff * trsfTr1;
     }
 
     gp_Trsf calcPartTrsf() const {
@@ -300,6 +298,85 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
+    void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
+    {
+        using namespace BotSocket;
+        switch(shType) {
+            case ENST_DESK   : {
+                guiSettings.deskTrX = pos.globalPos.x;
+                guiSettings.deskTrY = pos.globalPos.y;
+                guiSettings.deskTrZ = pos.globalPos.z;
+                guiSettings.deskRotationX = pos.globalRotation.x;
+                guiSettings.deskRotationY = pos.globalRotation.y;
+                guiSettings.deskRotationZ = pos.globalRotation.z;
+                context->setDeskMdlTransform(calcDeskTrsf());
+                view->Redraw();
+                break;
+            }
+            case ENST_PART   : {
+                guiSettings.partTrX = pos.globalPos.x;
+                guiSettings.partTrY = pos.globalPos.y;
+                guiSettings.partTrZ = pos.globalPos.z;
+                guiSettings.partRotationX = pos.globalRotation.x;
+                guiSettings.partRotationY = pos.globalRotation.y;
+                guiSettings.partRotationZ = pos.globalRotation.z;
+                context->setPartMdlTransform(calcPartTrsf());
+                view->Redraw();
+                break;
+            }
+            case ENST_LSRHEAD: {
+                guiSettings.lheadTrX = pos.globalPos.x;
+                guiSettings.lheadTrY = pos.globalPos.y;
+                guiSettings.lheadTrZ = pos.globalPos.z;
+                guiSettings.lheadRotationX = pos.globalRotation.x;
+                guiSettings.lheadRotationY = pos.globalRotation.y;
+                guiSettings.lheadRotationZ = pos.globalRotation.z;
+                context->setLsrheadMdlTransform(calcLsrheadTrsf());
+                view->Redraw();
+                break;
+            }
+            case ENST_GRIP   : {
+                guiSettings.gripTrX = pos.globalPos.x;
+                guiSettings.gripTrY = pos.globalPos.y;
+                guiSettings.gripTrZ = pos.globalPos.z;
+                guiSettings.gripRotationX = pos.globalRotation.x;
+                guiSettings.gripRotationY = pos.globalRotation.y;
+                guiSettings.gripRotationZ = pos.globalRotation.z;
+                context->setGripMdlTransform(calcGripTrsf());
+                view->Redraw();
+                break;
+            }
+            default: break;
+        }
+    }
+
+    void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
+    {
+        using namespace BotSocket;
+        switch(shType) {
+            case ENST_DESK   : {
+                context->setDeskMdlTransform(transform);
+                view->Redraw();
+                break;
+            }
+            case ENST_PART   : {
+                context->setPartMdlTransform(transform);
+                view->Redraw();
+                break;
+            }
+            case ENST_LSRHEAD: {
+                context->setLsrheadMdlTransform(transform);
+                view->Redraw();
+                break;
+            }
+            case ENST_GRIP   : {
+                context->setGripMdlTransform(transform);
+                view->Redraw();
+                break;
+            }
+            default: break;
+        }
+    }
 
     CMainViewport * const q_ptr;
     std::vector <CAbstractMainViewportSubscriber *> subs;
@@ -484,6 +561,16 @@ void CMainViewport::moveLsrhead(const BotSocket::SBotPosition &pos)
 void CMainViewport::moveGrip(const BotSocket::SBotPosition &pos)
 {
     d_ptr->moveGrip(pos);
+}
+
+void CMainViewport::shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
+{
+    d_ptr->shapeCalibrationChanged(shType, pos);
+}
+
+void CMainViewport::shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
+{
+    d_ptr->shapeTransformChanged(shType, transform);
 }
 
 std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
@@ -713,7 +800,7 @@ void CMainViewport::slAddCalibPoint()
     initPoint.globalPos.x = cursorPos.X();
     initPoint.globalPos.y = cursorPos.Y();
     initPoint.globalPos.z = cursorPos.Z();
-    initPoint.botPos      = d_ptr->lheadPos.globalPos;
+    initPoint.botPos      = d_ptr->gripPos.globalPos;
     CAddCalibPointDialog dialog(this, initPoint);
     if (dialog.exec() == QDialog::Accepted)
     {

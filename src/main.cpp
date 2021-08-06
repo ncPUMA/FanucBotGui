@@ -9,7 +9,7 @@
 
 #include "csimplesettingsstorage.h"
 
-#include "BotSocket/cbotsocketemulator.h"
+#include "BotSocket/cfanucbotsocket.h"
 
 int main(int argc, char *argv[])
 {
@@ -41,12 +41,11 @@ int main(int argc, char *argv[])
     settings.setSettingsFName("conf.cfg");
 #endif
 
-    CBotSocketEmulator emulator(false, 50.0f, 10.0, 90.0);
-
     MainWindow w;
+    CFanucBotSocket bot_socket;
     w.init(*aGraphicDriver);
     w.setSettingsStorage(settings);
-    w.setBotSocket(emulator);
+    w.setBotSocket(bot_socket);
     if (bStyleSheet)
     {
         QFile f(":/Styles/Data/StyleSheets/style.qss");

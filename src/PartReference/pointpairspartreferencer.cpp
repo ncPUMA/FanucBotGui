@@ -19,18 +19,13 @@ bool PointPairsPartReferencer::isReferenced() const
     return reference_ok_;
 }
 
-QFuture<bool> PointPairsPartReferencer::referencePart()
-{
-    return QtConcurrent::run(this, &PointPairsPartReferencer::referencePartAsync);
-}
-
-bool PointPairsPartReferencer::referencePartAsync()
+bool PointPairsPartReferencer::referencePart()
 {
     if(point_pairs_.size() < 3)
         return false;
 
     const bool with_scaling = true;
-    const double max_error = 0.01;
+    const double max_error = 10.0;
 
     transform_part_to_robot_ = gp_Trsf();
     transform_robot_to_part_ = gp_Trsf();
@@ -52,7 +47,8 @@ bool PointPairsPartReferencer::referencePartAsync()
     Eigen::Matrix4d model2robot = Eigen::umeyama (cloud_model, cloud_robot, with_scaling);
     Eigen::Matrix4d robot2model = model2robot.inverse();
 
-    double error = (model2robot * cloud_model.colwise().homogeneous() - cloud_robot.colwise().homogeneous()).norm();
+    Eigen::Matrix<Standard_Real, 3, Eigen::Dynamic> error_matrix = (model2robot * cloud_model.colwise().homogeneous() - cloud_robot.colwise().homogeneous()).topRows<3>();
+    double error = error_matrix.norm();
 
     qDebug() << "PointPairsPartReferencer: error is " << error;
 
@@ -70,7 +66,7 @@ bool PointPairsPartReferencer::referencePartAsync()
     return true;
 }
 
-position_t PointPairsPartReferencer::transformPartToRobot(const position_t &position) const
+PointPairsPartReferencer::position_t PointPairsPartReferencer::transformPartToRobot(const position_t &position) const
 {
     gp_Trsf pos_src;
     pos_src.SetRotation(position.r);
@@ -80,7 +76,7 @@ position_t PointPairsPartReferencer::transformPartToRobot(const position_t &posi
     return {pos_result.TranslationPart(), pos_result.GetRotation().Normalized()};
 }
 
-position_t PointPairsPartReferencer::transformRobotToPart(const position_t &position) const
+PointPairsPartReferencer::position_t PointPairsPartReferencer::transformRobotToPart(const position_t &position) const
 {
     gp_Trsf pos_src;
     pos_src.SetRotation(position.r);
@@ -88,4 +84,14 @@ position_t PointPairsPartReferencer::transformRobotToPart(const position_t &posi
 
     gp_Trsf pos_result = transform_robot_to_part_ * pos_src;
     return {pos_result.TranslationPart(), pos_result.GetRotation().Normalized()};
+}
+
+gp_Trsf PointPairsPartReferencer::getPartToRobotTransformation() const
+{
+    return transform_part_to_robot_;
+}
+
+gp_Trsf PointPairsPartReferencer::getRobotToPartTransformation() const
+{
+    return transform_robot_to_part_;
 }

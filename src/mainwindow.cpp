@@ -31,7 +31,16 @@ protected:
 
     }
 
-    void tasksComplete(const BotSocket::EN_WorkResult) {
+    void tasksComplete(const BotSocket::EN_WorkResult result) {
+        if(result == BotSocket::ENWR_OK)
+            QMessageBox::information(viewport,
+                                  QObject::tr("Задание завершено"),
+                                  QObject::tr("Задание завершено"));
+        else
+            QMessageBox::warning(viewport,
+                                  QObject::tr("Ошибка выполнения задания"),
+                                  QObject::tr("Ошибка выполнения задания"));
+
         viewport->setUiState(GUI_TYPES::ENUS_TASK_EDITING);
     }
 
@@ -83,6 +92,15 @@ protected:
         shapeTransformChaged(BotSocket::ENST_GRIP);
         if (viewport->getBotState() == BotSocket::ENBS_ATTACHED)
             shapeTransformChaged(BotSocket::ENST_PART);
+    }
+
+    void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
+    {
+        viewport->shapeCalibrationChanged(shType, pos);
+    }
+    void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
+    {
+        viewport->shapeTransformChanged(shType, transform);
     }
 
     const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const final {
@@ -288,6 +306,7 @@ MainWindow::MainWindow(QWidget *parent) :
     configToolBar();
 
     //Callib
+    connect(ui->wSettings, SIGNAL(sigCalcCalibration()), SLOT(slCallibCalc()));
     connect(ui->wSettings, SIGNAL(sigApplyRequest()), SLOT(slCallibApply()));
 
     ui->teJrnl->document()->setMaximumBlockCount(MAX_JRNL_ROW_COUNT);
@@ -320,7 +339,7 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
     ui->mainView->setPartModel(loadShape(":/Models/Data/Models/turbine_blade.stp"));
     ui->mainView->setDeskModel(loadShape(":/Models/Data/Models/WTTGA-001 - Configurable Table.stp"));
     ui->mainView->setLsrheadModel(loadShape(":/Models/Data/Models/Neje tool 30W Laser Module.stp"));
-    ui->mainView->setGripModel(loadShape(":/Models/Data/Models/LDLSR30w.STEP"));
+    ui->mainView->setGripModel(loadShape(":/Models/Data/Models/MHZ2_16D_grip.stp"));
 
     ui->mainView->setShading(true);
     ui->mainView->setUiState(GUI_TYPES::ENUS_TASK_EDITING);
@@ -428,19 +447,34 @@ void MainWindow::slClearJrnl()
     ui->teJrnl->clear();
 }
 
+void MainWindow::slCallibCalc()
+{
+    const BotSocket::EN_CalibResult calibRes =
+            d_ptr->uiIface.execCalibration(ui->mainView->getCallibrationPoints());
+    if(calibRes == BotSocket::ENCR_OK)
+        QMessageBox::information(this,
+                              tr("Калибровка завершена"),
+                              tr("Калибровка завершена"));
+    else
+        QMessageBox::warning(this,
+                              tr("Ошибка калибровки"),
+                              tr("Проверьте правильность точек калибровки"));
+
+    ui->wSettings->initFromGuiSettings(ui->mainView->getGuiSettings());
+    ui->mainView->setCalibResult(calibRes);
+}
+
 void MainWindow::slCallibApply()
 {
     GUI_TYPES::SGuiSettings settings = ui->wSettings->getChangedSettings();
     settings.msaa = ui->mainView->getMSAA();
-    d_ptr->settingsStorage->saveGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_DESK   );
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_LSRHEAD);
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART   );
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   );
-    const BotSocket::EN_CalibResult calibRes =
-            d_ptr->uiIface.execCalibration(ui->mainView->getCallibrationPoints());
-    ui->mainView->setCalibResult(calibRes);
+
+    d_ptr->settingsStorage->saveGuiSettings(ui->mainView->getGuiSettings());
 }
 
 void MainWindow::slStart()

@@ -2,6 +2,7 @@
 #define CMAINVIEWPORT_H
 
 #include <QWidget>
+#include <gp_Trsf.hxx>
 
 #include "BotSocket/bot_socket_types.h"
 
@@ -78,6 +79,9 @@ public:
     BotSocket::EN_BotState getBotState() const;
     void moveLsrhead(const BotSocket::SBotPosition &pos);
     void moveGrip(const BotSocket::SBotPosition &pos);
+
+    void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos);
+    void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform);
 
     std::vector <GUI_TYPES::SCalibPoint> getCallibrationPoints() const;
     std::vector <GUI_TYPES::STaskPoint>  getTaskPoints() const;

@@ -2,21 +2,30 @@
 #define CFANUCBOTSOCKET_H
 
 #include "cabstractbotsocket.h"
-#include "fanucsocket.h"
+#include "fanuc_state_socket.h"
+#include "fanuc_relay_socket.h"
 
 class CFanucBotSocket:
+        public QObject,
         public CAbstractBotSocket
 {
+    Q_OBJECT
 public:
-    CFanucBotSocket() = default;
+    CFanucBotSocket();
 
-    BotSocket::TSocketError startSocket();
-    void stopSocket();
-    BotSocket::TSocketState socketState() const;
+    BotSocket::EN_CalibResult execCalibration(const std::vector <GUI_TYPES::SCalibPoint> &points);
+    void prepare(const std::vector <GUI_TYPES::STaskPoint> &points);
+    void startTasks(const std::vector <GUI_TYPES::STaskPoint> &points);
+    void stopTasks();
+    void shapeTransformChanged(const BotSocket::EN_ShapeType shType);
 
 private:
-    bool active_ = false;
-    FanucSocket fanuc_socket_;
+
+    FanucStateSocket fanuc_state_;
+    FanucRelaySocket fanuc_relay_;
+
+    void updatePosition(const xyzwpr_data &pos);
+    void updateConnectionState();
 };
 
 #endif // CFANUCBOTSOCKET_H
