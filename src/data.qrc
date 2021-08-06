@@ -18,5 +18,6 @@
         <file>Data/Models/LDLSR30w.STEP</file>
         <file>Data/Models/WTTGA-001 - Configurable Table.stp</file>
         <file>Data/Models/Neje tool 30W Laser Module.stp</file>
+        <file>Data/Models/MHZ2_16D_grip.stp</file>
     </qresource>
 </RCC>

@@ -339,7 +339,7 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
     ui->mainView->setPartModel(loadShape(":/Models/Data/Models/turbine_blade.stp"));
     ui->mainView->setDeskModel(loadShape(":/Models/Data/Models/WTTGA-001 - Configurable Table.stp"));
     ui->mainView->setLsrheadModel(loadShape(":/Models/Data/Models/Neje tool 30W Laser Module.stp"));
-    ui->mainView->setGripModel(loadShape(":/Models/Data/Models/LDLSR30w.STEP"));
+    ui->mainView->setGripModel(loadShape(":/Models/Data/Models/MHZ2_16D_grip.stp"));
 
     ui->mainView->setShading(true);
     ui->mainView->setUiState(GUI_TYPES::ENUS_TASK_EDITING);
