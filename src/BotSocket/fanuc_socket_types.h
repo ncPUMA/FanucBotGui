@@ -2,9 +2,9 @@
 
 #include <QVector>
 
-typedef QVector<float> joint_data;
+typedef QVector<double> joint_data;
 typedef struct xyzwpr_data_s {
-    QVector<float> xyzwpr;
+    QVector<double> xyzwpr;
     bool flip = false; // Flip/Unflip
     bool left = false;
     bool up = true;    // Up/Down

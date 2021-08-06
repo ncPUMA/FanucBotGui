@@ -43,7 +43,6 @@ HEADERS += \
     BotSocket/cfanucbotsocket.h \
     BotSocket/fanuc_relay_socket.h \
     BotSocket/fanuc_state_socket.h \
-    BotSocket/fanuc_types.h \
     BotSocket/simple_message.h \
     Dialogs/caddcalibpointdialog.h \
     Dialogs/cbottaskdialogfacade.h \
