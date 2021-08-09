@@ -76,7 +76,7 @@ static void bswap(QByteArray &array)
 
 static bool get_prefix_header(QByteArray &packet, struct prefix_t **prefix, struct header_t **header)
 {
-    if(packet.size() < sizeof(prefix_t) + sizeof(header_t))
+    if(static_cast<size_t>(packet.size()) < sizeof(prefix_t) + sizeof(header_t))
         return false;
 
     char *data = packet.data();
@@ -165,6 +165,19 @@ void FanucRelaySocket::on_readyread()
 
         if(header->reply_code == REPLY_CODE_SUCCESS)
         {
+            if(sequence_id < 0)
+            {
+                if(sequence_id == STOP_TRAJECTORY && sequence_id == path_idx_)
+                {
+                    qDebug() << "Stop trajectory completed";
+                }
+                else
+                {
+                    qDebug() << "Unexpected sequence_id " << sequence_id;
+                }
+                continue;
+            }
+
             if(sequence_id != path_idx_)
             {
                 qDebug() << "Unexpected sequence_id " << sequence_id << " expected " << path_idx_;
@@ -173,12 +186,13 @@ void FanucRelaySocket::on_readyread()
 
             qDebug() << "Trajectory point enqueued "<< path_idx_;
 
-            if(path_idx_ < path_joint_.size())
+            size_t path_idx_u = path_idx_;
+            if(path_idx_u < path_joint_.size())
             {
                 emit trajectory_joint_point_enqueued(path_joint_[path_idx_], path_idx_);
 
                 path_idx_++;
-                if(path_idx_ < path_joint_.size())
+                if(path_idx_u < path_joint_.size())
                 {
                     move_point(path_joint_[path_idx_], path_idx_);
                 }
@@ -187,12 +201,12 @@ void FanucRelaySocket::on_readyread()
                     emit trajectory_enqueue_finished();
                 }
             }
-            else if(path_idx_ < path_xyzwpr_.size())
+            else if(path_idx_u < path_xyzwpr_.size())
             {
                 emit trajectory_xyzwpr_point_enqueued(path_xyzwpr_[path_idx_], path_idx_);
 
                 path_idx_++;
-                if(path_idx_ < path_xyzwpr_.size())
+                if(path_idx_u < path_xyzwpr_.size())
                 {
                     move_point(path_xyzwpr_[path_idx_], path_idx_);
                 }
@@ -208,13 +222,27 @@ void FanucRelaySocket::on_readyread()
         }
         else if(header->reply_code == REPLY_CODE_FAILURE)
         {
+            if(sequence_id < 0 && sequence_id == path_idx_)
+            {
+                if(sequence_id == STOP_TRAJECTORY)
+                {
+                    qDebug() << "Stop trajectory failed";
+                }
+                else
+                {
+                    qDebug() << "Unexpected sequence_id " << sequence_id;
+                }
+                continue;
+            }
+
             qDebug() << "Trajectory point enqueue fail, stopping "<< path_idx_;
 
-            if(path_idx_ < path_joint_.size())
+            size_t path_idx_u = path_idx_;
+            if(path_idx_u < path_joint_.size())
             {
                 emit trajectory_joint_point_enqueue_fail(path_joint_[path_idx_], path_idx_);
             }
-            else if(path_idx_ < path_xyzwpr_.size())
+            else if(path_idx_u < path_xyzwpr_.size())
             {
                 emit trajectory_xyzwpr_point_enqueue_fail(path_xyzwpr_[path_idx_], path_idx_);
             }
@@ -241,7 +269,7 @@ void FanucRelaySocket::start_connection()
         QSettings settings("fanuc.ini", QSettings::IniFormat);
 
         bigendian_ = settings.value("bigendian", false).toBool();
-        QString host = settings.value("server_ip", "192.168.1.230").toString();
+        QString host = settings.value("server_ip", "127.0.0.1").toString();
         int port = settings.value("server_relay_port", 11000).toInt();
         prefix1 = settings.value("prefix1", prefix1).toInt();
         prefix2 = settings.value("prefix2", prefix2).toInt();
