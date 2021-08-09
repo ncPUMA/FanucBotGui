@@ -30,6 +30,8 @@ public:
 private slots:
     //Menu "File"
     void slImport();
+    void slCalibPointsOrderDlg();
+    void slTaskPointsOrderDlg();
     void slExit();
 
     //Menu "View"

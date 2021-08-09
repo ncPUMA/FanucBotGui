@@ -1,7 +1,7 @@
 #include "caddcalibpointdialog.h"
 #include "ui_caddcalibpointdialog.h"
 
-#include "../gui_types.h"
+#include "../../gui_types.h"
 
 CAddCalibPointDialog::CAddCalibPointDialog(QWidget *parent, const GUI_TYPES::SCalibPoint &initData) :
     QDialog(parent),

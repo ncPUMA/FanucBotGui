@@ -33,7 +33,7 @@
 #include "caspectwindow.h"
 #include "sguisettings.h"
 
-#include "Dialogs/caddcalibpointdialog.h"
+#include "Dialogs/CalibPoints/caddcalibpointdialog.h"
 #include "Dialogs/cbottaskdialogfacade.h"
 
 static constexpr double DEGREE_K = M_PI / 180.;

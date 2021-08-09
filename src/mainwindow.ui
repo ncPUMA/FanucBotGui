@@ -39,8 +39,10 @@
     <property name="title">
      <string>&amp;Файл</string>
     </property>
-    <addaction name="separator"/>
     <addaction name="actionImport"/>
+    <addaction name="separator"/>
+    <addaction name="actionCalibPoints"/>
+    <addaction name="actionTaskPoints"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -253,6 +255,16 @@ p, li { white-space: pre-wrap; }
   <action name="actionClearJrnl">
    <property name="text">
     <string>Очистить журнал</string>
+   </property>
+  </action>
+  <action name="actionTaskPoints">
+   <property name="text">
+    <string>Точки задания...</string>
+   </property>
+  </action>
+  <action name="actionCalibPoints">
+   <property name="text">
+    <string>Точки калибровки...</string>
    </property>
   </action>
  </widget>
