@@ -269,7 +269,7 @@ void FanucRelaySocket::start_connection()
         QSettings settings("fanuc.ini", QSettings::IniFormat);
 
         bigendian_ = settings.value("bigendian", false).toBool();
-        QString host = settings.value("server_ip", "192.168.1.230").toString();
+        QString host = settings.value("server_ip", "127.0.0.1").toString();
         int port = settings.value("server_relay_port", 11000).toInt();
         prefix1 = settings.value("prefix1", prefix1).toInt();
         prefix2 = settings.value("prefix2", prefix2).toInt();
