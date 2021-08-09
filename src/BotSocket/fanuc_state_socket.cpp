@@ -77,7 +77,7 @@ static void bswap(QByteArray &array)
 
 static bool get_prefix_header(QByteArray &packet, struct prefix_t **prefix, struct header_t **header)
 {
-    if(packet.size() < sizeof(prefix_t) + sizeof(header_t))
+    if(static_cast<size_t>(packet.size()) < sizeof(prefix_t) + sizeof(header_t))
         return false;
 
     char *data = packet.data();
@@ -178,7 +178,7 @@ void FanucStateSocket::on_readyread()
     }
 }
 
-void FanucStateSocket::joint_data_received(const simple_message::real_t   joint[10], int sequence)
+void FanucStateSocket::joint_data_received(const simple_message::real_t   joint[10], int)
 {
     joint_data pos(6);
     for(int i=0; i<6; i++)
@@ -191,7 +191,7 @@ void FanucStateSocket::joint_data_received(const simple_message::real_t   joint[
 //                                                 << " J6" << pos[5];
     emit joint_position_received(pos);
 }
-void FanucStateSocket::xyzwpr_data_received(const simple_message::real_t   xyzwpr[6], int config, int sequence)
+void FanucStateSocket::xyzwpr_data_received(const simple_message::real_t   xyzwpr[6], int config, int)
 {
     xyzwpr_data pos;
     pos.xyzwpr.resize(6);
