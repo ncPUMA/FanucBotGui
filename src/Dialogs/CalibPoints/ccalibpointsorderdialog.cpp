@@ -2,8 +2,12 @@
 #include "ui_ccalibpointsorderdialog.h"
 
 #include <QAbstractTableModel>
-#include <QDebug>
+#include <QProxyStyle>
 #include <QMimeData>
+#include <QPainter>
+#include <QStyledItemDelegate>
+
+#include "caddcalibpointdialog.h"
 
 class CCalibPointsOrderModel : public QAbstractTableModel
 {
@@ -175,15 +179,17 @@ public:
         const int rCount = rowCount();
         if (sourceRow < 0 ||
             sourceRow >= rCount ||
-            destinationChild >= rCount ||
+            destinationChild > rCount ||
             destinationChild < 0 ||
-            (destinationChild == rCount && sourceRow == rCount - 1))
+            sourceRow == destinationChild - 1)
             return false;
-//        beginResetModel();
-//        if (destinationChild == rCount)
-//        qDebug() << "move " << sourceRow << " to " << destinationChild;
-//        std::swap(points.begin() + sourceRow, points.begin() + destinationChild);
-//        endResetModel();
+        beginMoveRows(QModelIndex(), sourceRow, sourceRow, QModelIndex(), destinationChild);
+        const SPoint tmp = points[sourceRow];
+        points.erase(points.begin() + sourceRow);
+        if (sourceRow <= destinationChild)
+            --destinationChild;
+        points.insert(points.begin() + destinationChild, tmp);
+        endMoveRows();
         return true;
     }
 
@@ -194,6 +200,61 @@ private:
         GUI_TYPES::SCalibPoint pnt;
     };
     std::vector <SPoint> points;
+};
+
+
+
+class CViewStyle: public QProxyStyle
+{
+public:
+    CViewStyle(QStyle* style = 0) : QProxyStyle(style) { }
+
+    void drawPrimitive (QStyle::PrimitiveElement element, const QStyleOption * option,
+                         QPainter * painter, const QWidget * widget = 0 ) const final {
+        if (element == QStyle::PE_IndicatorItemViewItemDrop && !option->rect.isNull()) {
+            QStyleOption opt(*option);
+            if (widget)
+                opt.rect = QRect(0, opt.rect.top(), widget->width(), 2);
+            QBrush br = painter->background();
+            br.setColor(opt.palette.color(QPalette::Highlight));
+            painter->setBrush(br);
+            QProxyStyle::drawPrimitive(element, &opt, painter, widget);
+        }
+        else
+            QProxyStyle::drawPrimitive(element, option, painter, widget);
+    }
+};
+
+
+
+class CItemDelegate : public QStyledItemDelegate
+{
+public:
+    CItemDelegate(CCalibPointsOrderModel &model, QObject * const parent) :
+        QStyledItemDelegate(parent),
+        mdl(model) { }
+
+protected:
+    QWidget *createEditor(QWidget *parent,
+                          const QStyleOptionViewItem &option,
+                          const QModelIndex &index) const final {
+        (void)option;
+
+        std::vector <GUI_TYPES::SCalibPoint> points = mdl.getCalibPoints();
+        const size_t row = static_cast <size_t> (index.row());
+        if (row < points.size()) {
+            GUI_TYPES::SCalibPoint &pnt = points[row];
+            CAddCalibPointDialog dlg(parent, pnt);
+            if (dlg.exec() == QDialog::Accepted) {
+                pnt = dlg.getCalibPoint();
+                mdl.setCalibPoints(points);
+            }
+        }
+        return nullptr;
+    }
+
+private:
+    CCalibPointsOrderModel &mdl;
 };
 
 
@@ -219,6 +280,9 @@ CCalibPointsOrderDialog::CCalibPointsOrderDialog(const std::vector<GUI_TYPES::SC
     ui->tableView->setModel(&d_ptr->mdl);
     ui->tableView->resizeColumnsToContents();
 
+    ui->tableView->setStyle(new CViewStyle(ui->tableView->style()));
+    ui->tableView->setItemDelegate(new CItemDelegate(d_ptr->mdl, ui->tableView));
+
     connect(ui->pbOk, &QAbstractButton::clicked, this, &QDialog::accept);
     connect(ui->pbCancel, &QAbstractButton::clicked, this, &QDialog::reject);
 }
@@ -227,4 +291,9 @@ CCalibPointsOrderDialog::~CCalibPointsOrderDialog()
 {
     delete ui;
     delete d_ptr;
+}
+
+std::vector<GUI_TYPES::SCalibPoint> CCalibPointsOrderDialog::getCalibPoints() const
+{
+    return d_ptr->mdl.getCalibPoints();
 }

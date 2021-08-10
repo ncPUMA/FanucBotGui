@@ -573,6 +573,16 @@ void CMainViewport::shapeTransformChanged(const BotSocket::EN_ShapeType shType, 
     d_ptr->shapeTransformChanged(shType, transform);
 }
 
+void CMainViewport::setCalibrationPoints(const std::vector<GUI_TYPES::SCalibPoint> &points)
+{
+    while(d_ptr->context->getCalibPointCount() > 0)
+        d_ptr->context->removeCalibPoint(0);
+    for (const auto &pnt : points)
+        d_ptr->context->appendCalibPoint(pnt);
+    d_ptr->viewer->Redraw();
+    setCalibResult(BotSocket::ENCR_FALL);
+}
+
 std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
 {
     std::vector <GUI_TYPES::SCalibPoint> res;

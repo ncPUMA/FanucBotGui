@@ -404,9 +404,7 @@ void MainWindow::slCalibPointsOrderDlg()
 {
     CCalibPointsOrderDialog dialog(ui->mainView->getCallibrationPoints());
     if (dialog.exec() == QDialog::Accepted)
-        ;
-    else
-        ;
+        ui->mainView->setCalibrationPoints(dialog.getCalibPoints());
 }
 
 void MainWindow::slTaskPointsOrderDlg()

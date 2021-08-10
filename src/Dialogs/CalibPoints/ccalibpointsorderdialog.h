@@ -20,6 +20,8 @@ public:
                                      QWidget *parent = nullptr);
     ~CCalibPointsOrderDialog();
 
+    std::vector<GUI_TYPES::SCalibPoint> getCalibPoints() const;
+
 private:
     Ui::CCalibPointsOrderDialog *ui;
 
