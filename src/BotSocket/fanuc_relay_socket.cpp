@@ -192,6 +192,7 @@ void FanucRelaySocket::on_readyread()
                 emit trajectory_joint_point_enqueued(path_joint_[path_idx_], path_idx_);
 
                 path_idx_++;
+                path_idx_u++;
                 if(path_idx_u < path_joint_.size())
                 {
                     move_point(path_joint_[path_idx_], path_idx_);
@@ -206,6 +207,7 @@ void FanucRelaySocket::on_readyread()
                 emit trajectory_xyzwpr_point_enqueued(path_xyzwpr_[path_idx_], path_idx_);
 
                 path_idx_++;
+                path_idx_u++;
                 if(path_idx_u < path_xyzwpr_.size())
                 {
                     move_point(path_xyzwpr_[path_idx_], path_idx_);
