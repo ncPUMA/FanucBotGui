@@ -33,8 +33,8 @@
 #include "caspectwindow.h"
 #include "sguisettings.h"
 
-#include "Dialogs/caddcalibpointdialog.h"
-#include "Dialogs/cbottaskdialogfacade.h"
+#include "Dialogs/CalibPoints/caddcalibpointdialog.h"
+#include "Dialogs/TaskPoints/cbottaskdialogfacade.h"
 
 static constexpr double DEGREE_K = M_PI / 180.;
 
@@ -573,6 +573,16 @@ void CMainViewport::shapeTransformChanged(const BotSocket::EN_ShapeType shType, 
     d_ptr->shapeTransformChanged(shType, transform);
 }
 
+void CMainViewport::setCalibrationPoints(const std::vector<GUI_TYPES::SCalibPoint> &points)
+{
+    while(d_ptr->context->getCalibPointCount() > 0)
+        d_ptr->context->removeCalibPoint(0);
+    for (const auto &pnt : points)
+        d_ptr->context->appendCalibPoint(pnt);
+    d_ptr->viewer->Redraw();
+    setCalibResult(BotSocket::ENCR_FALL);
+}
+
 std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
 {
     std::vector <GUI_TYPES::SCalibPoint> res;
@@ -580,6 +590,16 @@ std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
     for(size_t i = 0; i < count; ++i)
         res.push_back(d_ptr->context->getCalibPoint(i));
     return res;
+}
+
+void CMainViewport::setTaskPoints(const std::vector<GUI_TYPES::STaskPoint> &points)
+{
+    while(d_ptr->context->getTaskPointCount() > 0)
+        d_ptr->context->removeTaskPoint(0);
+    for (const auto &pnt : points)
+        d_ptr->context->appendTaskPoint(pnt);
+    d_ptr->viewer->Redraw();
+    taskPointsChanged();
 }
 
 std::vector<GUI_TYPES::STaskPoint> CMainViewport::getTaskPoints() const

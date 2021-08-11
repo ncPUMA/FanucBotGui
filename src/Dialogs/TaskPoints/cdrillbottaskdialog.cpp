@@ -1,7 +1,7 @@
 #include "cdrillbottaskdialog.h"
 #include "ui_cdrillbottaskdialog.h"
 
-#include "../gui_types.h"
+#include "../../gui_types.h"
 
 CDrillBotTaskDialog::CDrillBotTaskDialog(QWidget *parent, const GUI_TYPES::STaskPoint &initData) :
     QDialog(parent),

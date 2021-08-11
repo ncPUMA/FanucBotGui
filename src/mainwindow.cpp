@@ -14,6 +14,9 @@
 
 #include "BotSocket/cabstractui.h"
 
+#include "Dialogs/CalibPoints/ccalibpointsorderdialog.h"
+#include "Dialogs/TaskPoints/ctaskpointsorderdialog.h"
+
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
 static const int STATE_LAMP_UPDATE_INTERVAL = 200;
 
@@ -398,6 +401,20 @@ void MainWindow::slImport()
     }
 }
 
+void MainWindow::slCalibPointsOrderDlg()
+{
+    CCalibPointsOrderDialog dialog(ui->mainView->getCallibrationPoints());
+    if (dialog.exec() == QDialog::Accepted)
+        ui->mainView->setCalibrationPoints(dialog.getCalibPoints());
+}
+
+void MainWindow::slTaskPointsOrderDlg()
+{
+    CTaskPointsOrderDialog dialog(ui->mainView->getTaskPoints());
+    if (dialog.exec() == QDialog::Accepted)
+        ui->mainView->setTaskPoints(dialog.getTaskPoints());
+}
+
 void MainWindow::slExit()
 {
     close();
@@ -501,6 +518,8 @@ void MainWindow::configMenu()
 {
     //Menu "File"
     connect(ui->actionImport, SIGNAL(triggered(bool)), SLOT(slImport()));
+    connect(ui->actionCalibPoints, SIGNAL(triggered(bool)), SLOT(slCalibPointsOrderDlg()));
+    connect(ui->actionTaskPoints, SIGNAL(triggered(bool)), SLOT(slTaskPointsOrderDlg()));
     connect(ui->actionExit, SIGNAL(triggered(bool)), SLOT(slExit()));
 
     //Menu "View"
