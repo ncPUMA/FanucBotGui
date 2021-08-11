@@ -15,6 +15,7 @@
 #include "BotSocket/cabstractui.h"
 
 #include "Dialogs/CalibPoints/ccalibpointsorderdialog.h"
+#include "Dialogs/TaskPoints/ctaskpointsorderdialog.h"
 
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
 static const int STATE_LAMP_UPDATE_INTERVAL = 200;
@@ -409,7 +410,9 @@ void MainWindow::slCalibPointsOrderDlg()
 
 void MainWindow::slTaskPointsOrderDlg()
 {
-
+    CTaskPointsOrderDialog dialog(ui->mainView->getTaskPoints());
+    if (dialog.exec() == QDialog::Accepted)
+        ui->mainView->setTaskPoints(dialog.getTaskPoints());
 }
 
 void MainWindow::slExit()

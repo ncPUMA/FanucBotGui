@@ -85,7 +85,8 @@ public:
 
     void setCalibrationPoints(const std::vector <GUI_TYPES::SCalibPoint> &points);
     std::vector <GUI_TYPES::SCalibPoint> getCallibrationPoints() const;
-    std::vector <GUI_TYPES::STaskPoint>  getTaskPoints() const;
+    void setTaskPoints(const std::vector <GUI_TYPES::STaskPoint> &points);
+    std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const;
 
 protected:
     QPaintEngine* paintEngine() const final;

@@ -1,5 +1,5 @@
-#include "ccalibpointsorderdialog.h"
-#include "ui_ccalibpointsorderdialog.h"
+#include "ctaskpointsorderdialog.h"
+#include "ui_ctaskpointsorderdialog.h"
 
 #include <QAbstractTableModel>
 #include <QProxyStyle>
@@ -7,11 +7,11 @@
 #include <QPainter>
 #include <QStyledItemDelegate>
 
-#include "caddcalibpointdialog.h"
+#include "cbottaskdialogfacade.h"
 
 namespace {
 
-class CCalibPointsOrderModel : public QAbstractTableModel
+class CTaskPointsOrderModel : public QAbstractTableModel
 {
 private:
     enum EN_Columns
@@ -19,31 +19,32 @@ private:
         ENC_FIRST = 0,
 
         ENC_NAME = ENC_FIRST,
+        ENC_TASK_TYPE,
         ENC_GLOBAL_POS,
-        ENC_BOT_POS,
+        ENC_ANGLE,
 
         ENC_LAST
     };
 
 public:
-    CCalibPointsOrderModel(QObject *parent = nullptr) :
+    CTaskPointsOrderModel(QObject *parent = nullptr) :
         QAbstractTableModel(parent) { }
 
-    void setCalibPoints(const std::vector<GUI_TYPES::SCalibPoint> &calibPnts) {
+    void setTaskPoints(const std::vector<GUI_TYPES::STaskPoint> &taskPnts) {
         beginResetModel();
         points.clear();
         size_t cntr = 0;
-        for(const auto &scp : calibPnts) {
+        for(const auto &scp : taskPnts) {
             SPoint pnt;
-            pnt.name = tr("C%1").arg(++cntr);
+            pnt.name = tr("T%1").arg(++cntr);
             pnt.pnt = scp;
             points.push_back(pnt);
         }
         endResetModel();
     }
 
-    std::vector<GUI_TYPES::SCalibPoint> getCalibPoints() const {
-        std::vector<GUI_TYPES::SCalibPoint> result;
+    std::vector<GUI_TYPES::STaskPoint> getTaskPoints() const {
+        std::vector<GUI_TYPES::STaskPoint> result;
         for(const auto &pnt : points)
             result.push_back(pnt.pnt);
         return result;
@@ -64,13 +65,25 @@ public:
         if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
             switch(section) {
                 case ENC_NAME      : result = tr("Название")            ; break;
+                case ENC_TASK_TYPE : result = tr("Задание")             ; break;
                 case ENC_GLOBAL_POS: result = tr("Координаты заготовки"); break;
-                case ENC_BOT_POS   : result = tr("Координаты робота")   ; break;
+                case ENC_ANGLE     : result = tr("Угол поворота")       ; break;
                 default: break;
             }
         }
         else
             result = QAbstractTableModel::headerData(section, orientation, role);
+        return result;
+    }
+
+    QString taskName(const GUI_TYPES::TBotTaskType taskType) const {
+        QString result;
+        using namespace GUI_TYPES;
+        switch(taskType) {
+            case ENBTT_MOVE : result = tr("Перемещение"); break;
+            case ENBTT_DRILL: result = tr("Сверление")  ; break;
+            case ENBTT_MARK : result = tr("Маркировка") ; break;
+        }
         return result;
     }
 
@@ -82,6 +95,9 @@ public:
                 case ENC_NAME:
                     result = points[row].name;
                     break;
+                case ENC_TASK_TYPE:
+                    result = taskName(points[row].pnt.taskType);
+                    break;
                 case ENC_GLOBAL_POS: {
                     const GUI_TYPES::SVertex &vertex = points[row].pnt.globalPos;
                     result = tr("X:%1 Y:%2 Z:%3")
@@ -90,16 +106,14 @@ public:
                             .arg(vertex.z, 11, 'f', 6, QChar('0'));
                     break;
                 }
-                case ENC_BOT_POS: {
-                    const GUI_TYPES::SVertex &vertex = points[row].pnt.botPos;
-                    result = tr("X:%1 Y:%2 Z:%3")
-                            .arg(vertex.x, 11, 'f', 6, QChar('0'))
-                            .arg(vertex.y, 11, 'f', 6, QChar('0'))
-                            .arg(vertex.z, 11, 'f', 6, QChar('0'));
+                case ENC_ANGLE: {
+                    const GUI_TYPES::SRotationAngle &angle = points[row].pnt.angle;
+                    result = tr("α:%1 β:%2 γ:%3")
+                            .arg(angle.x, 11, 'f', 6, QChar('0'))
+                            .arg(angle.y, 11, 'f', 6, QChar('0'))
+                            .arg(angle.z, 11, 'f', 6, QChar('0'));
                     break;
                 }
-                default:
-                    break;
             }
         }
         return result;
@@ -199,7 +213,7 @@ private:
     struct SPoint
     {
         QString name;
-        GUI_TYPES::SCalibPoint pnt;
+        GUI_TYPES::STaskPoint pnt;
     };
     std::vector <SPoint> points;
 };
@@ -232,7 +246,7 @@ public:
 class CItemDelegate : public QStyledItemDelegate
 {
 public:
-    CItemDelegate(CCalibPointsOrderModel &model, QObject * const parent) :
+    CItemDelegate(CTaskPointsOrderModel &model, QObject * const parent) :
         QStyledItemDelegate(parent),
         mdl(model) { }
 
@@ -242,45 +256,45 @@ protected:
                           const QModelIndex &index) const final {
         (void)option;
 
-        std::vector <GUI_TYPES::SCalibPoint> points = mdl.getCalibPoints();
+        std::vector <GUI_TYPES::STaskPoint> points = mdl.getTaskPoints();
         const size_t row = static_cast <size_t> (index.row());
         if (row < points.size()) {
-            GUI_TYPES::SCalibPoint &pnt = points[row];
-            CAddCalibPointDialog dlg(parent, pnt);
+            GUI_TYPES::STaskPoint &pnt = points[row];
+            CBotTaskDialogFacade dlg(parent, pnt);
             if (dlg.exec() == QDialog::Accepted) {
-                pnt = dlg.getCalibPoint();
-                mdl.setCalibPoints(points);
+                pnt = dlg.getTaskPoint();
+                mdl.setTaskPoints(points);
             }
         }
         return nullptr;
     }
 
 private:
-    CCalibPointsOrderModel &mdl;
+    CTaskPointsOrderModel &mdl;
 };
 
 }
 
 
 
-class CCalibPointsOrderDialogPrivate
+class CTaskPointsOrderDialogPrivate
 {
-    friend class CCalibPointsOrderDialog;
+    friend class CTaskPointsOrderDialog;
 
-    CCalibPointsOrderModel mdl;
+    CTaskPointsOrderModel mdl;
 };
 
 
 
-CCalibPointsOrderDialog::CCalibPointsOrderDialog(const std::vector<GUI_TYPES::SCalibPoint> &calibPnts,
-                                                 QWidget *parent) :
+CTaskPointsOrderDialog::CTaskPointsOrderDialog(const std::vector<GUI_TYPES::STaskPoint> &taskPnts,
+                                               QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CCalibPointsOrderDialog),
-    d_ptr(new CCalibPointsOrderDialogPrivate)
+    ui(new Ui::CTaskPointsOrderDialog),
+    d_ptr(new CTaskPointsOrderDialogPrivate())
 {
     ui->setupUi(this);
 
-    d_ptr->mdl.setCalibPoints(calibPnts);
+    d_ptr->mdl.setTaskPoints(taskPnts);
     ui->tableView->setModel(&d_ptr->mdl);
     ui->tableView->resizeColumnsToContents();
 
@@ -291,13 +305,13 @@ CCalibPointsOrderDialog::CCalibPointsOrderDialog(const std::vector<GUI_TYPES::SC
     connect(ui->pbCancel, &QAbstractButton::clicked, this, &QDialog::reject);
 }
 
-CCalibPointsOrderDialog::~CCalibPointsOrderDialog()
+CTaskPointsOrderDialog::~CTaskPointsOrderDialog()
 {
     delete ui;
     delete d_ptr;
 }
 
-std::vector<GUI_TYPES::SCalibPoint> CCalibPointsOrderDialog::getCalibPoints() const
+std::vector<GUI_TYPES::STaskPoint> CTaskPointsOrderDialog::getTaskPoints() const
 {
-    return d_ptr->mdl.getCalibPoints();
+    return d_ptr->mdl.getTaskPoints();
 }

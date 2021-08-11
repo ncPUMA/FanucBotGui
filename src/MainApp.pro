@@ -16,10 +16,11 @@ SOURCES += \
     BotSocket/fanuc_state_socket.cpp \
     Dialogs/CalibPoints/caddcalibpointdialog.cpp \
     Dialogs/CalibPoints/ccalibpointsorderdialog.cpp \
-    Dialogs/cbottaskdialogfacade.cpp \
-    Dialogs/cdrillbottaskdialog.cpp \
-    Dialogs/cmarkbottaskdialog.cpp \
-    Dialogs/cmovebottaskdialog.cpp \
+    Dialogs/TaskPoints/cbottaskdialogfacade.cpp \
+    Dialogs/TaskPoints/cdrillbottaskdialog.cpp \
+    Dialogs/TaskPoints/cmarkbottaskdialog.cpp \
+    Dialogs/TaskPoints/cmovebottaskdialog.cpp \
+    Dialogs/TaskPoints/ctaskpointsorderdialog.cpp \
     ModelLoader/cabstractmodelloader.cpp \
     ModelLoader/cbreploader.cpp \
     ModelLoader/cigesloader.cpp \
@@ -47,10 +48,11 @@ HEADERS += \
     BotSocket/simple_message.h \
     Dialogs/CalibPoints/caddcalibpointdialog.h \
     Dialogs/CalibPoints/ccalibpointsorderdialog.h \
-    Dialogs/cbottaskdialogfacade.h \
-    Dialogs/cdrillbottaskdialog.h \
-    Dialogs/cmarkbottaskdialog.h \
-    Dialogs/cmovebottaskdialog.h \
+    Dialogs/TaskPoints/cbottaskdialogfacade.h \
+    Dialogs/TaskPoints/cdrillbottaskdialog.h \
+    Dialogs/TaskPoints/cmarkbottaskdialog.h \
+    Dialogs/TaskPoints/cmovebottaskdialog.h \
+    Dialogs/TaskPoints/ctaskpointsorderdialog.h \
     ModelLoader/cabstractmodelloader.h \
     ModelLoader/cbreploader.h \
     ModelLoader/cigesloader.h \
@@ -73,9 +75,10 @@ HEADERS += \
 FORMS += \
     Dialogs/CalibPoints/caddcalibpointdialog.ui \
     Dialogs/CalibPoints/ccalibpointsorderdialog.ui \
-    Dialogs/cdrillbottaskdialog.ui \
-    Dialogs/cmarkbottaskdialog.ui \
-    Dialogs/cmovebottaskdialog.ui \
+    Dialogs/TaskPoints/cdrillbottaskdialog.ui \
+    Dialogs/TaskPoints/cmarkbottaskdialog.ui \
+    Dialogs/TaskPoints/cmovebottaskdialog.ui \
+    Dialogs/TaskPoints/ctaskpointsorderdialog.ui \
     cguisettingswidget.ui \
     mainwindow.ui
 

@@ -1,11 +1,11 @@
-#include "cmarkbottaskdialog.h"
-#include "ui_cmarkbottaskdialog.h"
+#include "cmovebottaskdialog.h"
+#include "ui_cmovebottaskdialog.h"
 
-#include "../gui_types.h"
+#include "../../gui_types.h"
 
-CMarkBotTaskDialog::CMarkBotTaskDialog(QWidget *parent, const GUI_TYPES::STaskPoint &initData) :
+CMoveBotTaskDialog::CMoveBotTaskDialog(QWidget *parent, const GUI_TYPES::STaskPoint &initData) :
     QDialog(parent),
-    ui(new Ui::CMarkBotTaskDialog)
+    ui(new Ui::CMoveBotTaskDialog)
 {
     ui->setupUi(this);
 
@@ -17,15 +17,15 @@ CMarkBotTaskDialog::CMarkBotTaskDialog(QWidget *parent, const GUI_TYPES::STaskPo
     connect(ui->pbCancel, &QAbstractButton::clicked, this, &QDialog::reject);
 }
 
-CMarkBotTaskDialog::~CMarkBotTaskDialog()
+CMoveBotTaskDialog::~CMoveBotTaskDialog()
 {
     delete ui;
 }
 
-GUI_TYPES::STaskPoint CMarkBotTaskDialog::getTaskPoint() const
+GUI_TYPES::STaskPoint CMoveBotTaskDialog::getTaskPoint() const
 {
     GUI_TYPES::STaskPoint res;
-    res.taskType = GUI_TYPES::ENBTT_MARK;
+    res.taskType = GUI_TYPES::ENBTT_MOVE;
     res.globalPos.x = ui->dsbGlobalX->value();
     res.globalPos.y = ui->dsbGlobalY->value();
     res.globalPos.z = ui->dsbGlobalZ->value();

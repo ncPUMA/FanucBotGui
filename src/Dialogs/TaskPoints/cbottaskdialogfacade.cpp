@@ -4,7 +4,7 @@
 #include <cassert>
 #include <map>
 
-#include "../gui_types.h"
+#include "../../gui_types.h"
 
 #include "cmovebottaskdialog.h"
 #include "cdrillbottaskdialog.h"
