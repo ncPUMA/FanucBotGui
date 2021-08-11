@@ -16,6 +16,8 @@ SOURCES += \
     BotSocket/fanuc_state_socket.cpp \
     Dialogs/CalibPoints/caddcalibpointdialog.cpp \
     Dialogs/CalibPoints/ccalibpointsorderdialog.cpp \
+    Dialogs/PathPoints/caddpathpointdialog.cpp \
+    Dialogs/PathPoints/cpathpointsorderdialog.cpp \
     Dialogs/TaskPoints/cbottaskdialogfacade.cpp \
     Dialogs/TaskPoints/cdrillbottaskdialog.cpp \
     Dialogs/TaskPoints/cmarkbottaskdialog.cpp \
@@ -48,6 +50,8 @@ HEADERS += \
     BotSocket/simple_message.h \
     Dialogs/CalibPoints/caddcalibpointdialog.h \
     Dialogs/CalibPoints/ccalibpointsorderdialog.h \
+    Dialogs/PathPoints/caddpathpointdialog.h \
+    Dialogs/PathPoints/cpathpointsorderdialog.h \
     Dialogs/TaskPoints/cbottaskdialogfacade.h \
     Dialogs/TaskPoints/cdrillbottaskdialog.h \
     Dialogs/TaskPoints/cmarkbottaskdialog.h \
@@ -75,6 +79,8 @@ HEADERS += \
 FORMS += \
     Dialogs/CalibPoints/caddcalibpointdialog.ui \
     Dialogs/CalibPoints/ccalibpointsorderdialog.ui \
+    Dialogs/PathPoints/caddpathpointdialog.ui \
+    Dialogs/PathPoints/cpathpointsorderdialog.ui \
     Dialogs/TaskPoints/cdrillbottaskdialog.ui \
     Dialogs/TaskPoints/cmarkbottaskdialog.ui \
     Dialogs/TaskPoints/cmovebottaskdialog.ui \

@@ -6,6 +6,7 @@
 namespace GUI_TYPES {
 struct SCalibPoint;
 struct STaskPoint;
+struct SPathPoint;
 }
 
 class CInteractiveContextPrivate;
@@ -53,11 +54,15 @@ public:
     void showCalibObjects();
     void showTaskObjects();
 
-    void setGripVisible(const bool enabled);
+    void setGripVisible(const bool enabled, const bool selectable);
 
+    bool isDeskDetected() const;
     bool isPartDetected() const;
+    bool isGripDetected() const;
+    bool isLsrheadDetected() const;
     bool isCalibPointDetected(size_t &index) const;
     bool isTaskPointDetected(size_t &index) const;
+    bool isPathPointDetected(size_t &index) const;
 
     //Usr points
     size_t getCalibPointCount() const;
@@ -71,6 +76,12 @@ public:
     void appendTaskPoint(const GUI_TYPES::STaskPoint &taskPoint);
     void changeTaskPoint(const size_t index, const GUI_TYPES::STaskPoint &taskPoint);
     void removeTaskPoint(const size_t index);
+
+    size_t getPathPointCount() const;
+    GUI_TYPES::SPathPoint getPathPoint(const size_t index) const;
+    void appendPathPoint(const GUI_TYPES::SPathPoint &pathPoint);
+    void changePathPoint(const size_t index, const GUI_TYPES::SPathPoint &pathPoint);
+    void removePathPoint(const size_t index);
 
 private:
     CInteractiveContextPrivate * const d_ptr;

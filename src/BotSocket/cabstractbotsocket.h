@@ -22,7 +22,8 @@ protected:
 
     virtual BotSocket::EN_CalibResult execCalibration(const std::vector <GUI_TYPES::SCalibPoint> &points) = 0;
     virtual void prepare(const std::vector <GUI_TYPES::STaskPoint> &points) = 0;
-    virtual void startTasks(const std::vector <GUI_TYPES::STaskPoint> &points) = 0;
+    virtual void startTasks(const std::vector <GUI_TYPES::SPathPoint> &pathPoints,
+                            const std::vector <GUI_TYPES::STaskPoint> &taskPoints) = 0;
     virtual void stopTasks() = 0;
     virtual void shapeTransformChanged(const BotSocket::EN_ShapeType shType) = 0;
 

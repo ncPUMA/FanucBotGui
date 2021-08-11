@@ -16,6 +16,7 @@
 
 #include "Dialogs/CalibPoints/ccalibpointsorderdialog.h"
 #include "Dialogs/TaskPoints/ctaskpointsorderdialog.h"
+#include "Dialogs/PathPoints/cpathpointsorderdialog.h"
 
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
 static const int STATE_LAMP_UPDATE_INTERVAL = 200;
@@ -181,6 +182,10 @@ protected:
     }
 
     void tasksChanged() final {
+        updateUiState();
+    }
+
+    void pathPointsChanged() final {
         updateUiState();
     }
 
@@ -415,6 +420,13 @@ void MainWindow::slTaskPointsOrderDlg()
         ui->mainView->setTaskPoints(dialog.getTaskPoints());
 }
 
+void MainWindow::slPathPointsOrderDlg()
+{
+    CPathPointsOrderDialog dialog(ui->mainView->getPathPoints());
+    if (dialog.exec() == QDialog::Accepted)
+        ui->mainView->setPathPoints(dialog.getPathPoints());
+}
+
 void MainWindow::slExit()
 {
     close();
@@ -497,7 +509,8 @@ void MainWindow::slCallibApply()
 void MainWindow::slStart()
 {
     ui->mainView->setUiState(GUI_TYPES::ENUS_BOT_WORKED);
-    d_ptr->uiIface.startTasks(ui->mainView->getTaskPoints());
+    d_ptr->uiIface.startTasks(ui->mainView->getPathPoints(),
+                              ui->mainView->getTaskPoints());
 }
 
 void MainWindow::slStop()
@@ -520,6 +533,7 @@ void MainWindow::configMenu()
     connect(ui->actionImport, SIGNAL(triggered(bool)), SLOT(slImport()));
     connect(ui->actionCalibPoints, SIGNAL(triggered(bool)), SLOT(slCalibPointsOrderDlg()));
     connect(ui->actionTaskPoints, SIGNAL(triggered(bool)), SLOT(slTaskPointsOrderDlg()));
+    connect(ui->actionPathPoints, SIGNAL(triggered(bool)), SLOT(slPathPointsOrderDlg()));
     connect(ui->actionExit, SIGNAL(triggered(bool)), SLOT(slExit()));
 
     //Menu "View"
