@@ -85,17 +85,17 @@ public:
                 case ENC_GLOBAL_POS: {
                     const GUI_TYPES::SVertex &vertex = points[row].pnt.globalPos;
                     result = tr("X:%1 Y:%2 Z:%3")
-                            .arg(vertex.x, 11, 'f', 6, QChar('0'))
-                            .arg(vertex.y, 11, 'f', 6, QChar('0'))
-                            .arg(vertex.z, 11, 'f', 6, QChar('0'));
+                            .arg(vertex.x, 12, 'f', 6, QChar('0'))
+                            .arg(vertex.y, 12, 'f', 6, QChar('0'))
+                            .arg(vertex.z, 12, 'f', 6, QChar('0'));
                     break;
                 }
                 case ENC_BOT_POS: {
                     const GUI_TYPES::SVertex &vertex = points[row].pnt.botPos;
                     result = tr("X:%1 Y:%2 Z:%3")
-                            .arg(vertex.x, 11, 'f', 6, QChar('0'))
-                            .arg(vertex.y, 11, 'f', 6, QChar('0'))
-                            .arg(vertex.z, 11, 'f', 6, QChar('0'));
+                            .arg(vertex.x, 12, 'f', 6, QChar('0'))
+                            .arg(vertex.y, 12, 'f', 6, QChar('0'))
+                            .arg(vertex.z, 12, 'f', 6, QChar('0'));
                     break;
                 }
                 default:

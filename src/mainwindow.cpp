@@ -56,12 +56,12 @@ protected:
         const QString jrnlTxt = MainWindow::tr(" Lsr: %1\t-->\tx: %2 y: %3 z: %4 "
                                                "α: %5 β: %6 γ: %7")
                 .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
-                .arg(pos.globalPos.x     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalPos.y     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalPos.z     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
+                .arg(pos.globalPos.x     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.y     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.z     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.x, 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.y, 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.z, 12, 'f', 6, QChar('0'));
         if(!usrText.isEmpty()) {
             jrnl->clear();
             jrnl->append(jrnlTxt);
@@ -78,12 +78,12 @@ protected:
         const QString jrnlTxt = MainWindow::tr("Grip: %1\t-->\tx: %2 y: %3 z: %4 "
                                                "α: %5 β: %6 γ: %7")
                 .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
-                .arg(pos.globalPos.x     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalPos.y     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalPos.z     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
+                .arg(pos.globalPos.x     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.y     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.z     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.x, 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.y, 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.z, 12, 'f', 6, QChar('0'));
         if(!usrText.isEmpty()) {
             jrnl->clear();
             jrnl->append(jrnlTxt);
