@@ -10,6 +10,7 @@
 #include "csimplesettingsstorage.h"
 
 #include "BotSocket/cfanucbotsocket.h"
+#include "log/loguru.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -21,6 +22,10 @@ int main(int argc, char *argv[])
         if (strcmp(arg, "--no-ssheet") == 0)
             bStyleSheet = false;
     }
+
+    loguru::g_stderr_verbosity = loguru::Verbosity_OFF;
+    loguru::init(argc, argv);
+    loguru::add_file("log.txt", loguru::Truncate, loguru::Verbosity_MAX);
 
     QApplication a(argc, argv);
 

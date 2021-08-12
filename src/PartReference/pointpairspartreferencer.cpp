@@ -2,7 +2,8 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <QDebug>
+#include <sstream>
+#include "../log/loguru.hpp"
 
 PointPairsPartReferencer::PointPairsPartReferencer()
 {
@@ -21,6 +22,7 @@ bool PointPairsPartReferencer::isReferenced() const
 
 bool PointPairsPartReferencer::referencePart()
 {
+    VLOG_CALL;
     if(point_pairs_.size() < 3)
         return false;
 
@@ -42,6 +44,8 @@ bool PointPairsPartReferencer::referencePart()
         cloud_robot (0, i) = point_pairs_[i].t_robot.X();
         cloud_robot (1, i) = point_pairs_[i].t_robot.Y();
         cloud_robot (2, i) = point_pairs_[i].t_robot.Z();
+        LOG_F(INFO, "(%f,%f,%f) <-> (%f,%f,%f)", cloud_model (0, i), cloud_model (1, i), cloud_model (2, i),
+                                                 cloud_robot (0, i), cloud_robot (1, i), cloud_robot (2, i));
     }
 
     Eigen::Matrix4d model2robot = Eigen::umeyama (cloud_model, cloud_robot, with_scaling);
@@ -50,7 +54,7 @@ bool PointPairsPartReferencer::referencePart()
     Eigen::Matrix<Standard_Real, 3, Eigen::Dynamic> error_matrix = (model2robot * cloud_model.colwise().homogeneous() - cloud_robot.colwise().homogeneous()).topRows<3>();
     double error = error_matrix.norm();
 
-    qDebug() << "PointPairsPartReferencer: error is " << error;
+    LOG_F(INFO, "PointPairsPartReferencer: error is %f (max_error is %f)", error, max_error);
 
     if(error > max_error)
         return false;
