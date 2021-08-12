@@ -35,6 +35,7 @@
 
 #include "Dialogs/CalibPoints/caddcalibpointdialog.h"
 #include "Dialogs/TaskPoints/cbottaskdialogfacade.h"
+#include "Dialogs/PathPoints/caddpathpointdialog.h"
 
 static constexpr double DEGREE_K = M_PI / 180.;
 
@@ -53,6 +54,7 @@ protected:
     void uiStateChanged() final { }
     void calibrationChanged() final { }
     void tasksChanged() final { }
+    void pathPointsChanged() final { }
 
 } emptySub;
 
@@ -228,7 +230,7 @@ class CMainViewportPrivate : public AIS_ViewController
         context->setLaserLine(start, dir, guiSettings.lheadLsrLenght, guiSettings.lheadLsrClip);
         context->setLsrheadMdlTransform(calcLsrheadTrsf());
         context->setGripMdlTransform(calcGripTrsf());
-        context->setGripVisible(guiSettings.gripVis);
+        context->setGripVisible(guiSettings.gripVis, uiState != GUI_TYPES::ENUS_CALIBRATION);
         view->Redraw();
     }
 
@@ -253,7 +255,7 @@ class CMainViewportPrivate : public AIS_ViewController
     void setGripModel(const TopoDS_Shape &shape) {
         context->setGripModel(shape);
         context->setGripMdlTransform(calcGripTrsf());
-        context->setGripVisible(guiSettings.gripVis);
+        context->setGripVisible(guiSettings.gripVis, uiState != GUI_TYPES::ENUS_CALIBRATION);
         view->Redraw();
     }
 
@@ -611,6 +613,25 @@ std::vector<GUI_TYPES::STaskPoint> CMainViewport::getTaskPoints() const
     return res;
 }
 
+void CMainViewport::setPathPoints(const std::vector<GUI_TYPES::SPathPoint> &points)
+{
+    while(d_ptr->context->getPathPointCount() > 0)
+        d_ptr->context->removePathPoint(0);
+    for (const auto &pnt : points)
+        d_ptr->context->appendPathPoint(pnt);
+    d_ptr->viewer->Redraw();
+    pathPointsChanged();
+}
+
+std::vector<GUI_TYPES::SPathPoint> CMainViewport::getPathPoints() const
+{
+    std::vector <GUI_TYPES::SPathPoint> res;
+    const size_t count = d_ptr->context->getPathPointCount();
+    for(size_t i = 0; i < count; ++i)
+        res.push_back(d_ptr->context->getPathPoint(i));
+    return res;
+}
+
 QPaintEngine *CMainViewport::paintEngine() const
 {
     return nullptr;
@@ -785,13 +806,30 @@ void CMainViewport::fillTaskAddCntxtMenu(QMenu &menu)
                        &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MOVE);
         menu.addAction(taskName(ENBTT_DRILL),
                        this,
-                       &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_DRILL);;
+                       &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_DRILL);
         menu.addAction(taskName(ENBTT_MARK),
                        this,
-                       &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MARK);;
+                       &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MARK);
+        menu.addSeparator();
+        menu.addAction(tr("Точка траектории"),
+                       this,
+                       &CMainViewport::slAddPathPoint);
     }
-    else
-    {
+    else if(d_ptr->context->isDeskDetected()) {
+        menu.addAction(taskName(GUI_TYPES::ENBTT_MOVE),
+                       this,
+                       &CMainViewport::slAddTaskPoint)->setProperty("taskType", GUI_TYPES::ENBTT_MOVE);
+        menu.addSeparator();
+        menu.addAction(tr("Точка траектории"),
+                       this,
+                       &CMainViewport::slAddPathPoint);
+    }
+    else if (d_ptr->context->isGripDetected() || d_ptr->context->isLsrheadDetected()) {
+        menu.addAction(tr("Точка траектории"),
+                       this,
+                       &CMainViewport::slAddPathPoint);
+    }
+    else {
         size_t index = 0;
         if (d_ptr->context->isTaskPointDetected(index))
         {
@@ -804,6 +842,17 @@ void CMainViewport::fillTaskAddCntxtMenu(QMenu &menu)
                                &CMainViewport::slRemoveTaskPoint)->
                         setProperty("index", static_cast <qulonglong> (index));;
         }
+        else if (d_ptr->context->isPathPointDetected(index))
+        {
+                menu.addAction(CMainViewport::tr("Изменить"),
+                               this,
+                               &CMainViewport::slChangePathPoint)->
+                        setProperty("index", static_cast <qulonglong> (index));
+                menu.addAction(CMainViewport::tr("Удалить"),
+                               this,
+                               &CMainViewport::slRemovePathPoint)->
+                        setProperty("index", static_cast <qulonglong> (index));;
+        }
     }
 }
 
@@ -811,6 +860,12 @@ void CMainViewport::taskPointsChanged()
 {
     for(auto s : d_ptr->subs)
         s->tasksChanged();
+}
+
+void CMainViewport::pathPointsChanged()
+{
+    for(auto s : d_ptr->subs)
+        s->pathPointsChanged();
 }
 
 void CMainViewport::slAddCalibPoint()
@@ -909,6 +964,53 @@ void CMainViewport::slRemoveTaskPoint()
     {
         d_ptr->context->removeTaskPoint(index);
         taskPointsChanged();
+        d_ptr->viewer->Redraw();
+    }
+}
+
+void CMainViewport::slAddPathPoint()
+{
+    const gp_Pnt cursorPos = d_ptr->context->lastCursorPosition();
+    GUI_TYPES::SPathPoint initPoint;
+    initPoint.globalPos.x = cursorPos.X();
+    initPoint.globalPos.y = cursorPos.Y();
+    initPoint.globalPos.z = cursorPos.Z();
+    CAddPathPointDialog dialog(this, initPoint);
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        d_ptr->context->appendPathPoint(dialog.getPathPoint());
+        pathPointsChanged();
+        d_ptr->viewer->Redraw();
+    }
+}
+
+void CMainViewport::slChangePathPoint()
+{
+    assert(sender() != nullptr);
+
+    const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
+    if (index < d_ptr->context->getPathPointCount())
+    {
+        const GUI_TYPES::SPathPoint pathPoint = d_ptr->context->getPathPoint(index);
+        CAddPathPointDialog dialog(this, pathPoint);
+        if (dialog.exec() == QDialog::Accepted)
+        {
+            d_ptr->context->changePathPoint(index, dialog.getPathPoint());
+            pathPointsChanged();
+            d_ptr->viewer->Redraw();
+        }
+    }
+}
+
+void CMainViewport::slRemovePathPoint()
+{
+    assert(sender() != nullptr);
+
+    const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
+    if (index < d_ptr->context->getPathPointCount())
+    {
+        d_ptr->context->removePathPoint(index);
+        pathPointsChanged();
         d_ptr->viewer->Redraw();
     }
 }

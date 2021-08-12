@@ -30,6 +30,7 @@ protected:
     virtual void uiStateChanged() = 0;
     virtual void calibrationChanged() = 0;
     virtual void tasksChanged() = 0;
+    virtual void pathPointsChanged() = 0;
 
 private:
     CAbstractMainViewportSubscriber(const CAbstractMainViewportSubscriber &) = delete;
@@ -87,6 +88,8 @@ public:
     std::vector <GUI_TYPES::SCalibPoint> getCallibrationPoints() const;
     void setTaskPoints(const std::vector <GUI_TYPES::STaskPoint> &points);
     std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const;
+    void setPathPoints(const std::vector <GUI_TYPES::SPathPoint> &points);
+    std::vector <GUI_TYPES::SPathPoint> getPathPoints() const;
 
 protected:
     QPaintEngine* paintEngine() const final;
@@ -103,6 +106,7 @@ private:
     void fillCalibCntxtMenu(QMenu &menu);
     void fillTaskAddCntxtMenu(QMenu &menu);
     void taskPointsChanged();
+    void pathPointsChanged();
 
 private slots:
     void slAddCalibPoint();
@@ -112,6 +116,10 @@ private slots:
     void slAddTaskPoint();
     void slChangeTaskPoint();
     void slRemoveTaskPoint();
+
+    void slAddPathPoint();
+    void slChangePathPoint();
+    void slRemovePathPoint();
 
 private:
     CMainViewportPrivate * const d_ptr;

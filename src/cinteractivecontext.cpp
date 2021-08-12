@@ -118,8 +118,14 @@ private:
     void updateCursorPosition() {
         const bool bLastVisible = bCursorIsVisible;
         Handle(SelectMgr_EntityOwner) owner = context->DetectedOwner();
-        if (owner)
-            bCursorIsVisible = Handle(AIS_Shape)::DownCast(owner->Selectable()) == ais_part;
+        if (owner) {
+            Handle(AIS_Shape) shape = Handle(AIS_Shape)::DownCast(owner->Selectable());
+            bCursorIsVisible =
+                    (shape == ais_part) ||
+                    (shape == ais_desk) ||
+                    (shape == ais_grip) ||
+                    (shape == ais_lsrhead);
+        }
 
         if (bCursorIsVisible) {
             Handle(StdSelect_ViewerSelector3d) selector = context->MainSelector();
@@ -198,7 +204,6 @@ private:
 
         context->SetDisplayMode(ais_desk, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
         context->Display(ais_desk, Standard_False);
-        context->Deactivate(ais_desk);
     }
 
     void setDeskMdlTransform(const gp_Trsf &trsf) {
@@ -225,7 +230,6 @@ private:
 
         context->SetDisplayMode(ais_lsrhead, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
         context->Display(ais_lsrhead, Standard_False);
-        context->Deactivate(ais_lsrhead);
     }
 
     void setLsrheadMdlTransform(const gp_Trsf &trsf) {
@@ -272,7 +276,6 @@ private:
 
         context->SetDisplayMode(ais_grip, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
         context->Display(ais_grip, Standard_False);
-        context->Deactivate(ais_grip);
     }
 
     void setGripMdlTransform(const gp_Trsf &trsf) {
@@ -283,7 +286,9 @@ private:
 
     void hideAllAdditionalObjects() {
         context->Erase(calibTrihedron, Standard_False);
-        //context->Erase(ais_desk, Standard_False);
+        context->Erase(ais_desk, Standard_False);
+        context->Erase(ais_grip, Standard_False);
+        context->Erase(ais_lsrhead, Standard_False);
         for(auto scpnt : calibPoints) {
             context->Erase(scpnt.pnt, Standard_False);
             context->Erase(scpnt.pntLbl, Standard_False);
@@ -292,6 +297,10 @@ private:
             context->Erase(stpnt.pnt, Standard_False);
             context->Erase(stpnt.pntLbl, Standard_False);
         }
+        for(auto sppnt : pathPoints) {
+            context->Erase(sppnt.pnt, Standard_False);
+            context->Erase(sppnt.pntLbl, Standard_False);
+        }
     }
 
     void showCalibObjects() {
@@ -299,6 +308,10 @@ private:
         context->Deactivate(calibTrihedron);
         context->Display(ais_desk, Standard_False);
         context->Deactivate(ais_desk);
+        context->Display(ais_grip, Standard_False);
+        context->Deactivate(ais_grip);
+        context->Display(ais_lsrhead, Standard_False);
+        context->Deactivate(ais_lsrhead);
         for(auto scpnt : calibPoints) {
             context->Display(scpnt.pnt, Standard_False);
             context->Display(scpnt.pntLbl, Standard_False);
@@ -307,10 +320,18 @@ private:
     }
 
     void showTaskObjects() {
+        context->Display(ais_desk, Standard_False);
+        context->Display(ais_grip, Standard_False);
+        context->Display(ais_lsrhead, Standard_False);
         for(auto stpnt : taskPoints) {
             context->Display(stpnt.pnt, Standard_False);
             context->Display(stpnt.pntLbl, Standard_False);
             context->Deactivate(stpnt.pntLbl);
+        }
+        for(auto sppnt : pathPoints) {
+            context->Display(sppnt.pnt, Standard_False);
+            context->Display(sppnt.pntLbl, Standard_False);
+            context->Deactivate(sppnt.pntLbl);
         }
     }
 
@@ -446,6 +467,60 @@ private:
         }
     }
 
+    GUI_TYPES::SPathPoint getPathPoint(const size_t index) const {
+        assert(index < pathPoints.size());
+        const SPathPoint &sppnt = pathPoints[index];
+        GUI_TYPES::SPathPoint res;
+        res.angle = sppnt.angle;
+        const gp_Pnt global = sppnt.pnt->Component()->Pnt();
+        res.globalPos.x = global.X();
+        res.globalPos.y = global.Y();
+        res.globalPos.z = global.Z();
+        return res;
+    }
+
+    void appendPathPoint(const GUI_TYPES::SPathPoint &pathPoint) {
+        SPathPoint sppnt;
+        sppnt.angle = pathPoint.angle;
+        const gp_Pnt globalPos(pathPoint.globalPos.x, pathPoint.globalPos.y, pathPoint.globalPos.z);
+        sppnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
+        sppnt.pntLbl = new AIS_TextLabel();
+        sppnt.pntLbl->SetPosition(globalPos);
+        std::stringstream ss;
+        ss << "P" << pathPoints.size() + 1;
+        sppnt.pntLbl->SetText(TCollection_ExtendedString(ss.str().c_str(), Standard_True));
+        pathPoints.push_back(sppnt);
+        context->Display(sppnt.pnt, Standard_False);
+        context->SetZLayer(sppnt.pntLbl, depthTestOffZlayer);
+        context->Display(sppnt.pntLbl, Standard_False);
+        context->Deactivate(sppnt.pntLbl);
+    }
+
+    void changePathPoint(const size_t index, const GUI_TYPES::SPathPoint &pathPoint) {
+        assert(index < pathPoints.size());
+        SPathPoint &sppnt = pathPoints[index];
+        sppnt.angle = pathPoint.angle;
+        const gp_Pnt globalPos(pathPoint.globalPos.x, pathPoint.globalPos.y, pathPoint.globalPos.z);
+        sppnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
+        sppnt.pntLbl->SetPosition(globalPos);
+        context->RecomputePrsOnly(sppnt.pnt, Standard_False);
+        context->RecomputePrsOnly(sppnt.pntLbl, Standard_False);
+    }
+
+    void removePathPoint(const size_t index) {
+        assert(index < pathPoints.size());
+        SPathPoint &sppnt = pathPoints[index];
+        context->Remove(sppnt.pnt, Standard_False);
+        context->Remove(sppnt.pntLbl, Standard_False);
+        pathPoints.erase(pathPoints.cbegin() + index);
+        for(size_t i = 0; i < pathPoints.size(); ++i) {
+            std::stringstream ss;
+            ss << "P" << i + 1;
+            pathPoints[i].pntLbl->SetText(TCollection_ExtendedString(ss.str().c_str(), Standard_True));
+            context->RecomputePrsOnly(pathPoints[i].pntLbl, Standard_False);
+        }
+    }
+
     void updateLaserLine() {
         if (lsrClip && !ais_laser.IsNull()) {
             NCollection_Vector <Handle(AIS_Shape)> vecObj;
@@ -460,6 +535,7 @@ private:
 private:
     Graphic3d_ZLayerId depthTestOffZlayer;
     bool bShading;
+    bool bGripVisible;
 
     //AIS_Objects
     Handle(AIS_InteractiveContext) context;
@@ -493,6 +569,14 @@ private:
         Handle(AIS_TextLabel) pntLbl;
     };
     std::vector <STaskPoint> taskPoints;
+
+    struct SPathPoint
+    {
+        GUI_TYPES::SRotationAngle angle;
+        Handle(AIS_Point) pnt;
+        Handle(AIS_TextLabel) pntLbl;
+    };
+    std::vector <SPathPoint> pathPoints;
 };
 
 
@@ -626,15 +710,21 @@ void CInteractiveContext::showTaskObjects()
     d_ptr->showTaskObjects();
 }
 
-void CInteractiveContext::setGripVisible(const bool enabled)
+void CInteractiveContext::setGripVisible(const bool enabled, const bool selectable)
 {
     if (enabled)
     {
         d_ptr->context->Display(d_ptr->ais_grip, Standard_False);
-        d_ptr->context->Deactivate(d_ptr->ais_grip);
+        if (!selectable)
+            d_ptr->context->Deactivate(d_ptr->ais_grip);
     }
     else
         d_ptr->context->Erase(d_ptr->ais_grip, Standard_False);
+}
+
+bool CInteractiveContext::isDeskDetected() const
+{
+    return d_ptr->curShape() == d_ptr->ais_desk;
 }
 
 bool CInteractiveContext::isPartDetected() const
@@ -642,9 +732,20 @@ bool CInteractiveContext::isPartDetected() const
     return d_ptr->curShape() == d_ptr->ais_part;
 }
 
+bool CInteractiveContext::isGripDetected() const
+{
+    return d_ptr->curShape() == d_ptr->ais_grip;
+}
+
+bool CInteractiveContext::isLsrheadDetected() const
+{
+    return d_ptr->curShape() == d_ptr->ais_lsrhead;
+}
+
 bool CInteractiveContext::isCalibPointDetected(size_t &index) const
 {
     Handle(AIS_InteractiveObject) curShape = d_ptr->curShape();
+    index = 0;
     for (auto scpnt : d_ptr->calibPoints)
     {
         if (scpnt.pnt == curShape)
@@ -658,9 +759,23 @@ bool CInteractiveContext::isCalibPointDetected(size_t &index) const
 bool CInteractiveContext::isTaskPointDetected(size_t &index) const
 {
     Handle(AIS_InteractiveObject) curShape = d_ptr->curShape();
+    index = 0;
     for (auto stpnt : d_ptr->taskPoints)
     {
         if (stpnt.pnt == curShape)
+            return true;
+        ++index;
+    }
+    return false;
+}
+
+bool CInteractiveContext::isPathPointDetected(size_t &index) const
+{
+    Handle(AIS_InteractiveObject) curShape = d_ptr->curShape();
+    index = 0;
+    for (auto sppnt : d_ptr->pathPoints)
+    {
+        if (sppnt.pnt == curShape)
             return true;
         ++index;
     }
@@ -715,4 +830,29 @@ void CInteractiveContext::changeTaskPoint(const size_t index, const GUI_TYPES::S
 void CInteractiveContext::removeTaskPoint(const size_t index)
 {
     d_ptr->removeTaskPoint(index);
+}
+
+size_t CInteractiveContext::getPathPointCount() const
+{
+    return d_ptr->pathPoints.size();
+}
+
+GUI_TYPES::SPathPoint CInteractiveContext::getPathPoint(const size_t index) const
+{
+    return d_ptr->getPathPoint(index);
+}
+
+void CInteractiveContext::appendPathPoint(const GUI_TYPES::SPathPoint &pathPoint)
+{
+    d_ptr->appendPathPoint(pathPoint);
+}
+
+void CInteractiveContext::changePathPoint(const size_t index, const GUI_TYPES::SPathPoint &pathPoint)
+{
+    d_ptr->changePathPoint(index, pathPoint);
+}
+
+void CInteractiveContext::removePathPoint(const size_t index)
+{
+    d_ptr->removePathPoint(index);
 }

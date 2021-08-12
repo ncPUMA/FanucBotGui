@@ -1,5 +1,5 @@
-#include "ccalibpointsorderdialog.h"
-#include "ui_ccalibpointsorderdialog.h"
+#include "cpathpointsorderdialog.h"
+#include "ui_cpathpointsorderdialog.h"
 
 #include <QAbstractTableModel>
 #include <QProxyStyle>
@@ -7,11 +7,11 @@
 #include <QPainter>
 #include <QStyledItemDelegate>
 
-#include "caddcalibpointdialog.h"
+#include "caddpathpointdialog.h"
 
 namespace {
 
-class CCalibPointsOrderModel : public QAbstractTableModel
+class CPathPointsOrderModel : public QAbstractTableModel
 {
 private:
     enum EN_Columns
@@ -20,30 +20,30 @@ private:
 
         ENC_NAME = ENC_FIRST,
         ENC_GLOBAL_POS,
-        ENC_BOT_POS,
+        ENC_ANGLE,
 
         ENC_LAST
     };
 
 public:
-    CCalibPointsOrderModel(QObject *parent = nullptr) :
+    CPathPointsOrderModel(QObject *parent = nullptr) :
         QAbstractTableModel(parent) { }
 
-    void setCalibPoints(const std::vector<GUI_TYPES::SCalibPoint> &calibPnts) {
+    void setPathPoints(const std::vector<GUI_TYPES::SPathPoint> &pathPnts) {
         beginResetModel();
         points.clear();
         size_t cntr = 0;
-        for(const auto &scp : calibPnts) {
+        for(const auto &spp : pathPnts) {
             SPoint pnt;
-            pnt.name = tr("C%1").arg(++cntr);
-            pnt.pnt = scp;
+            pnt.name = tr("P%1").arg(++cntr);
+            pnt.pnt = spp;
             points.push_back(pnt);
         }
         endResetModel();
     }
 
-    std::vector<GUI_TYPES::SCalibPoint> getCalibPoints() const {
-        std::vector<GUI_TYPES::SCalibPoint> result;
+    std::vector<GUI_TYPES::SPathPoint> getPathPoints() const {
+        std::vector<GUI_TYPES::SPathPoint> result;
         for(const auto &pnt : points)
             result.push_back(pnt.pnt);
         return result;
@@ -64,8 +64,8 @@ public:
         if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
             switch(section) {
                 case ENC_NAME      : result = tr("Название")            ; break;
-                case ENC_GLOBAL_POS: result = tr("Координаты заготовки"); break;
-                case ENC_BOT_POS   : result = tr("Координаты робота")   ; break;
+                case ENC_GLOBAL_POS: result = tr("Координаты"); break;
+                case ENC_ANGLE     : result = tr("Угол поворота")       ; break;
                 default: break;
             }
         }
@@ -90,16 +90,14 @@ public:
                             .arg(vertex.z, 12, 'f', 6, QChar('0'));
                     break;
                 }
-                case ENC_BOT_POS: {
-                    const GUI_TYPES::SVertex &vertex = points[row].pnt.botPos;
-                    result = tr("X:%1 Y:%2 Z:%3")
-                            .arg(vertex.x, 12, 'f', 6, QChar('0'))
-                            .arg(vertex.y, 12, 'f', 6, QChar('0'))
-                            .arg(vertex.z, 12, 'f', 6, QChar('0'));
+                case ENC_ANGLE: {
+                    const GUI_TYPES::SRotationAngle &angle = points[row].pnt.angle;
+                    result = tr("α:%1 β:%2 γ:%3")
+                            .arg(angle.x, 12, 'f', 6, QChar('0'))
+                            .arg(angle.y, 12, 'f', 6, QChar('0'))
+                            .arg(angle.z, 12, 'f', 6, QChar('0'));
                     break;
                 }
-                default:
-                    break;
             }
         }
         return result;
@@ -199,7 +197,7 @@ private:
     struct SPoint
     {
         QString name;
-        GUI_TYPES::SCalibPoint pnt;
+        GUI_TYPES::SPathPoint pnt;
     };
     std::vector <SPoint> points;
 };
@@ -232,7 +230,7 @@ public:
 class CItemDelegate : public QStyledItemDelegate
 {
 public:
-    CItemDelegate(CCalibPointsOrderModel &model, QObject * const parent) :
+    CItemDelegate(CPathPointsOrderModel &model, QObject * const parent) :
         QStyledItemDelegate(parent),
         mdl(model) { }
 
@@ -242,45 +240,45 @@ protected:
                           const QModelIndex &index) const final {
         (void)option;
 
-        std::vector <GUI_TYPES::SCalibPoint> points = mdl.getCalibPoints();
+        std::vector <GUI_TYPES::SPathPoint> points = mdl.getPathPoints();
         const size_t row = static_cast <size_t> (index.row());
         if (row < points.size()) {
-            GUI_TYPES::SCalibPoint &pnt = points[row];
-            CAddCalibPointDialog dlg(parent, pnt);
+            GUI_TYPES::SPathPoint &pnt = points[row];
+            CAddPathPointDialog dlg(parent, pnt);
             if (dlg.exec() == QDialog::Accepted) {
-                pnt = dlg.getCalibPoint();
-                mdl.setCalibPoints(points);
+                pnt = dlg.getPathPoint();
+                mdl.setPathPoints(points);
             }
         }
         return nullptr;
     }
 
 private:
-    CCalibPointsOrderModel &mdl;
+    CPathPointsOrderModel &mdl;
 };
 
 }
 
 
 
-class CCalibPointsOrderDialogPrivate
+class CPathPointsOrderDialogPrivate
 {
-    friend class CCalibPointsOrderDialog;
+    friend class CPathPointsOrderDialog;
 
-    CCalibPointsOrderModel mdl;
+    CPathPointsOrderModel mdl;
 };
 
 
 
-CCalibPointsOrderDialog::CCalibPointsOrderDialog(const std::vector<GUI_TYPES::SCalibPoint> &calibPnts,
-                                                 QWidget *parent) :
+CPathPointsOrderDialog::CPathPointsOrderDialog(const std::vector<GUI_TYPES::SPathPoint> &pathPnts,
+                                               QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CCalibPointsOrderDialog),
-    d_ptr(new CCalibPointsOrderDialogPrivate)
+    ui(new Ui::CPathPointsOrderDialog),
+    d_ptr(new CPathPointsOrderDialogPrivate())
 {
     ui->setupUi(this);
 
-    d_ptr->mdl.setCalibPoints(calibPnts);
+    d_ptr->mdl.setPathPoints(pathPnts);
     ui->tableView->setModel(&d_ptr->mdl);
     ui->tableView->resizeColumnsToContents();
 
@@ -291,13 +289,13 @@ CCalibPointsOrderDialog::CCalibPointsOrderDialog(const std::vector<GUI_TYPES::SC
     connect(ui->pbCancel, &QAbstractButton::clicked, this, &QDialog::reject);
 }
 
-CCalibPointsOrderDialog::~CCalibPointsOrderDialog()
+CPathPointsOrderDialog::~CPathPointsOrderDialog()
 {
     delete ui;
     delete d_ptr;
 }
 
-std::vector<GUI_TYPES::SCalibPoint> CCalibPointsOrderDialog::getCalibPoints() const
+std::vector<GUI_TYPES::SPathPoint> CPathPointsOrderDialog::getPathPoints() const
 {
-    return d_ptr->mdl.getCalibPoints();
+    return d_ptr->mdl.getPathPoints();
 }

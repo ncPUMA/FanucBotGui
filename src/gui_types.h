@@ -91,6 +91,14 @@ struct STaskPoint
     SRotationAngle angle;
 };
 
+struct SPathPoint
+{
+    SPathPoint() {}
+
+    SVertex globalPos;
+    SRotationAngle angle;
+};
+
 template <typename Key, typename Value, typename Map>
 inline static Value extract_map_value(const Map &map,
                                       const Key key,

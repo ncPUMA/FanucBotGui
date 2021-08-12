@@ -98,11 +98,14 @@ BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI
     return result;
 }
 
-void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::STaskPoint> &points)
+void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &pathPoints,
+                                 const std::vector<GUI_TYPES::STaskPoint> &taskPoints)
 {
+    (void)pathPoints;
+
     std::vector<xyzwpr_data> path;
-    path.reserve(points.size());
-    for(GUI_TYPES::STaskPoint p : points)
+    path.reserve(taskPoints.size());
+    for(GUI_TYPES::STaskPoint p : taskPoints)
     {
         if(p.taskType == GUI_TYPES::ENBTT_MOVE)
             path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle));

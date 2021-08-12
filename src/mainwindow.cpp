@@ -16,6 +16,7 @@
 
 #include "Dialogs/CalibPoints/ccalibpointsorderdialog.h"
 #include "Dialogs/TaskPoints/ctaskpointsorderdialog.h"
+#include "Dialogs/PathPoints/cpathpointsorderdialog.h"
 
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
 static const int STATE_LAMP_UPDATE_INTERVAL = 200;
@@ -55,12 +56,12 @@ protected:
         const QString jrnlTxt = MainWindow::tr(" Lsr: %1\t-->\tx: %2 y: %3 z: %4 "
                                                "α: %5 β: %6 γ: %7")
                 .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
-                .arg(pos.globalPos.x     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalPos.y     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalPos.z     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
+                .arg(pos.globalPos.x     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.y     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.z     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.x, 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.y, 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.z, 12, 'f', 6, QChar('0'));
         if(!usrText.isEmpty()) {
             jrnl->clear();
             jrnl->append(jrnlTxt);
@@ -77,12 +78,12 @@ protected:
         const QString jrnlTxt = MainWindow::tr("Grip: %1\t-->\tx: %2 y: %3 z: %4 "
                                                "α: %5 β: %6 γ: %7")
                 .arg(QTime::currentTime().toString("hh:mm:ss.zzz"))
-                .arg(pos.globalPos.x     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalPos.y     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalPos.z     , 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.x, 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.y, 11, 'f', 6, QChar('0'))
-                .arg(pos.globalRotation.z, 11, 'f', 6, QChar('0'));
+                .arg(pos.globalPos.x     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.y     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalPos.z     , 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.x, 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.y, 12, 'f', 6, QChar('0'))
+                .arg(pos.globalRotation.z, 12, 'f', 6, QChar('0'));
         if(!usrText.isEmpty()) {
             jrnl->clear();
             jrnl->append(jrnlTxt);
@@ -181,6 +182,10 @@ protected:
     }
 
     void tasksChanged() final {
+        updateUiState();
+    }
+
+    void pathPointsChanged() final {
         updateUiState();
     }
 
@@ -415,6 +420,13 @@ void MainWindow::slTaskPointsOrderDlg()
         ui->mainView->setTaskPoints(dialog.getTaskPoints());
 }
 
+void MainWindow::slPathPointsOrderDlg()
+{
+    CPathPointsOrderDialog dialog(ui->mainView->getPathPoints());
+    if (dialog.exec() == QDialog::Accepted)
+        ui->mainView->setPathPoints(dialog.getPathPoints());
+}
+
 void MainWindow::slExit()
 {
     close();
@@ -497,7 +509,8 @@ void MainWindow::slCallibApply()
 void MainWindow::slStart()
 {
     ui->mainView->setUiState(GUI_TYPES::ENUS_BOT_WORKED);
-    d_ptr->uiIface.startTasks(ui->mainView->getTaskPoints());
+    d_ptr->uiIface.startTasks(ui->mainView->getPathPoints(),
+                              ui->mainView->getTaskPoints());
 }
 
 void MainWindow::slStop()
@@ -520,6 +533,7 @@ void MainWindow::configMenu()
     connect(ui->actionImport, SIGNAL(triggered(bool)), SLOT(slImport()));
     connect(ui->actionCalibPoints, SIGNAL(triggered(bool)), SLOT(slCalibPointsOrderDlg()));
     connect(ui->actionTaskPoints, SIGNAL(triggered(bool)), SLOT(slTaskPointsOrderDlg()));
+    connect(ui->actionPathPoints, SIGNAL(triggered(bool)), SLOT(slPathPointsOrderDlg()));
     connect(ui->actionExit, SIGNAL(triggered(bool)), SLOT(slExit()));
 
     //Menu "View"

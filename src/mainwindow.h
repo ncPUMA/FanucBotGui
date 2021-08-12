@@ -32,6 +32,7 @@ private slots:
     void slImport();
     void slCalibPointsOrderDlg();
     void slTaskPointsOrderDlg();
+    void slPathPointsOrderDlg();
     void slExit();
 
     //Menu "View"

@@ -15,7 +15,8 @@ public:
 
     BotSocket::EN_CalibResult execCalibration(const std::vector <GUI_TYPES::SCalibPoint> &points);
     void prepare(const std::vector <GUI_TYPES::STaskPoint> &points);
-    void startTasks(const std::vector <GUI_TYPES::STaskPoint> &points);
+    void startTasks(const std::vector <GUI_TYPES::SPathPoint> &pathPoints,
+                    const std::vector <GUI_TYPES::STaskPoint> &taskPoints);
     void stopTasks();
     void shapeTransformChanged(const BotSocket::EN_ShapeType shType);
 
