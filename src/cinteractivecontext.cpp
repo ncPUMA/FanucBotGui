@@ -372,8 +372,8 @@ private:
         const SCalibPoint &scpnt = calibPoints[index];
         GUI_TYPES::SCalibPoint res;
         res.botPos = scpnt.botPos;
-        const gp_Trsf partTr = ais_part->Shape().Location().Transformation().Inverted();
-        const gp_Pnt local = scpnt.pnt->Component()->Pnt().Transformed(partTr);
+        const gp_Trsf partTr = context->Location(ais_part).Transformation();
+        const gp_Pnt local = scpnt.pnt->Component()->Pnt().Transformed(partTr.Inverted());
         res.globalPos.x = local.X();
         res.globalPos.y = local.Y();
         res.globalPos.z = local.Z();
