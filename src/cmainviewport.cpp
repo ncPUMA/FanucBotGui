@@ -937,6 +937,11 @@ void CMainViewport::slAddTaskPoint()
     taskPoint.globalPos.y = cursorPos.Y();
     taskPoint.globalPos.z = cursorPos.Z();
 
+    const gp_Dir normal = d_ptr->context->detectNormal(cursorPos);
+    taskPoint.normal.x = normal.X();
+    taskPoint.normal.y = normal.Y();
+    taskPoint.normal.z = normal.Z();
+
     CBotTaskDialogFacade dialog(this, taskPoint);
     if (dialog.exec() == QDialog::Accepted)
     {

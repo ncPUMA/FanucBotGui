@@ -24,7 +24,7 @@ CLaserVec::CLaserVec(const gp_Pnt2d& thePnt1,
   myLength = aVec.Magnitude();
   clippedLenght = myLength;
 }
-#include <QDebug>
+
 void CLaserVec::clipLenght(Handle(AIS_InteractiveContext) context,
                            const NCollection_Vector<Handle(AIS_Shape)>& theObjects)
 {

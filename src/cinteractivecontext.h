@@ -46,6 +46,7 @@ public:
     void setGripMdlTransform(const gp_Trsf &trsf);
 
     const TopoDS_Shape& getPartShape() const;
+    const gp_Trsf& getPartTransform() const;
     const TopoDS_Shape& getDeskShape() const;
     const TopoDS_Shape& getLsrHeadShape() const;
     const TopoDS_Shape& getGripShape() const;
@@ -83,6 +84,8 @@ public:
     void appendPathPoint(const GUI_TYPES::SPathPoint &pathPoint);
     void changePathPoint(const size_t index, const GUI_TYPES::SPathPoint &pathPoint);
     void removePathPoint(const size_t index);
+
+    gp_Dir detectNormal(const gp_Pnt pnt) const;
 
 private:
     CInteractiveContextPrivate * const d_ptr;

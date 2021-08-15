@@ -19,9 +19,18 @@
 #include <Geom_CartesianPoint.hxx>
 #include <Geom_Axis2Placement.hxx>
 
+#include <TopExp_Explorer.hxx>
+#include <BRepClass3d_SolidClassifier.hxx>
+#include <BRepTools.hxx>
+#include <BRep_Tool.hxx>
+#include <Geom_Surface.hxx>
+#include <GeomLProp_SLProps.hxx>
+#include <TopoDS.hxx>
+
 #include "gui_types.h"
 
 #include "Primitives/claservec.h"
+#include "Primitives/ctaskpnt.h"
 
 static const Quantity_Color TXT_CLR  = Quantity_Color( .15  ,  .15, 0.15, Quantity_TOC_RGB);
 static const Quantity_Color FACE_CLR = Quantity_Color(0.1   , 0.1 , 0.1 , Quantity_TOC_RGB);
@@ -448,11 +457,15 @@ private:
         stpnt.pntLbl->SetPosition(globalPos);
         const std::string txt = taskPointName(taskPoints.size(), stpnt.taskType);
         stpnt.pntLbl->SetText(TCollection_ExtendedString(txt.c_str(), Standard_True));
+        gp_Dir zDir(taskPoint.normal.x, taskPoint.normal.y, taskPoint.normal.z);
+        stpnt.tPnt = new CTaskPnt(globalPos, zDir, 5.);
         taskPoints.push_back(stpnt);
         context->Display(stpnt.pnt, Standard_False);
         context->SetZLayer(stpnt.pntLbl, depthTestOffZlayer);
         context->Display(stpnt.pntLbl, Standard_False);
         context->Deactivate(stpnt.pntLbl);
+        context->Display(stpnt.tPnt, Standard_False);
+        context->Deactivate(stpnt.tPnt);
     }
 
     void changeTaskPoint(const size_t index, const GUI_TYPES::STaskPoint &taskPoint) {
@@ -462,8 +475,12 @@ private:
         const gp_Pnt globalPos(taskPoint.globalPos.x, taskPoint.globalPos.y, taskPoint.globalPos.z);
         stpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
         stpnt.pntLbl->SetPosition(globalPos);
+        gp_Dir zDir(taskPoint.normal.x, taskPoint.normal.y, taskPoint.normal.z);
+        stpnt.tPnt = new CTaskPnt(globalPos, zDir, 5.);
         context->RecomputePrsOnly(stpnt.pnt, Standard_False);
         context->RecomputePrsOnly(stpnt.pntLbl, Standard_False);
+        context->Display(stpnt.tPnt, Standard_False);
+        context->Deactivate(stpnt.tPnt);
     }
 
     void removeTaskPoint(const size_t index) {
@@ -534,6 +551,29 @@ private:
         }
     }
 
+    bool detectNormal(gp_Dir &normal, const gp_Pnt pnt, const Handle(AIS_Shape) &obj) const {
+        normal = gp_Dir(0., 0., 1.);
+        const gp_Trsf partTr = context->Location(obj).Transformation();
+        const gp_Pnt localCoord = pnt.Transformed(partTr.Inverted());
+        for (TopExp_Explorer anExp(obj->Shape(), TopAbs_FACE); anExp.More(); anExp.Next()) {
+            const TopoDS_Face face = TopoDS::Face(anExp.Current());
+            BRepClass3d_SolidClassifier classifier(face);
+            classifier.Perform(localCoord, Precision::Intersection());
+            if (classifier.State() == TopAbs_ON) {
+                Standard_Real umin, umax, vmin, vmax;
+                BRepTools::UVBounds(face, umin, umax, vmin, vmax);
+                Handle(Geom_Surface) aSurface = BRep_Tool::Surface(face);
+                GeomLProp_SLProps props(aSurface, umin, vmin,1, 0.01);
+                normal = props.Normal();
+                if(face.Orientation() == TopAbs_REVERSED)
+                    normal.Reverse();
+                normal.Transform(partTr);
+                return true;
+            }
+        }
+        return false;
+    }
+
     void updateLaserLine() {
         if (lsrClip && !ais_laser.IsNull()) {
             NCollection_Vector <Handle(AIS_Shape)> vecObj;
@@ -580,6 +620,7 @@ private:
         GUI_TYPES::SRotationAngle angle;
         Handle(AIS_Point) pnt;
         Handle(AIS_TextLabel) pntLbl;
+        Handle(CTaskPnt) tPnt;
     };
     std::vector <STaskPoint> taskPoints;
 
@@ -691,6 +732,11 @@ void CInteractiveContext::setGripMdlTransform(const gp_Trsf &trsf)
 const TopoDS_Shape &CInteractiveContext::getPartShape() const
 {
     return d_ptr->ais_part->Shape();
+}
+
+const gp_Trsf &CInteractiveContext::getPartTransform() const
+{
+    return d_ptr->context->Location(d_ptr->ais_part).Transformation();
 }
 
 const TopoDS_Shape &CInteractiveContext::getDeskShape() const
@@ -873,4 +919,13 @@ void CInteractiveContext::changePathPoint(const size_t index, const GUI_TYPES::S
 void CInteractiveContext::removePathPoint(const size_t index)
 {
     d_ptr->removePathPoint(index);
+}
+
+gp_Dir CInteractiveContext::detectNormal(const gp_Pnt pnt) const
+{
+    gp_Dir normal(0., 0., 1.);
+    bool res = d_ptr->detectNormal(normal, pnt, d_ptr->ais_part);
+    if (!res)
+        d_ptr->detectNormal(normal, pnt, d_ptr->ais_desk);
+    return normal;
 }

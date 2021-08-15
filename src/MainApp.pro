@@ -32,6 +32,7 @@ SOURCES += \
     ModelLoader/cstlloader.cpp \
     Primitives/cbotcross.cpp \
     Primitives/claservec.cpp \
+    Primitives/ctaskpnt.cpp \
     caspectwindow.cpp \
     cguisettingswidget.cpp \
     cinteractivecontext.cpp \
@@ -66,6 +67,7 @@ HEADERS += \
     ModelLoader/cstlloader.h \
     Primitives/cbotcross.h \
     Primitives/claservec.h \
+    Primitives/ctaskpnt.h \
     cabstractsettingsstorage.h \
     caspectwindow.h \
     cguisettingswidget.h \

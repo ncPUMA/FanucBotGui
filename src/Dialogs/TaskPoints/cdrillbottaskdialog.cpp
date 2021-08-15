@@ -12,6 +12,10 @@ CDrillBotTaskDialog::CDrillBotTaskDialog(QWidget *parent, const GUI_TYPES::STask
     ui->dsbGlobalX->setValue(initData.globalPos.x);
     ui->dsbGlobalY->setValue(initData.globalPos.y);
     ui->dsbGlobalZ->setValue(initData.globalPos.z);
+    ui->dsbNormalX->setValue(initData.normal.x);
+    ui->dsbNormalY->setValue(initData.normal.y);
+    ui->dsbNormalZ->setValue(initData.normal.z);
+    ui->checkZSimmetry->setChecked(initData.zSimmetry);
 
     connect(ui->pbOk, &QAbstractButton::clicked, this, &QDialog::accept);
     connect(ui->pbCancel, &QAbstractButton::clicked, this, &QDialog::reject);
@@ -32,5 +36,9 @@ GUI_TYPES::STaskPoint CDrillBotTaskDialog::getTaskPoint() const
     res.angle.x = ui->dsbApha->value();
     res.angle.y = ui->dsbBeta->value();
     res.angle.z = ui->dsbGamma->value();
+    res.normal.x = ui->dsbNormalX->value();
+    res.normal.y = ui->dsbNormalY->value();
+    res.normal.z = ui->dsbNormalZ->value();
+    res.zSimmetry = ui->checkZSimmetry->isChecked();
     return res;
 }
