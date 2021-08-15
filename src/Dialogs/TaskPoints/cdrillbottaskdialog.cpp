@@ -12,6 +12,9 @@ CDrillBotTaskDialog::CDrillBotTaskDialog(QWidget *parent, const GUI_TYPES::STask
     ui->dsbGlobalX->setValue(initData.globalPos.x);
     ui->dsbGlobalY->setValue(initData.globalPos.y);
     ui->dsbGlobalZ->setValue(initData.globalPos.z);
+    ui->dsbApha->setValue(initData.angle.x);
+    ui->dsbBeta->setValue(initData.angle.y);
+    ui->dsbGamma->setValue(initData.angle.z);
     ui->dsbNormalX->setValue(initData.normal.x);
     ui->dsbNormalY->setValue(initData.normal.y);
     ui->dsbNormalZ->setValue(initData.normal.z);

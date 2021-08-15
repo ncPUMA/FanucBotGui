@@ -26,11 +26,14 @@
 #include <Geom_Surface.hxx>
 #include <GeomLProp_SLProps.hxx>
 #include <TopoDS.hxx>
+#include <gp_Quaternion.hxx>
 
 #include "gui_types.h"
 
 #include "Primitives/claservec.h"
 #include "Primitives/ctaskpnt.h"
+
+static constexpr double DEGREE_K = M_PI / 180.;
 
 static const Quantity_Color TXT_CLR  = Quantity_Color( .15  ,  .15, 0.15, Quantity_TOC_RGB);
 static const Quantity_Color FACE_CLR = Quantity_Color(0.1   , 0.1 , 0.1 , Quantity_TOC_RGB);
@@ -459,6 +462,17 @@ private:
         stpnt.pntLbl->SetText(TCollection_ExtendedString(txt.c_str(), Standard_True));
         gp_Dir zDir(taskPoint.normal.x, taskPoint.normal.y, taskPoint.normal.z);
         stpnt.tPnt = new CTaskPnt(globalPos, zDir, 5.);
+        gp_Trsf trTrsf;
+        trTrsf.SetTranslation(gp_Pnt(), globalPos);
+        gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
+        gp_Quaternion delta;
+        delta.SetEulerAngles(gp_Extrinsic_XYZ,
+                             stpnt.angle.x * DEGREE_K,
+                             stpnt.angle.y * DEGREE_K,
+                             stpnt.angle.z * DEGREE_K);
+        gp_Trsf rotTrsf;
+        rotTrsf.SetRotation(normal * delta);
+        context->SetLocation(stpnt.tPnt, trTrsf * rotTrsf);
         taskPoints.push_back(stpnt);
         context->Display(stpnt.pnt, Standard_False);
         context->SetZLayer(stpnt.pntLbl, depthTestOffZlayer);
@@ -476,7 +490,19 @@ private:
         stpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
         stpnt.pntLbl->SetPosition(globalPos);
         gp_Dir zDir(taskPoint.normal.x, taskPoint.normal.y, taskPoint.normal.z);
+        context->Erase(stpnt.tPnt, Standard_False);
         stpnt.tPnt = new CTaskPnt(globalPos, zDir, 5.);
+        gp_Trsf trTrsf;
+        trTrsf.SetTranslation(gp_Pnt(), globalPos);
+        gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
+        gp_Quaternion delta;
+        delta.SetEulerAngles(gp_Extrinsic_XYZ,
+                             stpnt.angle.x * DEGREE_K,
+                             stpnt.angle.y * DEGREE_K,
+                             stpnt.angle.z * DEGREE_K);
+        gp_Trsf rotTrsf;
+        rotTrsf.SetRotation(normal * delta);
+        context->SetLocation(stpnt.tPnt, trTrsf * rotTrsf);
         context->RecomputePrsOnly(stpnt.pnt, Standard_False);
         context->RecomputePrsOnly(stpnt.pntLbl, Standard_False);
         context->Display(stpnt.tPnt, Standard_False);

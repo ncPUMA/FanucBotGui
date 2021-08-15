@@ -39,6 +39,29 @@ void CTaskPnt::Compute (const Handle(PrsMgr_PresentationManager3d)& ,
     aLastPoint.Translate(myLength * gp_Vec(myDir));
 
     // Draw Line
+//    {
+//        Quantity_Color clr(Quantity_NOC_STEELBLUE3);
+//        if (HasColor())
+//            Color(clr);
+//        myDrawer->SetLineAspect(new Prs3d_LineAspect(clr, Aspect_TOL_SOLID, 1.5));
+//        Handle(Graphic3d_Group) aLineGroup = thePrs->NewGroup();
+//        aLineGroup->SetGroupPrimitivesAspect(myDrawer->LineAspect()->Aspect());
+//        Handle(Graphic3d_ArrayOfSegments) aPrims = new Graphic3d_ArrayOfSegments(2);
+//        aPrims->AddVertex(myPnt);
+//        aPrims->AddVertex(aLastPoint);
+//        aLineGroup->AddPrimitiveArray(aPrims);
+//        Handle(Graphic3d_ArrayOfSegments) aPrims2 = new Graphic3d_ArrayOfSegments(2);
+//        aPrims2->AddVertex(myPnt);
+//        gp_Ax3 axZ(myPnt, myDir);
+//        gp_Pnt xPnt = myPnt;
+//        xPnt.Translate(myLength / 3. * axZ.XDirection());
+//        aPrims2->AddVertex(xPnt);
+//        aLineGroup->AddPrimitiveArray(aPrims2);
+
+//        // Draw arrow
+//        Prs3d_Arrow::Draw(aLineGroup, aLastPoint, myDir, anArrowAspect->Angle(), anArrowAspect->Length());
+//    }
+
     {
         Quantity_Color clr(Quantity_NOC_STEELBLUE3);
         if (HasColor())
@@ -47,14 +70,14 @@ void CTaskPnt::Compute (const Handle(PrsMgr_PresentationManager3d)& ,
         Handle(Graphic3d_Group) aLineGroup = thePrs->NewGroup();
         aLineGroup->SetGroupPrimitivesAspect(myDrawer->LineAspect()->Aspect());
         Handle(Graphic3d_ArrayOfSegments) aPrims = new Graphic3d_ArrayOfSegments(2);
-        aPrims->AddVertex(myPnt);
-        aPrims->AddVertex(aLastPoint);
+        const gp_Pnt start(0., 0., 0.);
+        const gp_Pnt zPnt(0., 0., myLength);
+        const gp_Pnt xPnt(myLength / 3., 0., 0.);
+        aPrims->AddVertex(start);
+        aPrims->AddVertex(zPnt);
         aLineGroup->AddPrimitiveArray(aPrims);
         Handle(Graphic3d_ArrayOfSegments) aPrims2 = new Graphic3d_ArrayOfSegments(2);
-        aPrims2->AddVertex(myPnt);
-        gp_Ax3 axZ(myPnt, myDir);
-        gp_Pnt xPnt = myPnt;
-        xPnt.Translate(myLength / 3. * axZ.XDirection());
+        aPrims2->AddVertex(start);
         aPrims2->AddVertex(xPnt);
         aLineGroup->AddPrimitiveArray(aPrims2);
 
