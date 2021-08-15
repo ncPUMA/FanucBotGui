@@ -67,6 +67,7 @@ public:
     //Usr points
     size_t getCalibPointCount() const;
     GUI_TYPES::SCalibPoint getCalibPoint(const size_t index) const;
+    GUI_TYPES::SCalibPoint getCalibLocalPoint(const size_t index) const;
     void appendCalibPoint(const GUI_TYPES::SCalibPoint &calibPoint);
     void changeCalibPoint(const size_t index, const GUI_TYPES::SCalibPoint &calibPoint);
     void removeCalibPoint(const size_t index);

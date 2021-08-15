@@ -594,6 +594,15 @@ std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
     return res;
 }
 
+std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationLocalPoints() const
+{
+    std::vector <GUI_TYPES::SCalibPoint> res;
+    const size_t count = d_ptr->context->getCalibPointCount();
+    for(size_t i = 0; i < count; ++i)
+        res.push_back(d_ptr->context->getCalibLocalPoint(i));
+    return res;
+}
+
 void CMainViewport::setTaskPoints(const std::vector<GUI_TYPES::STaskPoint> &points)
 {
     while(d_ptr->context->getTaskPointCount() > 0)

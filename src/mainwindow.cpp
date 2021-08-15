@@ -479,7 +479,7 @@ void MainWindow::slClearJrnl()
 void MainWindow::slCallibCalc()
 {
     const BotSocket::EN_CalibResult calibRes =
-            d_ptr->uiIface.execCalibration(ui->mainView->getCallibrationPoints());
+            d_ptr->uiIface.execCalibration(ui->mainView->getCallibrationLocalPoints());
     if(calibRes == BotSocket::ENCR_OK)
         QMessageBox::information(this,
                               tr("Калибровка завершена"),

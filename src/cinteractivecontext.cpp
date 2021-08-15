@@ -358,6 +358,19 @@ private:
         return res;
     }
 
+    GUI_TYPES::SCalibPoint getCalibLocalPoint(const size_t index) const {
+        assert(index < calibPoints.size());
+        const SCalibPoint &scpnt = calibPoints[index];
+        GUI_TYPES::SCalibPoint res;
+        res.botPos = scpnt.botPos;
+        const gp_Trsf partTr = ais_part->Shape().Location().Transformation().Inverted();
+        const gp_Pnt local = scpnt.pnt->Component()->Pnt().Transformed(partTr);
+        res.globalPos.x = local.X();
+        res.globalPos.y = local.Y();
+        res.globalPos.z = local.Z();
+        return res;
+    }
+
     void appendCalibPoint(const GUI_TYPES::SCalibPoint &calibPoint) {
         SCalibPoint scpnt;
         scpnt.botPos = calibPoint.botPos;
@@ -790,6 +803,11 @@ size_t CInteractiveContext::getCalibPointCount() const
 GUI_TYPES::SCalibPoint CInteractiveContext::getCalibPoint(const size_t index) const
 {
     return d_ptr->getCalibPoint(index);
+}
+
+GUI_TYPES::SCalibPoint CInteractiveContext::getCalibLocalPoint(const size_t index) const
+{
+    return d_ptr->getCalibLocalPoint(index);
 }
 
 void CInteractiveContext::appendCalibPoint(const GUI_TYPES::SCalibPoint &calibPoint)

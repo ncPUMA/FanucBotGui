@@ -86,6 +86,7 @@ public:
 
     void setCalibrationPoints(const std::vector <GUI_TYPES::SCalibPoint> &points);
     std::vector <GUI_TYPES::SCalibPoint> getCallibrationPoints() const;
+    std::vector <GUI_TYPES::SCalibPoint> getCallibrationLocalPoints() const;
     void setTaskPoints(const std::vector <GUI_TYPES::STaskPoint> &points);
     std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const;
     void setPathPoints(const std::vector <GUI_TYPES::SPathPoint> &points);
