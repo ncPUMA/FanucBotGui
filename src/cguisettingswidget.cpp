@@ -9,8 +9,15 @@ CGuiSettingsWidget::CGuiSettingsWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->gbDesk->hide();
+    ui->gbLHead->hide();
+    ui->gbGrip->hide();
+    ui->pbShowLess->hide();
+
     connect(ui->pbApply, SIGNAL(clicked(bool)), this, SIGNAL(sigApplyRequest()));
     connect(ui->pbCalc, SIGNAL(clicked(bool)), this, SIGNAL(sigCalcCalibration()));
+    connect(ui->pbShowMore, &QPushButton::clicked, this, &CGuiSettingsWidget::slShowMoreOrLess);
+    connect(ui->pbShowLess, &QPushButton::clicked, this, &CGuiSettingsWidget::slShowMoreOrLess);
 }
 
 CGuiSettingsWidget::~CGuiSettingsWidget()
@@ -132,4 +139,14 @@ GUI_TYPES::SGuiSettings CGuiSettingsWidget::getChangedSettings() const
     settings.gripScale     = ui->dsbGripScale->value();
     settings.gripVis       = ui->checkGripVis->isChecked();
     return settings;
+}
+
+void CGuiSettingsWidget::slShowMoreOrLess()
+{
+    const bool bShowMore = sender() == ui->pbShowMore;
+    ui->pbShowMore->setVisible(!bShowMore);
+    ui->gbDesk->setVisible(bShowMore);
+    ui->gbLHead->setVisible(bShowMore);
+    ui->gbGrip->setVisible(bShowMore);
+    ui->pbShowLess->setVisible(bShowMore);
 }

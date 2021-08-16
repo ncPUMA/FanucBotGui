@@ -28,6 +28,9 @@ signals:
     void sigApplyRequest();
     void sigCalcCalibration();
 
+private slots:
+    void slShowMoreOrLess();
+
 private:
     Ui::CGuiSettingsWidget *ui;
 };
