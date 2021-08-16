@@ -74,6 +74,11 @@ public:
     const TopoDS_Shape& getLsrheadShape() const;
     const TopoDS_Shape& getGripShape() const;
 
+    const gp_Trsf& getPartTransform() const;
+    const gp_Trsf& getDeskTransform() const;
+    const gp_Trsf& getLsrheadTransform() const;
+    const gp_Trsf& getGripTransform() const;
+
     void setCalibResult(const BotSocket::EN_CalibResult val);
     BotSocket::EN_CalibResult getCalibResult() const;
     void setBotState(const BotSocket::EN_BotState state);

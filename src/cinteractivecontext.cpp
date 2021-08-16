@@ -770,14 +770,29 @@ const TopoDS_Shape &CInteractiveContext::getDeskShape() const
     return d_ptr->ais_desk->Shape();
 }
 
+const gp_Trsf &CInteractiveContext::getDeskTransform() const
+{
+    return d_ptr->context->Location(d_ptr->ais_desk).Transformation();
+}
+
 const TopoDS_Shape &CInteractiveContext::getLsrHeadShape() const
 {
     return d_ptr->ais_lsrhead->Shape();
 }
 
+const gp_Trsf &CInteractiveContext::getLsrHeadTransform() const
+{
+    return d_ptr->context->Location(d_ptr->ais_lsrhead).Transformation();
+}
+
 const TopoDS_Shape &CInteractiveContext::getGripShape() const
 {
     return d_ptr->ais_grip->Shape();
+}
+
+const gp_Trsf &CInteractiveContext::getGripTransform() const
+{
+    return d_ptr->context->Location(d_ptr->ais_grip).Transformation();
 }
 
 void CInteractiveContext::hideAllAdditionalObjects()

@@ -114,10 +114,21 @@ protected:
             case ENST_PART   : return viewport->getPartShape();
             case ENST_LSRHEAD: return viewport->getLsrheadShape();
             case ENST_GRIP   : return viewport->getGripShape();
-            default: break;
         }
         static const TopoDS_Shape sh;
         return sh;
+    }
+
+    const gp_Trsf& getShapeTransform(const BotSocket::EN_ShapeType shType) const final {
+        using namespace BotSocket;
+        switch(shType) {
+            case ENST_DESK   : return viewport->getDeskTransform();
+            case ENST_PART   : return viewport->getPartTransform();
+            case ENST_LSRHEAD: return viewport->getLsrheadTransform();
+            case ENST_GRIP   : return viewport->getGripTransform();
+        }
+        static const gp_Trsf trsf;
+        return trsf;
     }
 
     void updateUiState() {
@@ -374,11 +385,6 @@ void MainWindow::setBotSocket(CAbstractBotSocket &botSocket)
     using namespace BotSocket;
 
     d_ptr->uiIface.setBotSocket(botSocket);
-    std::map <BotSocket::EN_ShapeType, TopoDS_Shape> shapes;
-    shapes[ENST_DESK]    = ui->mainView->getDeskShape();
-    shapes[ENST_PART]    = ui->mainView->getPartShape();
-    shapes[ENST_LSRHEAD] = ui->mainView->getLsrheadShape();
-    shapes[ENST_GRIP]    = ui->mainView->getGripShape();
 }
 
 void MainWindow::slImport()

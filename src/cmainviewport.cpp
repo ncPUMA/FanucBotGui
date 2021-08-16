@@ -530,6 +530,26 @@ const TopoDS_Shape& CMainViewport::getGripShape() const
     return d_ptr->context->getGripShape();
 }
 
+const gp_Trsf &CMainViewport::getPartTransform() const
+{
+    return d_ptr->context->getPartTransform();
+}
+
+const gp_Trsf &CMainViewport::getDeskTransform() const
+{
+    return d_ptr->context->getDeskTransform();
+}
+
+const gp_Trsf &CMainViewport::getLsrheadTransform() const
+{
+    return d_ptr->context->getLsrHeadTransform();
+}
+
+const gp_Trsf &CMainViewport::getGripTransform() const
+{
+    return d_ptr->context->getGripTransform();
+}
+
 void CMainViewport::setCalibResult(const BotSocket::EN_CalibResult val)
 {
     if (val != d_ptr->calibResult)

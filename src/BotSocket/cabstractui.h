@@ -31,6 +31,7 @@ protected:
     virtual void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos) = 0;
     virtual void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform) = 0;
     virtual const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const = 0;
+    virtual const gp_Trsf& getShapeTransform(const BotSocket::EN_ShapeType shType) const = 0;
 
     BotSocket::EN_CalibResult execCalibration(const std::vector <GUI_TYPES::SCalibPoint> &points);
     void prepare(const std::vector <GUI_TYPES::STaskPoint> &points);
