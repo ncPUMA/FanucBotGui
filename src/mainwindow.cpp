@@ -507,6 +507,11 @@ void MainWindow::slCallibCalc()
     ui->mainView->setCalibResult(calibRes);
 }
 
+void MainWindow::slPartPrntScr()
+{
+    ui->mainView->partPrntScr();
+}
+
 void MainWindow::slCallibApply()
 {
     GUI_TYPES::SGuiSettings settings = ui->wSettings->getChangedSettings();
@@ -565,6 +570,8 @@ void MainWindow::configMenu()
         connect(pair.second, SIGNAL(toggled(bool)), SLOT(slMsaa()));
     //FPS
     connect(ui->actionFPS, SIGNAL(toggled(bool)), SLOT(slFpsCounter(bool)));
+    //PrntScr
+    connect(ui->actionPartPrntScr, SIGNAL(triggered(bool)), SLOT(slPartPrntScr()));
 
     //teJrnl
     connect(ui->actionClearJrnl, SIGNAL(triggered(bool)), SLOT(slClearJrnl()));

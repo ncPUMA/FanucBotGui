@@ -29,6 +29,8 @@
 #include <AIS_TextLabel.hxx>
 #include <TopoDS_Shape.hxx>
 
+#include <Image_AlienPixMap.hxx>
+
 #include "cinteractivecontext.h"
 #include "caspectwindow.h"
 #include "sguisettings.h"
@@ -689,6 +691,26 @@ std::vector<GUI_TYPES::SPathPoint> CMainViewport::getPathPoints() const
     for(size_t i = 0; i < count; ++i)
         res.push_back(d_ptr->context->getPathPoint(i));
     return res;
+}
+
+void CMainViewport::partPrntScr()
+{
+    d_ptr->context->hideAllAdditionalObjects();
+    d_ptr->view->RedrawImmediate ();
+    Image_PixMap pix;
+    V3d_ImageDumpOptions params;
+    params.Width = width();
+    params.Height = height();
+    d_ptr->view->ToPixMap(pix, params);
+    Image_AlienPixMap bmpImg;
+    bmpImg.InitCopy(pix);
+    bmpImg.Save("partSnapshot.bmp");
+    switch(d_ptr->uiState) {
+        case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
+        case GUI_TYPES::ENUS_TASK_EDITING: d_ptr->context->showTaskObjects();  break;
+        default: d_ptr->context->resetCursorPosition(); break;
+    }
+    d_ptr->view->Redraw();
 }
 
 QPaintEngine *CMainViewport::paintEngine() const

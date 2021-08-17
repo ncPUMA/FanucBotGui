@@ -97,6 +97,8 @@ public:
     void setPathPoints(const std::vector <GUI_TYPES::SPathPoint> &points);
     std::vector <GUI_TYPES::SPathPoint> getPathPoints() const;
 
+    void partPrntScr();
+
 protected:
     QPaintEngine* paintEngine() const final;
     void paintEvent(QPaintEvent *) final;
