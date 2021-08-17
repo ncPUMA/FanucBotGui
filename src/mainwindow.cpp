@@ -100,6 +100,14 @@ protected:
 
     void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
     {
+        if (std::isnan(pos.globalPos.x) ||
+            std::isnan(pos.globalPos.y) ||
+            std::isnan(pos.globalPos.z) ||
+            std::isnan(pos.globalRotation.x) ||
+            std::isnan(pos.globalRotation.y) ||
+            std::isnan(pos.globalRotation.z))
+            return;
+
         viewport->shapeCalibrationChanged(shType, pos);
     }
     void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)

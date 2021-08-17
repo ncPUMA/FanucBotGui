@@ -300,6 +300,15 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
+    template <typename TPoint>
+    static void updatePntTransform(TPoint &pnt, const gp_Trsf &transform) {
+        gp_Pnt gpPnt(pnt.globalPos.x, pnt.globalPos.y, pnt.globalPos.z);
+        gpPnt.Transform(transform);
+        pnt.globalPos.x = gpPnt.X();
+        pnt.globalPos.y = gpPnt.Y();
+        pnt.globalPos.z = gpPnt.Z();
+    }
+
     void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
     {
         using namespace BotSocket;
@@ -322,7 +331,28 @@ class CMainViewportPrivate : public AIS_ViewController
                 guiSettings.partRotationX = pos.globalRotation.x;
                 guiSettings.partRotationY = pos.globalRotation.y;
                 guiSettings.partRotationZ = pos.globalRotation.z;
-                context->setPartMdlTransform(calcPartTrsf());
+                const gp_Trsf newTrsf = calcPartTrsf();
+                const gp_Trsf pntTrsf = context->getPartTransform().Inverted() * newTrsf;
+                context->setPartMdlTransform(newTrsf);
+                //points transformation by new calibration data
+                const size_t calibPntCount = context->getCalibPointCount();
+                for(size_t i = 0; i < calibPntCount; ++i) {
+                    GUI_TYPES::SCalibPoint pnt = context->getCalibPoint(i);
+                    updatePntTransform(pnt, pntTrsf);
+                    context->changeCalibPoint(i, pnt);
+                }
+                const size_t taskPntCount = context->getTaskPointCount();
+                for(size_t i = 0; i < taskPntCount; ++i) {
+                    GUI_TYPES::STaskPoint pnt = context->getTaskPoint(i);
+                    updatePntTransform(pnt, pntTrsf);
+                    context->changeTaskPoint(i, pnt);
+                }
+                const size_t pathPntCount = context->getPathPointCount();
+                for(size_t i = 0; i < pathPntCount; ++i) {
+                    GUI_TYPES::SPathPoint pnt = context->getPathPoint(i);
+                    updatePntTransform(pnt, pntTrsf);
+                    context->changePathPoint(i, pnt);
+                }
                 view->Redraw();
                 break;
             }
