@@ -40,6 +40,8 @@ protected:
     void stopTasks();
     void shapeTransformChaged(const BotSocket::EN_ShapeType shType);
 
+    virtual void makePartSnapshot(const char *fname) = 0;
+
 private:
     CAbstractUi(const CAbstractUi &) = delete;
     CAbstractUi& operator =(const CAbstractUi &) = delete;

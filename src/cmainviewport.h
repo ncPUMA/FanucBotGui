@@ -98,6 +98,7 @@ public:
     std::vector <GUI_TYPES::SPathPoint> getPathPoints() const;
 
     void partPrntScr();
+    void makePartSnapshot(const char *fname);
 
 protected:
     QPaintEngine* paintEngine() const final;

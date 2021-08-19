@@ -53,6 +53,8 @@ public:
     const gp_Trsf& getLsrHeadTransform() const;
     const TopoDS_Shape& getGripShape() const;
     const gp_Trsf& getGripTransform() const;
+    gp_Pnt getLaserLineCalibration() const;
+    void getLaserLine(gp_Pnt &pnt, gp_Dir &dir, double &lenght) const;
 
     void hideAllAdditionalObjects();
     void showCalibObjects();

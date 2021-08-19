@@ -38,6 +38,8 @@ protected:
     const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const;
     const gp_Trsf& getShapeTransform(const BotSocket::EN_ShapeType shType) const;
 
+    void makePartSnapshot(const char *fname);
+
 private:
     CAbstractBotSocket(const CAbstractBotSocket &) = delete;
     CAbstractBotSocket& operator=(const CAbstractBotSocket &) = delete;

@@ -795,6 +795,19 @@ const gp_Trsf &CInteractiveContext::getGripTransform() const
     return d_ptr->context->Location(d_ptr->ais_grip).Transformation();
 }
 
+gp_Pnt CInteractiveContext::getLaserLineCalibration() const
+{
+    return d_ptr->ais_laser->getPos();
+}
+
+void CInteractiveContext::getLaserLine(gp_Pnt &pnt, gp_Dir &dir, double &lenght) const
+{
+    const gp_Trsf trsf = d_ptr->context->Location(d_ptr->ais_laser).Transformation();
+    pnt = d_ptr->ais_laser->getPos().Transformed(trsf);
+    dir = d_ptr->ais_laser->getDir().Transformed(trsf);
+    lenght = d_ptr->ais_laser->getClippedLen();
+}
+
 void CInteractiveContext::hideAllAdditionalObjects()
 {
     d_ptr->hideAllAdditionalObjects();

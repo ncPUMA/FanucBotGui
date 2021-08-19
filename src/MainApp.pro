@@ -38,6 +38,8 @@ SOURCES += \
     cinteractivecontext.cpp \
     cmainviewport.cpp \
     csimplesettingsstorage.cpp \
+    csnapshotdialog.cpp \
+    csnapshotviewport.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -74,6 +76,8 @@ HEADERS += \
     cinteractivecontext.h \
     cmainviewport.h \
     csimplesettingsstorage.h \
+    csnapshotdialog.h \
+    csnapshotviewport.h \
     gui_types.h \
     mainwindow.h \
     sguisettings.h
@@ -88,6 +92,8 @@ FORMS += \
     Dialogs/TaskPoints/cmovebottaskdialog.ui \
     Dialogs/TaskPoints/ctaskpointsorderdialog.ui \
     cguisettingswidget.ui \
+    csnapshotdialog.ui \
+    csnapshotviewport.ui \
     mainwindow.ui
 
 include(opencascade.pri)

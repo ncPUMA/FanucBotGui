@@ -208,6 +208,10 @@ protected:
         updateUiState();
     }
 
+    void makePartSnapshot(const char *fname) final {
+        viewport->makePartSnapshot(fname);
+    }
+
 private:
     CMainViewport *viewport;
     QTextEdit *jrnl;

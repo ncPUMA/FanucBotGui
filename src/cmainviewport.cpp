@@ -29,8 +29,6 @@
 #include <AIS_TextLabel.hxx>
 #include <TopoDS_Shape.hxx>
 
-#include <Image_AlienPixMap.hxx>
-
 #include "cinteractivecontext.h"
 #include "caspectwindow.h"
 #include "sguisettings.h"
@@ -38,6 +36,9 @@
 #include "Dialogs/CalibPoints/caddcalibpointdialog.h"
 #include "Dialogs/TaskPoints/cbottaskdialogfacade.h"
 #include "Dialogs/PathPoints/caddpathpointdialog.h"
+
+#include "csnapshotdialog.h"
+#include "csnapshotviewport.h"
 
 static constexpr double DEGREE_K = M_PI / 180.;
 
@@ -696,15 +697,31 @@ std::vector<GUI_TYPES::SPathPoint> CMainViewport::getPathPoints() const
 void CMainViewport::partPrntScr()
 {
     d_ptr->context->hideAllAdditionalObjects();
-    d_ptr->view->RedrawImmediate ();
-    Image_PixMap pix;
-    V3d_ImageDumpOptions params;
-    params.Width = width();
-    params.Height = height();
-    d_ptr->view->ToPixMap(pix, params);
-    Image_AlienPixMap bmpImg;
-    bmpImg.InitCopy(pix);
-    bmpImg.Save("partSnapshot.bmp");
+    CSnapshotDialog dialog(this);
+    dialog.setContext(*d_ptr->context);
+    dialog.setFileName("partSnapshot.bmp");
+    dialog.setScale(5.);
+//    QMetaObject::invokeMethod(&dialog, "makeSnapshot", Qt::QueuedConnection);
+//    QMetaObject::invokeMethod(&dialog, "reject", Qt::QueuedConnection);
+    dialog.exec();
+    switch(d_ptr->uiState) {
+        case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
+        case GUI_TYPES::ENUS_TASK_EDITING: d_ptr->context->showTaskObjects();  break;
+        default: d_ptr->context->resetCursorPosition(); break;
+    }
+    d_ptr->view->Redraw();
+}
+
+void CMainViewport::makePartSnapshot(const char *fname)
+{
+    d_ptr->context->hideAllAdditionalObjects();
+    CSnapshotDialog dialog(this);
+    dialog.setContext(*d_ptr->context);
+    dialog.setFileName(fname);
+    dialog.setScale(5.);
+    QMetaObject::invokeMethod(&dialog, "makeSnapshot", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(&dialog, "reject", Qt::QueuedConnection);
+    dialog.exec();
     switch(d_ptr->uiState) {
         case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
         case GUI_TYPES::ENUS_TASK_EDITING: d_ptr->context->showTaskObjects();  break;
