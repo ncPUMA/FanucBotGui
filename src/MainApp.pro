@@ -14,6 +14,7 @@ SOURCES += \
     BotSocket/cfanucbotsocket.cpp \
     BotSocket/fanuc_relay_socket.cpp \
     BotSocket/fanuc_state_socket.cpp \
+    log/loguru.cpp \
     Dialogs/CalibPoints/caddcalibpointdialog.cpp \
     Dialogs/CalibPoints/ccalibpointsorderdialog.cpp \
     Dialogs/PathPoints/caddpathpointdialog.cpp \
@@ -51,6 +52,7 @@ HEADERS += \
     BotSocket/fanuc_relay_socket.h \
     BotSocket/fanuc_state_socket.h \
     BotSocket/simple_message.h \
+    log/loguru.hpp \
     Dialogs/CalibPoints/caddcalibpointdialog.h \
     Dialogs/CalibPoints/ccalibpointsorderdialog.h \
     Dialogs/PathPoints/caddpathpointdialog.h \
@@ -102,6 +104,8 @@ include(opencascade.pri)
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+unix: LIBS += -ldl -lpthread
 
 DISTFILES += \
     ../.gitignore \

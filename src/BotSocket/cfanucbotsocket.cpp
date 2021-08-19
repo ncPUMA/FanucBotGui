@@ -1,11 +1,40 @@
 #include "cfanucbotsocket.h"
 
 #include <QTimer>
+#include <QSettings>
 
 #include "../PartReference/pointpairspartreferencer.h"
+#include "../log/loguru.hpp"
 
 CFanucBotSocket::CFanucBotSocket()
 {
+    VLOG_CALL;
+
+
+    QSettings settings("fanuc.ini", QSettings::IniFormat);
+
+    if(settings.contains("world2user") && settings.contains("user2world"))
+    {
+        QList<QVariant> w2u_v = settings.value("world2user").toList();
+        QList<QVariant> u2w_v = settings.value("user2world").toList();
+
+        if(w2u_v.size() >= 12 && u2w_v.size() >= 12)
+        {
+            QList<double> w2u_d, u2w_d;
+            for(QVariant v : w2u_v)
+                w2u_d.push_back(v.toDouble());
+            for(QVariant v : u2w_v)
+                u2w_d.push_back(v.toDouble());
+
+            world2user_.SetValues(w2u_d[0],w2u_d[1],w2u_d[2],w2u_d[3],
+                                  w2u_d[4],w2u_d[5],w2u_d[6],w2u_d[7],
+                                  w2u_d[8],w2u_d[9],w2u_d[10],w2u_d[11]);
+            user2world_.SetValues(u2w_d[0],u2w_d[1],u2w_d[2],u2w_d[3],
+                                  u2w_d[4],u2w_d[5],u2w_d[6],u2w_d[7],
+                                  u2w_d[8],u2w_d[9],u2w_d[10],u2w_d[11]);
+        }
+    }
+
     connect(&fanuc_state_, &FanucStateSocket::xyzwpr_position_received, this, &CFanucBotSocket::updatePosition);
 
     connect(&fanuc_state_, &FanucStateSocket::connection_state_changed, this, &CFanucBotSocket::updateConnectionState);
@@ -24,21 +53,48 @@ CFanucBotSocket::CFanucBotSocket()
     });
 }
 
-BotSocket::SBotPosition xyzwpr2botposition(const xyzwpr_data &pos)
+
+xyzwpr_data transform(const xyzwpr_data &p, const gp_Trsf &t)
 {
-    return BotSocket::SBotPosition(pos.xyzwpr[0], pos.xyzwpr[1], pos.xyzwpr[2], pos.xyzwpr[3], pos.xyzwpr[4], pos.xyzwpr[5]);
+    gp_Trsf pos_src;
+    gp_Quaternion r;
+
+    r.SetEulerAngles(gp_Extrinsic_XYZ, p.xyzwpr[3] * M_PI/180, p.xyzwpr[4] * M_PI/180, p.xyzwpr[5] * M_PI/180);
+    pos_src.SetRotation(r);
+    pos_src.SetTranslationPart(gp_Vec(p.xyzwpr[0], p.xyzwpr[1], p.xyzwpr[2]));
+
+    gp_Trsf pos_result = t * pos_src;
+
+    xyzwpr_data p_result = p;
+    p_result.xyzwpr[0] = pos_result.TranslationPart().X();
+    p_result.xyzwpr[1] = pos_result.TranslationPart().Y();
+    p_result.xyzwpr[2] = pos_result.TranslationPart().Z();
+
+    r = pos_result.GetRotation().Normalized();
+
+    r.GetEulerAngles(gp_Extrinsic_XYZ, p_result.xyzwpr[3], p_result.xyzwpr[4], p_result.xyzwpr[5]);
+
+    p_result.xyzwpr[3] *= 180/M_PI, p_result.xyzwpr[4] *= 180/M_PI, p_result.xyzwpr[5] *= 180/M_PI;
+
+    return p_result;
 }
 
-xyzwpr_data botposition2xyzwpr(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle)
+BotSocket::SBotPosition xyzwpr2botposition(const xyzwpr_data &pos, const gp_Trsf &world2user)
+{
+    xyzwpr_data p = transform(pos, world2user);
+    return BotSocket::SBotPosition(p.xyzwpr[0], p.xyzwpr[1], p.xyzwpr[2], p.xyzwpr[3], p.xyzwpr[4], p.xyzwpr[5]);
+}
+
+xyzwpr_data botposition2xyzwpr(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle, const gp_Trsf &user2world)
 {
     xyzwpr_data p;
     p.xyzwpr = {pos.x, pos.y, pos.z, angle.x, angle.y, angle.z};
-    return p;
+    return transform(p, user2world);
 }
 
 void CFanucBotSocket::updatePosition(const xyzwpr_data &pos)
 {
-    gripPositionChanged(xyzwpr2botposition(pos));
+    gripPositionChanged(xyzwpr2botposition(pos, world2user_));
 }
 
 void CFanucBotSocket::prepare(const std::vector <GUI_TYPES::STaskPoint> &)
@@ -55,6 +111,8 @@ void CFanucBotSocket::updateConnectionState()
 
 BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI_TYPES::SCalibPoint> &points)
 {
+    VLOG_CALL;
+
     BotSocket::EN_CalibResult result = BotSocket::ENCR_FALL;
     if(points.size() >= 3)
     {
@@ -98,10 +156,10 @@ BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI
     return result;
 }
 
-void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &pathPoints,
+void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &,
                                  const std::vector<GUI_TYPES::STaskPoint> &taskPoints)
 {
-    (void)pathPoints;
+    VLOG_CALL;
 
     /**
       Rotation extracting example
@@ -130,8 +188,9 @@ void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &pathP
     path.reserve(taskPoints.size());
     for(GUI_TYPES::STaskPoint p : taskPoints)
     {
+        LOG_F(INFO, "Task %d: %f %f %f %f %f %f", p.taskType, p.globalPos.x, p.globalPos.y, p.globalPos.z, p.angle.x, p.angle.y, p.angle.z);
         if(p.taskType == GUI_TYPES::ENBTT_MOVE)
-            path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle));
+            path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
     }
 
     fanuc_relay_.move_trajectory(path);
@@ -139,6 +198,7 @@ void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &pathP
 
 void CFanucBotSocket::stopTasks()
 {
+    VLOG_CALL;
     fanuc_relay_.stop();
 }
 

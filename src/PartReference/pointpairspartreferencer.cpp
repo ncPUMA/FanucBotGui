@@ -2,7 +2,8 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <QDebug>
+#include <sstream>
+#include "../log/loguru.hpp"
 
 PointPairsPartReferencer::PointPairsPartReferencer()
 {
@@ -21,6 +22,7 @@ bool PointPairsPartReferencer::isReferenced() const
 
 bool PointPairsPartReferencer::referencePart()
 {
+    VLOG_CALL;
     if(point_pairs_.size() < 3)
         return false;
 
@@ -42,6 +44,8 @@ bool PointPairsPartReferencer::referencePart()
         cloud_robot (0, i) = point_pairs_[i].t_robot.X();
         cloud_robot (1, i) = point_pairs_[i].t_robot.Y();
         cloud_robot (2, i) = point_pairs_[i].t_robot.Z();
+        LOG_F(INFO, "(%f,%f,%f) <-> (%f,%f,%f)", cloud_model (0, i), cloud_model (1, i), cloud_model (2, i),
+                                                 cloud_robot (0, i), cloud_robot (1, i), cloud_robot (2, i));
     }
 
     Eigen::Matrix4d model2robot = Eigen::umeyama (cloud_model, cloud_robot, with_scaling);
@@ -50,7 +54,7 @@ bool PointPairsPartReferencer::referencePart()
     Eigen::Matrix<Standard_Real, 3, Eigen::Dynamic> error_matrix = (model2robot * cloud_model.colwise().homogeneous() - cloud_robot.colwise().homogeneous()).topRows<3>();
     double error = error_matrix.norm();
 
-    qDebug() << "PointPairsPartReferencer: error is " << error;
+    LOG_F(INFO, "PointPairsPartReferencer: error is %f (max_error is %f)", error, max_error);
 
     if(error > max_error)
         return false;
@@ -61,6 +65,15 @@ bool PointPairsPartReferencer::referencePart()
     transform_robot_to_part_.SetValues(robot2model(0,0), robot2model(0,1), robot2model(0,2), robot2model(0,3),
                                        robot2model(1,0), robot2model(1,1), robot2model(1,2), robot2model(1,3),
                                        robot2model(2,0), robot2model(2,1), robot2model(2,2), robot2model(2,3));
+
+    std::stringstream ss;
+    ss << model2robot;
+    LOG_F(INFO, "model2robot: %s", ss.str().c_str());
+    ss.str("");
+    ss.clear();
+    ss << robot2model;
+    LOG_F(INFO, "robot2model: %s", ss.str().c_str());
+
     reference_ok_ = true;
     bool res = true;
     //check transform internal matrix 3x4 by Nan value

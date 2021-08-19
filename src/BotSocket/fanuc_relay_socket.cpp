@@ -3,12 +3,15 @@
 #include <math.h>
 #include <QTimer>
 #include <QSettings>
+#include "log/loguru.hpp"
 
 using namespace simple_message;
 
 FanucRelaySocket::FanucRelaySocket(QObject *parent):
     QObject(parent)
 {
+    VLOG_CALL;
+
     connect(&socket_, &QAbstractSocket::connected, this, &FanucRelaySocket::on_connected);
     connect(&socket_, &QAbstractSocket::disconnected, this, &FanucRelaySocket::on_disconnected);
     connect(&socket_, &QIODevice::readyRead, this, &FanucRelaySocket::on_readyread);
@@ -29,20 +32,21 @@ bool FanucRelaySocket::connected() const
 
 void FanucRelaySocket::on_connected()
 {
-    qDebug("Connected");
+    VLOG_CALL;
     emit connection_state_changed(true);
 }
 
 void FanucRelaySocket::on_disconnected()
 {
-    qDebug("Disconnected, restarting connection");
+    VLOG_CALL;
     QTimer::singleShot(1000, this, &FanucRelaySocket::start_connection);
     emit connection_state_changed(false);
 }
 
 void FanucRelaySocket::on_error(QAbstractSocket::SocketError error)
 {
-    qDebug() << "Error " << error << " (" << socket_.errorString() << "";
+    VLOG_CALL;
+    LOG_F(ERROR, "%d (%s)", error, socket_.errorString().toLocal8Bit().data());
     socket_.disconnectFromHost();
     QTimer::singleShot(1000, this, &FanucRelaySocket::start_connection);
     emit connection_state_changed(false);
@@ -88,6 +92,8 @@ static bool get_prefix_header(QByteArray &packet, struct prefix_t **prefix, stru
 
 void FanucRelaySocket::on_readyread()
 {
+    VLOG_CALL;
+
     struct prefix_t *prefix = nullptr;
     struct header_t *header = nullptr;
     while(socket_.bytesAvailable() != 0)
@@ -102,7 +108,7 @@ void FanucRelaySocket::on_readyread()
 
         if(header->comm_type == COMM_TYPE_SERVICE_REQUEST)
         {
-            qDebug() << "Service request received, no support";
+            LOG_F(ERROR, "Service request received, no support");
             header->comm_type = COMM_TYPE_SERVICE_REPLY;
             header->reply_code = REPLY_CODE_FAILURE;
             if(bigendian_)
@@ -113,13 +119,13 @@ void FanucRelaySocket::on_readyread()
 
         if(header->comm_type == COMM_TYPE_TOPIC)
         {
-            qDebug() << "Topic received, ignoring";
+            LOG_F(WARNING, "Topic received, ignoring");
             continue;
         }
 
         if(header->comm_type != COMM_TYPE_SERVICE_REPLY)
         {
-            qDebug() << "Unknown comm_type "<< header->comm_type;
+            LOG_F(ERROR, "Unknown comm_type %d", header->comm_type);
             continue;
         }
 
@@ -128,7 +134,7 @@ void FanucRelaySocket::on_readyread()
         {
             case MSG_TYPE_JOINT_POSITION: {
                 if(prefix->length+sizeof(prefix_t) != sizeof(joint_position_t)) {
-                    qDebug() << "Received joint position, but length is not valid";
+                    LOG_F(ERROR, "Received joint position, but length is not valid");
                     continue;
                 }
                 struct joint_position_t *msg = reinterpret_cast<struct joint_position_t *>(packet.data());
@@ -138,7 +144,7 @@ void FanucRelaySocket::on_readyread()
             };
             case MSG_TYPE_JOINT_TRAJ_PT: {
                 if(prefix->length+sizeof(prefix_t) != sizeof(joint_traj_pt_t)) {
-                    qDebug() << "Received joint position, but length is not valid";
+                    LOG_F(ERROR, "Received joint traj pt, but length is not valid");
                     continue;
                 }
                 struct joint_traj_pt_t *msg = reinterpret_cast<struct joint_traj_pt_t *>(packet.data());
@@ -148,7 +154,7 @@ void FanucRelaySocket::on_readyread()
             };
             case MSG_TYPE_XYZWPR_TRAJ_PT: {
                 if(prefix->length+sizeof(prefix_t) != sizeof(xyzwpr_traj_pt_t)) {
-                    qDebug() << "Received joint position, but length is not valid";
+                    LOG_F(ERROR, "Received xyzwpr_traj_pt_t, but length is not valid");
                     continue;
                 }
                 struct xyzwpr_traj_pt_t *msg = reinterpret_cast<struct xyzwpr_traj_pt_t *>(packet.data());
@@ -158,7 +164,7 @@ void FanucRelaySocket::on_readyread()
             };
             default:
             {
-                qDebug() << "Received l=" << prefix->length << " msg=" << header->msg_type << " comm=" << header->comm_type << " reply=" << header->reply_code;
+                LOG_F(INFO, "Received l=%d msg=%d comm=%d reply=%d", prefix->length, header->msg_type, header->comm_type, header->reply_code);
                 continue;
             }
         };
@@ -169,22 +175,22 @@ void FanucRelaySocket::on_readyread()
             {
                 if(sequence_id == STOP_TRAJECTORY && sequence_id == path_idx_)
                 {
-                    qDebug() << "Stop trajectory completed";
+                    LOG_F(INFO, "Stop trajectory completed");
                 }
                 else
                 {
-                    qDebug() << "Unexpected sequence_id " << sequence_id;
+                    LOG_F(WARNING, "Unexpected sequence_id %d", sequence_id);
                 }
                 continue;
             }
 
             if(sequence_id != path_idx_)
             {
-                qDebug() << "Unexpected sequence_id " << sequence_id << " expected " << path_idx_;
+                LOG_F(WARNING, "Unexpected sequence_id %d, expected %d", sequence_id, path_idx_);
                 continue;
             }
 
-            qDebug() << "Trajectory point enqueued "<< path_idx_;
+            LOG_F(INFO, "Trajectory point enqueued %d", path_idx_);
 
             size_t path_idx_u = path_idx_;
             if(path_idx_u < path_joint_.size())
@@ -192,6 +198,7 @@ void FanucRelaySocket::on_readyread()
                 emit trajectory_joint_point_enqueued(path_joint_[path_idx_], path_idx_);
 
                 path_idx_++;
+                path_idx_u++;
                 if(path_idx_u < path_joint_.size())
                 {
                     move_point(path_joint_[path_idx_], path_idx_);
@@ -206,6 +213,7 @@ void FanucRelaySocket::on_readyread()
                 emit trajectory_xyzwpr_point_enqueued(path_xyzwpr_[path_idx_], path_idx_);
 
                 path_idx_++;
+                path_idx_u++;
                 if(path_idx_u < path_xyzwpr_.size())
                 {
                     move_point(path_xyzwpr_[path_idx_], path_idx_);
@@ -217,7 +225,7 @@ void FanucRelaySocket::on_readyread()
             }
             else
             {
-                qDebug() << "Failure: unknown path_idx";
+                LOG_F(ERROR, "Failure: unknown path_idx %d", path_idx_);
             }
         }
         else if(header->reply_code == REPLY_CODE_FAILURE)
@@ -226,16 +234,16 @@ void FanucRelaySocket::on_readyread()
             {
                 if(sequence_id == STOP_TRAJECTORY)
                 {
-                    qDebug() << "Stop trajectory failed";
+                    LOG_F(ERROR, "Stop trajectory failed");
                 }
                 else
                 {
-                    qDebug() << "Unexpected sequence_id " << sequence_id;
+                    LOG_F(ERROR, "Unexpected sequence_id %d", sequence_id);
                 }
                 continue;
             }
 
-            qDebug() << "Trajectory point enqueue fail, stopping "<< path_idx_;
+            LOG_F(ERROR, "Trajectory point enqueue fail, stopping %d", path_idx_);
 
             size_t path_idx_u = path_idx_;
             if(path_idx_u < path_joint_.size())
@@ -248,14 +256,14 @@ void FanucRelaySocket::on_readyread()
             }
             else
             {
-                qDebug() << "Failure: unknown path_idx";
+                LOG_F(ERROR, "Failure: unknown path_idx %d", path_idx_);
             }
 
             stop();
         }
         else
         {
-            qDebug() << "Unexpected reply_code "<< header->reply_code;
+            LOG_F(WARNING, "Unexpected reply_code %d", header->reply_code);
             continue;
         }
     }
@@ -263,6 +271,7 @@ void FanucRelaySocket::on_readyread()
 
 void FanucRelaySocket::start_connection()
 {
+    VLOG_CALL;
     if(socket_.state() != QAbstractSocket::ConnectingState &&
        socket_.state() != QAbstractSocket::ConnectedState)
     {
@@ -273,7 +282,8 @@ void FanucRelaySocket::start_connection()
         int port = settings.value("server_relay_port", 11000).toInt();
         prefix1 = settings.value("prefix1", prefix1).toInt();
         prefix2 = settings.value("prefix2", prefix2).toInt();
-        qDebug() << "Connecting to" << host << ":" << port;
+        LOG_F(INFO, "Connecting to %s:%d", host.toLocal8Bit().data(), port);
+        LOG_F(INFO, "Bigendian: %d, prefix1: %d, prefix2: %d", bigendian_, prefix1, prefix2);
 
         socket_.connectToHost(host, port);
     }
@@ -320,6 +330,7 @@ bool FanucRelaySocket::send_cmd(struct simple_message::xyzwpr_traj_pt_t &cmd)
 
 void FanucRelaySocket::stop()
 {
+    VLOG_CALL;
     path_xyzwpr_.clear();
     path_joint_.clear();
     struct joint_traj_pt_t cmd;
@@ -335,6 +346,7 @@ void FanucRelaySocket::move_point(const joint_data &pos)
 
 void FanucRelaySocket::move_trajectory(const std::vector<joint_data> &path)
 {
+    VLOG_CALL;
     path_xyzwpr_.clear();
     path_joint_ = path;
     move_point(path_joint_[0], 0);
@@ -342,16 +354,13 @@ void FanucRelaySocket::move_trajectory(const std::vector<joint_data> &path)
 
 void FanucRelaySocket::move_point(const joint_data &pos, int sequence_number)
 {
+    VLOG_CALL;
     struct joint_traj_pt_t cmd;
     cmd.sequence = sequence_number;
     for(int i=0; i<6; i++)
         cmd.joint_data[i] = pos[i] * M_PI/180;
-    qDebug() << "JOINT TRAJ PT: i=" << cmd.sequence << " J1" << pos[0]
-                                                   << " J2" << pos[1]
-                                                   << " J3" << pos[2]
-                                                   << " J4" << pos[3]
-                                                   << " J5" << pos[4]
-                                                   << " J6" << pos[5];
+    LOG_F(INFO, "JOINT TRAJ PT: i=%d J1=%f J2=%f J3=%f J4=%f J5=%f J6=%f", cmd.sequence, pos[0], pos[1], pos[2],
+                                                                                         pos[3], pos[4], pos[5]);
     if(!send_cmd(cmd))
         emit trajectory_joint_point_enqueue_fail(pos, sequence_number);
 }
@@ -364,6 +373,7 @@ void FanucRelaySocket::move_point(const xyzwpr_data &pos)
 
 void FanucRelaySocket::move_trajectory(const std::vector<xyzwpr_data> &path)
 {
+    VLOG_CALL;
     path_joint_.clear();
     path_xyzwpr_ = path;
     move_point(path_xyzwpr_[0], 0);
@@ -383,12 +393,8 @@ void FanucRelaySocket::move_point(const xyzwpr_data &pos, int sequence_number)
         cmd.xyz_data.xyzwpr[i] = pos.xyzwpr[i];
     cmd.xyz_data.prefix1 = prefix1;
     cmd.xyz_data.prefix2 = prefix2;
-    qDebug() << "JOINT TRAJ PT: i=" << cmd.sequence << " X" << pos.xyzwpr[0]
-                                                   << " Y" << pos.xyzwpr[1]
-                                                   << " Z" << pos.xyzwpr[2]
-                                                   << " W" << pos.xyzwpr[3]
-                                                   << " P" << pos.xyzwpr[4]
-                                                   << " R" << pos.xyzwpr[5];
+    LOG_F(INFO, "XYZWPR TRAJ PT: i=%d X=%f Y=%f Z=%f W=%f P=%f R=%f", cmd.sequence, pos.xyzwpr[0], pos.xyzwpr[1], pos.xyzwpr[2],
+                                                                                    pos.xyzwpr[3], pos.xyzwpr[4], pos.xyzwpr[5]);
     if(!send_cmd(cmd))
         emit trajectory_xyzwpr_point_enqueue_fail(pos, sequence_number);
 }
