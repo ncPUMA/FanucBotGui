@@ -65,6 +65,15 @@ bool PointPairsPartReferencer::referencePart()
     transform_robot_to_part_.SetValues(robot2model(0,0), robot2model(0,1), robot2model(0,2), robot2model(0,3),
                                        robot2model(1,0), robot2model(1,1), robot2model(1,2), robot2model(1,3),
                                        robot2model(2,0), robot2model(2,1), robot2model(2,2), robot2model(2,3));
+
+    std::stringstream ss;
+    ss << model2robot;
+    LOG_F(INFO, "model2robot: %s", ss.str().c_str());
+    ss.str("");
+    ss.clear();
+    ss << robot2model;
+    LOG_F(INFO, "robot2model: %s", ss.str().c_str());
+
     reference_ok_ = true;
 
     return true;
