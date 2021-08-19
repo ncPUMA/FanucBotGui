@@ -1,7 +1,6 @@
 #include "caspectwindow.h"
 
 #include <QWidget>
-#include <QDebug>
 
 static const int RESIZE_PRECISION = 2;
 
@@ -67,7 +66,14 @@ class CAspectWindowPrivate
         return result;
     }
 
-    QWidget * const wdgt;
+    QRect wdgtGeometry() const {
+        QRect result;
+        if (wdgt)
+            result = wdgt->geometry();
+        return result;
+    }
+
+    QWidget *wdgt;
     QRect oldGeometry;
 };
 
@@ -76,12 +82,12 @@ class CAspectWindowPrivate
 CAspectWindow::CAspectWindow(QWidget &view) :
     Aspect_Window(),
     d_ptr(new CAspectWindowPrivate(view))
-{qDebug() << "create " << this;
+{
     SetBackground(Quantity_NOC_WHITE);
 }
 
 CAspectWindow::~CAspectWindow()
-{qDebug() << "del " << this;
+{
     delete d_ptr;
 }
 
@@ -130,7 +136,7 @@ void CAspectWindow::Unmap() const
 void CAspectWindow::Position(Standard_Integer &theX1, Standard_Integer &theY1,
                              Standard_Integer &theX2, Standard_Integer &theY2) const
 {
-    const QRect geometry = d_ptr->wdgt->geometry();
+    const QRect geometry = d_ptr->wdgtGeometry();
     theX1 = geometry.left();
     theX2 = geometry.right();
     theY1 = geometry.top();
@@ -139,7 +145,7 @@ void CAspectWindow::Position(Standard_Integer &theX1, Standard_Integer &theY1,
 
 Standard_Real CAspectWindow::Ratio() const
 {
-    const QRectF geometry = d_ptr->wdgt->geometry();
+    const QRectF geometry = d_ptr->wdgtGeometry();
     return static_cast <Standard_Real>
             ((geometry.right() - geometry.left()) /
              (geometry.bottom() - geometry.top()));
@@ -147,7 +153,7 @@ Standard_Real CAspectWindow::Ratio() const
 
 void CAspectWindow::Size(Standard_Integer &theWidth, Standard_Integer &theHeight) const
 {
-    const QRect geometry = d_ptr->wdgt->geometry();
+    const QRect geometry = d_ptr->wdgtGeometry();
     theWidth  = geometry.width();
     theHeight = geometry.height();
 }

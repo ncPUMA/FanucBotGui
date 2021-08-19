@@ -53,6 +53,7 @@ CSnapshotViewport::CSnapshotViewport(QWidget *parent) :
 
 CSnapshotViewport::~CSnapshotViewport()
 {
+    d_ptr->view->Remove();
     delete d_ptr;
     delete ui;
 }
