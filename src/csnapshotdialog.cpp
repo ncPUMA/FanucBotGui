@@ -20,6 +20,7 @@ CSnapshotDialog::CSnapshotDialog(QWidget * const parent) :
     ui->setupUi(this);
     ui->viewport->setScaleWidget(*ui->dsbScale);
     connect(ui->pbSnapshot, &QPushButton::clicked, this, &CSnapshotDialog::slSnapshot);
+    connect(ui->pbClose   , &QPushButton::clicked, this, &CSnapshotDialog::reject);
 }
 
 CSnapshotDialog::~CSnapshotDialog()

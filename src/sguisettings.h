@@ -11,6 +11,7 @@ struct SGuiSettings
     SGuiSettings() :
         //common
         msaa(0),
+        snapshotScale(5.),
         //The Part
         partTrX(0.),
         partTrY(0.),
@@ -22,7 +23,7 @@ struct SGuiSettings
         partRotationY(0.),
         partRotationZ(0.),
         partScale(1.),
-        //The Part
+        //The Desk
         deskTrX(0.),
         deskTrY(0.),
         deskTrZ(0.),
@@ -67,7 +68,8 @@ struct SGuiSettings
     { }
 
     //common
-    GUI_TYPES::TMSAA msaa;
+    TMSAA msaa;
+    TScale snapshotScale;
 
     //The Part
     TDistance partTrX;

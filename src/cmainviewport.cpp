@@ -48,6 +48,8 @@ static const Graphic3d_ZLayerId Z_LAYER_ID_WITHOUT_DEPTH_TEST_DEFAULT = 100;
 static const GUI_TYPES::TDistance DISTANCE_PRECITION = 0.000005;
 static const GUI_TYPES::TDegree   ROTATION_PRECITION = 0.000005;
 
+static const GUI_TYPES::TScale SNAP_SCALE = 5.;
+
 static class CEmptySubscriber : public CAbstractMainViewportSubscriber
 {
 public:
@@ -218,6 +220,8 @@ class CMainViewportPrivate : public AIS_ViewController
     void setGuiSettings(const GUI_TYPES::SGuiSettings &settings) {
         guiSettings = settings;
         view->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
+        if (guiSettings.snapshotScale == 0.)
+            guiSettings.snapshotScale = SNAP_SCALE;
         context->setPartMdlTransform(calcPartTrsf());
         context->setDeskMdlTransform(calcDeskTrsf());
         const gp_Pnt start = gp_Pnt(guiSettings.lheadLsrTrX,
@@ -485,6 +489,16 @@ GUI_TYPES::TMSAA CMainViewport::getMSAA() const
     return static_cast <GUI_TYPES::TMSAA> (d_ptr->view->RenderingParams().NbMsaaSamples);
 }
 
+void CMainViewport::setSnapshotScale(const GUI_TYPES::TScale scale)
+{
+    d_ptr->guiSettings.snapshotScale = scale;
+}
+
+GUI_TYPES::TScale CMainViewport::getSnapshotScale() const
+{
+    return d_ptr->guiSettings.snapshotScale;
+}
+
 void CMainViewport::setStatsVisible(const bool value)
 {
     d_ptr->view->ChangeRenderingParams().ToShowStats = value;
@@ -694,15 +708,13 @@ std::vector<GUI_TYPES::SPathPoint> CMainViewport::getPathPoints() const
     return res;
 }
 
-void CMainViewport::partPrntScr()
+GUI_TYPES::TScale CMainViewport::partPrntScr()
 {
     d_ptr->context->hideAllAdditionalObjects();
     CSnapshotDialog dialog(this);
     dialog.setContext(*d_ptr->context);
     dialog.setFileName("partSnapshot.bmp");
-    dialog.setScale(5.);
-//    QMetaObject::invokeMethod(&dialog, "makeSnapshot", Qt::QueuedConnection);
-//    QMetaObject::invokeMethod(&dialog, "reject", Qt::QueuedConnection);
+    dialog.setScale(d_ptr->guiSettings.snapshotScale);
     dialog.exec();
     switch(d_ptr->uiState) {
         case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
@@ -710,6 +722,7 @@ void CMainViewport::partPrntScr()
         default: d_ptr->context->resetCursorPosition(); break;
     }
     d_ptr->view->Redraw();
+    return dialog.getScale();
 }
 
 void CMainViewport::makePartSnapshot(const char *fname)
@@ -718,7 +731,7 @@ void CMainViewport::makePartSnapshot(const char *fname)
     CSnapshotDialog dialog(this);
     dialog.setContext(*d_ptr->context);
     dialog.setFileName(fname);
-    dialog.setScale(5.);
+    dialog.setScale(d_ptr->guiSettings.snapshotScale);
     QMetaObject::invokeMethod(&dialog, "makeSnapshot", Qt::QueuedConnection);
     QMetaObject::invokeMethod(&dialog, "reject", Qt::QueuedConnection);
     dialog.exec();

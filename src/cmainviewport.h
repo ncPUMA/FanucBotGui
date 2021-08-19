@@ -56,6 +56,8 @@ public:
 
     void setMSAA(const GUI_TYPES::TMSAA msaa);
     GUI_TYPES::TMSAA getMSAA() const;
+    void setSnapshotScale(const GUI_TYPES::TScale scale);
+    GUI_TYPES::TScale getSnapshotScale() const;
     void setStatsVisible(const bool value);
     void setShading(const bool enabled);
     void fitInView();
@@ -97,7 +99,7 @@ public:
     void setPathPoints(const std::vector <GUI_TYPES::SPathPoint> &points);
     std::vector <GUI_TYPES::SPathPoint> getPathPoints() const;
 
-    void partPrntScr();
+    GUI_TYPES::TScale partPrntScr();
     void makePartSnapshot(const char *fname);
 
 protected:

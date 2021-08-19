@@ -3,10 +3,24 @@
 
 #include "sguisettings.h"
 
+class CGuiSettingsWidgetPrivate
+{
+    friend class CGuiSettingsWidget;
+
+    GUI_TYPES::TMSAA msaa;
+    GUI_TYPES::TScale snapshotScale;
+};
+
+
+
 CGuiSettingsWidget::CGuiSettingsWidget(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::CGuiSettingsWidget)
+    ui(new Ui::CGuiSettingsWidget),
+    d_ptr(new CGuiSettingsWidgetPrivate())
 {
+    d_ptr->msaa = 0;
+    d_ptr->snapshotScale = 0.;
+
     ui->setupUi(this);
 
     ui->gbDesk->hide();
@@ -23,10 +37,15 @@ CGuiSettingsWidget::CGuiSettingsWidget(QWidget *parent) :
 CGuiSettingsWidget::~CGuiSettingsWidget()
 {
     delete ui;
+    delete d_ptr;
 }
 
 void CGuiSettingsWidget::initFromGuiSettings(const GUI_TYPES::SGuiSettings &settings)
 {
+    //Common
+    d_ptr->msaa          = settings.msaa;
+    d_ptr->snapshotScale = settings.snapshotScale;
+
     //The Part
     ui->dsbPartTrX->setValue    (settings.partTrX      );
     ui->dsbPartTrY->setValue    (settings.partTrY      );
@@ -85,6 +104,10 @@ void CGuiSettingsWidget::initFromGuiSettings(const GUI_TYPES::SGuiSettings &sett
 GUI_TYPES::SGuiSettings CGuiSettingsWidget::getChangedSettings() const
 {
     GUI_TYPES::SGuiSettings settings;
+    //Common
+    settings.msaa          = d_ptr->msaa;
+    settings.snapshotScale = d_ptr->snapshotScale;
+
     //The Part
     settings.partTrX       = ui->dsbPartTrX->value();
     settings.partTrY       = ui->dsbPartTrY->value();

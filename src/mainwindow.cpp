@@ -513,20 +513,29 @@ void MainWindow::slCallibCalc()
 
 void MainWindow::slPartPrntScr()
 {
-    ui->mainView->partPrntScr();
+    const GUI_TYPES::TScale newScale = ui->mainView->partPrntScr();
+    if (ui->mainView->getSnapshotScale() != newScale &&
+        QMessageBox::question(this,
+                              tr("Снимок детали"),
+                              tr("Сохранить новые настройки снимка детали?")) == QMessageBox::Yes)
+    {
+        GUI_TYPES::SGuiSettings settings = ui->mainView->getGuiSettings();
+        settings.snapshotScale = newScale;
+        ui->mainView->setSnapshotScale(newScale);
+        d_ptr->settingsStorage->saveGuiSettings(settings);
+    }
 }
 
 void MainWindow::slCallibApply()
 {
-    GUI_TYPES::SGuiSettings settings = ui->wSettings->getChangedSettings();
-    settings.msaa = ui->mainView->getMSAA();
+    const GUI_TYPES::SGuiSettings settings = ui->wSettings->getChangedSettings();
     ui->mainView->setGuiSettings(settings);
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_DESK   );
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_LSRHEAD);
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART   );
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   );
 
-    d_ptr->settingsStorage->saveGuiSettings(ui->mainView->getGuiSettings());
+    d_ptr->settingsStorage->saveGuiSettings(settings);
 }
 
 void MainWindow::slStart()

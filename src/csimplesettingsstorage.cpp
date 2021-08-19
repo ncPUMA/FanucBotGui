@@ -65,12 +65,16 @@ enum EN_GuiKeys
     ENGK_GRIP_SCALE,
     ENGK_GRIP_VIS,
 
+    //Common
+    ENGK_SNAP_SCALE,
+
     ENGK_LAST
 };
 typedef int TGuiKey;
 
 static const std::map <TGuiKey, QString> guiKeyMap = {
     { ENGK_MSAA          , "msaa"           },
+    { ENGK_SNAP_SCALE    , "snap_scale"     },
     //The Part
     { ENGK_PART_TR_X     , "part/tr_x"     },
     { ENGK_PART_TR_Y     , "part/tr_y"     },
@@ -147,7 +151,8 @@ public:
         SGuiSettings res;
         settingsFile->beginGroup(GUI_PREFIX);
         //Common
-        res.msaa          = readGuiValue <TMSAA> (ENGK_MSAA);
+        res.msaa          = readGuiValue <TMSAA>  (ENGK_MSAA);
+        res.snapshotScale = readGuiValue <TScale> (ENGK_SNAP_SCALE);
         settingsFile->endGroup();
 
         //The Part
@@ -209,6 +214,7 @@ public:
     void saveGuiSettings(const GUI_TYPES::SGuiSettings &settings) {
         settingsFile->beginGroup(GUI_PREFIX);
         writeGuiValue(ENGK_MSAA         , settings.msaa);
+        writeGuiValue(ENGK_SNAP_SCALE   , settings.snapshotScale);
         settingsFile->endGroup();
         //The Part
         writeGuiValue(ENGK_PART_TR_X    , settings.partTrX);

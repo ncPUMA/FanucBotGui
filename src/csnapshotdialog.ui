@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Снимок детали</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
@@ -76,6 +76,13 @@
        <widget class="QPushButton" name="pbSnapshot">
         <property name="text">
          <string>Снимок</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pbClose">
+        <property name="text">
+         <string>Закрыть</string>
         </property>
        </widget>
       </item>

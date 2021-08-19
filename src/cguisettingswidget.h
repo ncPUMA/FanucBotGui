@@ -13,6 +13,8 @@ namespace GUI_TYPES {
 class SGuiSettings;
 }
 
+class CGuiSettingsWidgetPrivate;
+
 class CGuiSettingsWidget : public QWidget
 {
     Q_OBJECT
@@ -33,6 +35,7 @@ private slots:
 
 private:
     Ui::CGuiSettingsWidget *ui;
+    CGuiSettingsWidgetPrivate * const d_ptr;
 };
 
 #endif // CGUISETTINGSWIDGET_H

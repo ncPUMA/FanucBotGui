@@ -1,6 +1,7 @@
 #include "caspectwindow.h"
 
 #include <QWidget>
+#include <QDebug>
 
 static const int RESIZE_PRECISION = 2;
 
@@ -75,12 +76,12 @@ class CAspectWindowPrivate
 CAspectWindow::CAspectWindow(QWidget &view) :
     Aspect_Window(),
     d_ptr(new CAspectWindowPrivate(view))
-{
+{qDebug() << "create " << this;
     SetBackground(Quantity_NOC_WHITE);
 }
 
 CAspectWindow::~CAspectWindow()
-{
+{qDebug() << "del " << this;
     delete d_ptr;
 }
 

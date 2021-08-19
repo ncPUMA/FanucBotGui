@@ -31,9 +31,9 @@ protected:
     void paintEvent(QPaintEvent *) final;
     void resizeEvent(QResizeEvent*) final;
 
-    void mousePressEvent(QMouseEvent *event) final;
-    void mouseReleaseEvent(QMouseEvent *event) final;
-    void mouseMoveEvent(QMouseEvent *event) final;
+//    void mousePressEvent(QMouseEvent *event) final;
+//    void mouseReleaseEvent(QMouseEvent *event) final;
+//    void mouseMoveEvent(QMouseEvent *event) final;
     void wheelEvent(QWheelEvent *event) final;
 
 private slots:
