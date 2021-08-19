@@ -87,13 +87,15 @@ struct STaskPoint
     STaskPoint() :
         taskType(ENBTT_MOVE),
         normal(SVertex(0., 0., 1.)),
-        zSimmetry(false) { }
+        zSimmetry(false),
+        bNeedCalib(false) { }
 
     TBotTaskType taskType;
     SVertex globalPos;
     SRotationAngle angle;
     SVertex normal;
     bool zSimmetry;
+    bool bNeedCalib;
 };
 
 struct SPathPoint

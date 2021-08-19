@@ -12,6 +12,7 @@ CMoveBotTaskDialog::CMoveBotTaskDialog(QWidget *parent, const GUI_TYPES::STaskPo
     ui->dsbGlobalX->setValue(initData.globalPos.x);
     ui->dsbGlobalY->setValue(initData.globalPos.y);
     ui->dsbGlobalZ->setValue(initData.globalPos.z);
+    ui->checkCalib->setChecked(initData.bNeedCalib);
     ui->dsbApha->setValue(initData.angle.x);
     ui->dsbBeta->setValue(initData.angle.y);
     ui->dsbGamma->setValue(initData.angle.z);
@@ -36,6 +37,7 @@ GUI_TYPES::STaskPoint CMoveBotTaskDialog::getTaskPoint() const
     res.globalPos.x = ui->dsbGlobalX->value();
     res.globalPos.y = ui->dsbGlobalY->value();
     res.globalPos.z = ui->dsbGlobalZ->value();
+    res.bNeedCalib = ui->checkCalib->isChecked();
     res.angle.x = ui->dsbApha->value();
     res.angle.y = ui->dsbBeta->value();
     res.angle.z = ui->dsbGamma->value();

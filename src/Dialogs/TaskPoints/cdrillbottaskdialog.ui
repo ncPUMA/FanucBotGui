@@ -73,19 +73,10 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="dsbGlobalX">
-          <property name="decimals">
-           <number>6</number>
-          </property>
-          <property name="minimum">
-           <double>-10000.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>10000.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.100000000000000</double>
+        <item row="3" column="1">
+         <widget class="QCheckBox" name="checkCalib">
+          <property name="text">
+           <string>Доп. калибровка</string>
           </property>
          </widget>
         </item>
@@ -121,18 +112,21 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
+        <item row="0" column="1">
+         <widget class="QDoubleSpinBox" name="dsbGlobalX">
+          <property name="decimals">
+           <number>6</number>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
+          <property name="minimum">
+           <double>-10000.000000000000000</double>
           </property>
-         </spacer>
+          <property name="maximum">
+           <double>10000.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

@@ -427,15 +427,7 @@ private:
 
     GUI_TYPES::STaskPoint getTaskPoint(const size_t index) const {
         assert(index < taskPoints.size());
-        const STaskPoint &stpnt = taskPoints[index];
-        GUI_TYPES::STaskPoint res;
-        res.taskType = stpnt.taskType;
-        const gp_Pnt global = stpnt.pnt->Component()->Pnt();
-        res.globalPos.x = global.X();
-        res.globalPos.y = global.Y();
-        res.globalPos.z = global.Z();
-        res.angle = stpnt.angle;
-        return res;
+        return taskPoints[index].task;
     }
 
     std::string taskPointName(const size_t index, const GUI_TYPES::TBotTaskType taskType) const {
@@ -452,13 +444,12 @@ private:
 
     void appendTaskPoint(const GUI_TYPES::STaskPoint &taskPoint) {
         STaskPoint stpnt;
-        stpnt.taskType = taskPoint.taskType;
-        stpnt.angle = taskPoint.angle;
+        stpnt.task = taskPoint;
         const gp_Pnt globalPos(taskPoint.globalPos.x, taskPoint.globalPos.y, taskPoint.globalPos.z);
         stpnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
         stpnt.pntLbl = new AIS_TextLabel();
         stpnt.pntLbl->SetPosition(globalPos);
-        const std::string txt = taskPointName(taskPoints.size(), stpnt.taskType);
+        const std::string txt = taskPointName(taskPoints.size(), taskPoint.taskType);
         stpnt.pntLbl->SetText(TCollection_ExtendedString(txt.c_str(), Standard_True));
         gp_Dir zDir(taskPoint.normal.x, taskPoint.normal.y, taskPoint.normal.z);
         stpnt.tPnt = new CTaskPnt(globalPos, zDir, 5.);
@@ -467,9 +458,9 @@ private:
         gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
         gp_Quaternion delta;
         delta.SetEulerAngles(gp_Extrinsic_XYZ,
-                             stpnt.angle.x * DEGREE_K,
-                             stpnt.angle.y * DEGREE_K,
-                             stpnt.angle.z * DEGREE_K);
+                             taskPoint.angle.x * DEGREE_K,
+                             taskPoint.angle.y * DEGREE_K,
+                             taskPoint.angle.z * DEGREE_K);
         gp_Trsf rotTrsf;
         rotTrsf.SetRotation(normal * delta);
         context->SetLocation(stpnt.tPnt, trTrsf * rotTrsf);
@@ -485,7 +476,8 @@ private:
     void changeTaskPoint(const size_t index, const GUI_TYPES::STaskPoint &taskPoint) {
         assert(index < taskPoints.size());
         STaskPoint &stpnt = taskPoints[index];
-        stpnt.angle = taskPoint.angle;
+        assert(stpnt.task.taskType == taskPoint.taskType);
+        stpnt.task = taskPoint;
         const gp_Pnt globalPos(taskPoint.globalPos.x, taskPoint.globalPos.y, taskPoint.globalPos.z);
         stpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
         stpnt.pntLbl->SetPosition(globalPos);
@@ -497,9 +489,9 @@ private:
         gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
         gp_Quaternion delta;
         delta.SetEulerAngles(gp_Extrinsic_XYZ,
-                             stpnt.angle.x * DEGREE_K,
-                             stpnt.angle.y * DEGREE_K,
-                             stpnt.angle.z * DEGREE_K);
+                             taskPoint.angle.x * DEGREE_K,
+                             taskPoint.angle.y * DEGREE_K,
+                             taskPoint.angle.z * DEGREE_K);
         gp_Trsf rotTrsf;
         rotTrsf.SetRotation(normal * delta);
         context->SetLocation(stpnt.tPnt, trTrsf * rotTrsf);
@@ -517,7 +509,7 @@ private:
         taskPoints.erase(taskPoints.cbegin() + index);
         for(size_t i = 0; i < taskPoints.size(); ++i)
         {
-            const std::string txt = taskPointName(i, taskPoints[i].taskType);
+            const std::string txt = taskPointName(i, taskPoints[i].task.taskType);
             taskPoints[i].pntLbl->SetText(TCollection_ExtendedString(txt.c_str(), Standard_True));
             context->RecomputePrsOnly(taskPoints[i].pntLbl, Standard_False);
         }
@@ -642,8 +634,7 @@ private:
 
     struct STaskPoint
     {
-        GUI_TYPES::TBotTaskType taskType;
-        GUI_TYPES::SRotationAngle angle;
+        GUI_TYPES::STaskPoint task;
         Handle(AIS_Point) pnt;
         Handle(AIS_TextLabel) pntLbl;
         Handle(CTaskPnt) tPnt;
