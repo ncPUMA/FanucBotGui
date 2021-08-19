@@ -92,8 +92,11 @@ class CLaserVec : public AIS_InteractiveObject
     void clipLenght(Handle(AIS_InteractiveContext) context,
                     const NCollection_Vector<Handle(AIS_Shape)>& theObjects);
 
-private:
+    gp_Pnt getPos() const { return myPnt; }
+    gp_Dir getDir() const { return myDir; }
+    Standard_Real getClippedLen() const { return clippedLenght; }
 
+private:
     //! Return TRUE for supported display modes (only mode 0 is supported).
     virtual Standard_Boolean AcceptDisplayMode (const Standard_Integer theMode) const Standard_OVERRIDE { return theMode == 0; }
 

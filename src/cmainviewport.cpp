@@ -37,6 +37,9 @@
 #include "Dialogs/TaskPoints/cbottaskdialogfacade.h"
 #include "Dialogs/PathPoints/caddpathpointdialog.h"
 
+#include "csnapshotdialog.h"
+#include "csnapshotviewport.h"
+
 static constexpr double DEGREE_K = M_PI / 180.;
 
 static const Quantity_Color BG_CLR   = Quantity_Color( .7765,  .9 , 1.  , Quantity_TOC_RGB);
@@ -300,6 +303,15 @@ class CMainViewportPrivate : public AIS_ViewController
         view->Redraw();
     }
 
+    template <typename TPoint>
+    static void updatePntTransform(TPoint &pnt, const gp_Trsf &transform) {
+        gp_Pnt gpPnt(pnt.globalPos.x, pnt.globalPos.y, pnt.globalPos.z);
+        gpPnt.Transform(transform);
+        pnt.globalPos.x = gpPnt.X();
+        pnt.globalPos.y = gpPnt.Y();
+        pnt.globalPos.z = gpPnt.Z();
+    }
+
     void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
     {
         using namespace BotSocket;
@@ -322,7 +334,28 @@ class CMainViewportPrivate : public AIS_ViewController
                 guiSettings.partRotationX = pos.globalRotation.x;
                 guiSettings.partRotationY = pos.globalRotation.y;
                 guiSettings.partRotationZ = pos.globalRotation.z;
-                context->setPartMdlTransform(calcPartTrsf());
+                const gp_Trsf newTrsf = calcPartTrsf();
+                const gp_Trsf pntTrsf = context->getPartTransform().Inverted() * newTrsf;
+                context->setPartMdlTransform(newTrsf);
+                //points transformation by new calibration data
+                const size_t calibPntCount = context->getCalibPointCount();
+                for(size_t i = 0; i < calibPntCount; ++i) {
+                    GUI_TYPES::SCalibPoint pnt = context->getCalibPoint(i);
+                    updatePntTransform(pnt, pntTrsf);
+                    context->changeCalibPoint(i, pnt);
+                }
+                const size_t taskPntCount = context->getTaskPointCount();
+                for(size_t i = 0; i < taskPntCount; ++i) {
+                    GUI_TYPES::STaskPoint pnt = context->getTaskPoint(i);
+                    updatePntTransform(pnt, pntTrsf);
+                    context->changeTaskPoint(i, pnt);
+                }
+                const size_t pathPntCount = context->getPathPointCount();
+                for(size_t i = 0; i < pathPntCount; ++i) {
+                    GUI_TYPES::SPathPoint pnt = context->getPathPoint(i);
+                    updatePntTransform(pnt, pntTrsf);
+                    context->changePathPoint(i, pnt);
+                }
                 view->Redraw();
                 break;
             }
@@ -530,6 +563,26 @@ const TopoDS_Shape& CMainViewport::getGripShape() const
     return d_ptr->context->getGripShape();
 }
 
+const gp_Trsf &CMainViewport::getPartTransform() const
+{
+    return d_ptr->context->getPartTransform();
+}
+
+const gp_Trsf &CMainViewport::getDeskTransform() const
+{
+    return d_ptr->context->getDeskTransform();
+}
+
+const gp_Trsf &CMainViewport::getLsrheadTransform() const
+{
+    return d_ptr->context->getLsrHeadTransform();
+}
+
+const gp_Trsf &CMainViewport::getGripTransform() const
+{
+    return d_ptr->context->getGripTransform();
+}
+
 void CMainViewport::setCalibResult(const BotSocket::EN_CalibResult val)
 {
     if (val != d_ptr->calibResult)
@@ -594,6 +647,15 @@ std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
     return res;
 }
 
+std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationLocalPoints() const
+{
+    std::vector <GUI_TYPES::SCalibPoint> res;
+    const size_t count = d_ptr->context->getCalibPointCount();
+    for(size_t i = 0; i < count; ++i)
+        res.push_back(d_ptr->context->getCalibLocalPoint(i));
+    return res;
+}
+
 void CMainViewport::setTaskPoints(const std::vector<GUI_TYPES::STaskPoint> &points)
 {
     while(d_ptr->context->getTaskPointCount() > 0)
@@ -630,6 +692,42 @@ std::vector<GUI_TYPES::SPathPoint> CMainViewport::getPathPoints() const
     for(size_t i = 0; i < count; ++i)
         res.push_back(d_ptr->context->getPathPoint(i));
     return res;
+}
+
+void CMainViewport::partPrntScr()
+{
+    d_ptr->context->hideAllAdditionalObjects();
+    CSnapshotDialog dialog(this);
+    dialog.setContext(*d_ptr->context);
+    dialog.setFileName("partSnapshot.bmp");
+    dialog.setScale(5.);
+//    QMetaObject::invokeMethod(&dialog, "makeSnapshot", Qt::QueuedConnection);
+//    QMetaObject::invokeMethod(&dialog, "reject", Qt::QueuedConnection);
+    dialog.exec();
+    switch(d_ptr->uiState) {
+        case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
+        case GUI_TYPES::ENUS_TASK_EDITING: d_ptr->context->showTaskObjects();  break;
+        default: d_ptr->context->resetCursorPosition(); break;
+    }
+    d_ptr->view->Redraw();
+}
+
+void CMainViewport::makePartSnapshot(const char *fname)
+{
+    d_ptr->context->hideAllAdditionalObjects();
+    CSnapshotDialog dialog(this);
+    dialog.setContext(*d_ptr->context);
+    dialog.setFileName(fname);
+    dialog.setScale(5.);
+    QMetaObject::invokeMethod(&dialog, "makeSnapshot", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(&dialog, "reject", Qt::QueuedConnection);
+    dialog.exec();
+    switch(d_ptr->uiState) {
+        case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
+        case GUI_TYPES::ENUS_TASK_EDITING: d_ptr->context->showTaskObjects();  break;
+        default: d_ptr->context->resetCursorPosition(); break;
+    }
+    d_ptr->view->Redraw();
 }
 
 QPaintEngine *CMainViewport::paintEngine() const
@@ -927,6 +1025,11 @@ void CMainViewport::slAddTaskPoint()
     taskPoint.globalPos.x = cursorPos.X();
     taskPoint.globalPos.y = cursorPos.Y();
     taskPoint.globalPos.z = cursorPos.Z();
+
+    const gp_Dir normal = d_ptr->context->detectNormal(cursorPos);
+    taskPoint.normal.x = normal.X();
+    taskPoint.normal.y = normal.Y();
+    taskPoint.normal.z = normal.Z();
 
     CBotTaskDialogFacade dialog(this, taskPoint);
     if (dialog.exec() == QDialog::Accepted)

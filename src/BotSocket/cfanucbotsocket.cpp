@@ -160,6 +160,30 @@ void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &,
                                  const std::vector<GUI_TYPES::STaskPoint> &taskPoints)
 {
     VLOG_CALL;
+
+    /**
+      Rotation extracting example
+
+    for(const GUI_TYPES::STaskPoint &stpnt : taskPoints)
+    {
+        //normal represent as the ZAxis
+        gp_Dir zDir(stpnt.normal.x, stpnt.normal.y, stpnt.normal.z);
+
+        //normal rotation angles from global coord system
+        gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
+
+        //delta rotation from global coord system
+        gp_Quaternion delta;
+        delta.SetEulerAngles(gp_Extrinsic_XYZ,
+                             stpnt.angle.x * M_PI / 180.,
+                             stpnt.angle.y * M_PI / 180.,
+                             stpnt.angle.z * M_PI / 180.);
+
+        //final rotation from global coord system
+        gp_Quaternion finalRotationZAxis = normal * delta;
+    }
+    */
+
     std::vector<xyzwpr_data> path;
     path.reserve(taskPoints.size());
     for(GUI_TYPES::STaskPoint p : taskPoints)

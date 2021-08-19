@@ -24,7 +24,7 @@ CLaserVec::CLaserVec(const gp_Pnt2d& thePnt1,
   myLength = aVec.Magnitude();
   clippedLenght = myLength;
 }
-#include <QDebug>
+
 void CLaserVec::clipLenght(Handle(AIS_InteractiveContext) context,
                            const NCollection_Vector<Handle(AIS_Shape)>& theObjects)
 {
@@ -40,9 +40,9 @@ void CLaserVec::clipLenght(Handle(AIS_InteractiveContext) context,
         {
             const Handle(AIS_Shape)& anObject = anIter.Value();
             const TopoDS_Shape shape = anObject->Shape().Located(context->Location(anObject));
-            intersector.Load(shape, Precision::Confusion());
+            intersector.Load(shape, Precision::Intersection());
 
-            intersector.PerformNearest(lin, 0, RealLast());
+            intersector.PerformNearest(lin, 0., 1000.);
             if (intersector.IsDone() && intersector.NbPnt() > 0) {
                 gp_Pnt aPnt = intersector.Pnt(1);
                 if (!trP.IsEqual(aPnt, gp::Resolution())) {

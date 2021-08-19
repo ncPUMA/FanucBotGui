@@ -36,6 +36,9 @@ protected:
     void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform);
     GUI_TYPES::EN_UiStates getUiState() const;
     const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const;
+    const gp_Trsf& getShapeTransform(const BotSocket::EN_ShapeType shType) const;
+
+    void makePartSnapshot(const char *fname);
 
 private:
     CAbstractBotSocket(const CAbstractBotSocket &) = delete;

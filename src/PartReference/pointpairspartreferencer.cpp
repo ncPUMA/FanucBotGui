@@ -75,8 +75,18 @@ bool PointPairsPartReferencer::referencePart()
     LOG_F(INFO, "robot2model: %s", ss.str().c_str());
 
     reference_ok_ = true;
+    bool res = true;
+    //check transform internal matrix 3x4 by Nan value
+    for(Standard_Integer i = 1; i < 4; ++i)
+        for(Standard_Integer j = 1; j < 5; ++j)
+        {
+            res = !(std::isnan(transform_part_to_robot_.Value(i, j)) ||
+                    std::isnan(transform_robot_to_part_.Value(i, j)));
+            if (!res)
+                break;
+        }
 
-    return true;
+    return res;
 }
 
 PointPairsPartReferencer::position_t PointPairsPartReferencer::transformPartToRobot(const position_t &position) const

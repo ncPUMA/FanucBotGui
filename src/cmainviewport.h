@@ -74,6 +74,11 @@ public:
     const TopoDS_Shape& getLsrheadShape() const;
     const TopoDS_Shape& getGripShape() const;
 
+    const gp_Trsf& getPartTransform() const;
+    const gp_Trsf& getDeskTransform() const;
+    const gp_Trsf& getLsrheadTransform() const;
+    const gp_Trsf& getGripTransform() const;
+
     void setCalibResult(const BotSocket::EN_CalibResult val);
     BotSocket::EN_CalibResult getCalibResult() const;
     void setBotState(const BotSocket::EN_BotState state);
@@ -86,10 +91,14 @@ public:
 
     void setCalibrationPoints(const std::vector <GUI_TYPES::SCalibPoint> &points);
     std::vector <GUI_TYPES::SCalibPoint> getCallibrationPoints() const;
+    std::vector <GUI_TYPES::SCalibPoint> getCallibrationLocalPoints() const;
     void setTaskPoints(const std::vector <GUI_TYPES::STaskPoint> &points);
     std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const;
     void setPathPoints(const std::vector <GUI_TYPES::SPathPoint> &points);
     std::vector <GUI_TYPES::SPathPoint> getPathPoints() const;
+
+    void partPrntScr();
+    void makePartSnapshot(const char *fname);
 
 protected:
     QPaintEngine* paintEngine() const final;

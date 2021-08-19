@@ -100,6 +100,14 @@ protected:
 
     void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
     {
+        if (std::isnan(pos.globalPos.x) ||
+            std::isnan(pos.globalPos.y) ||
+            std::isnan(pos.globalPos.z) ||
+            std::isnan(pos.globalRotation.x) ||
+            std::isnan(pos.globalRotation.y) ||
+            std::isnan(pos.globalRotation.z))
+            return;
+
         viewport->shapeCalibrationChanged(shType, pos);
     }
     void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
@@ -114,10 +122,21 @@ protected:
             case ENST_PART   : return viewport->getPartShape();
             case ENST_LSRHEAD: return viewport->getLsrheadShape();
             case ENST_GRIP   : return viewport->getGripShape();
-            default: break;
         }
         static const TopoDS_Shape sh;
         return sh;
+    }
+
+    const gp_Trsf& getShapeTransform(const BotSocket::EN_ShapeType shType) const final {
+        using namespace BotSocket;
+        switch(shType) {
+            case ENST_DESK   : return viewport->getDeskTransform();
+            case ENST_PART   : return viewport->getPartTransform();
+            case ENST_LSRHEAD: return viewport->getLsrheadTransform();
+            case ENST_GRIP   : return viewport->getGripTransform();
+        }
+        static const gp_Trsf trsf;
+        return trsf;
     }
 
     void updateUiState() {
@@ -187,6 +206,10 @@ protected:
 
     void pathPointsChanged() final {
         updateUiState();
+    }
+
+    void makePartSnapshot(const char *fname) final {
+        viewport->makePartSnapshot(fname);
     }
 
 private:
@@ -374,11 +397,6 @@ void MainWindow::setBotSocket(CAbstractBotSocket &botSocket)
     using namespace BotSocket;
 
     d_ptr->uiIface.setBotSocket(botSocket);
-    std::map <BotSocket::EN_ShapeType, TopoDS_Shape> shapes;
-    shapes[ENST_DESK]    = ui->mainView->getDeskShape();
-    shapes[ENST_PART]    = ui->mainView->getPartShape();
-    shapes[ENST_LSRHEAD] = ui->mainView->getLsrheadShape();
-    shapes[ENST_GRIP]    = ui->mainView->getGripShape();
 }
 
 void MainWindow::slImport()
@@ -479,7 +497,7 @@ void MainWindow::slClearJrnl()
 void MainWindow::slCallibCalc()
 {
     const BotSocket::EN_CalibResult calibRes =
-            d_ptr->uiIface.execCalibration(ui->mainView->getCallibrationPoints());
+            d_ptr->uiIface.execCalibration(ui->mainView->getCallibrationLocalPoints());
     if(calibRes == BotSocket::ENCR_OK)
         QMessageBox::information(this,
                               tr("Калибровка завершена"),
@@ -491,6 +509,11 @@ void MainWindow::slCallibCalc()
 
     ui->wSettings->initFromGuiSettings(ui->mainView->getGuiSettings());
     ui->mainView->setCalibResult(calibRes);
+}
+
+void MainWindow::slPartPrntScr()
+{
+    ui->mainView->partPrntScr();
 }
 
 void MainWindow::slCallibApply()
@@ -551,6 +574,8 @@ void MainWindow::configMenu()
         connect(pair.second, SIGNAL(toggled(bool)), SLOT(slMsaa()));
     //FPS
     connect(ui->actionFPS, SIGNAL(toggled(bool)), SLOT(slFpsCounter(bool)));
+    //PrntScr
+    connect(ui->actionPartPrntScr, SIGNAL(triggered(bool)), SLOT(slPartPrntScr()));
 
     //teJrnl
     connect(ui->actionClearJrnl, SIGNAL(triggered(bool)), SLOT(slClearJrnl()));

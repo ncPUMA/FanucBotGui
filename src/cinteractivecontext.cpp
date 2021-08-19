@@ -19,9 +19,21 @@
 #include <Geom_CartesianPoint.hxx>
 #include <Geom_Axis2Placement.hxx>
 
+#include <TopExp_Explorer.hxx>
+#include <BRepClass3d_SolidClassifier.hxx>
+#include <BRepTools.hxx>
+#include <BRep_Tool.hxx>
+#include <Geom_Surface.hxx>
+#include <GeomLProp_SLProps.hxx>
+#include <TopoDS.hxx>
+#include <gp_Quaternion.hxx>
+
 #include "gui_types.h"
 
 #include "Primitives/claservec.h"
+#include "Primitives/ctaskpnt.h"
+
+static constexpr double DEGREE_K = M_PI / 180.;
 
 static const Quantity_Color TXT_CLR  = Quantity_Color( .15  ,  .15, 0.15, Quantity_TOC_RGB);
 static const Quantity_Color FACE_CLR = Quantity_Color(0.1   , 0.1 , 0.1 , Quantity_TOC_RGB);
@@ -358,6 +370,19 @@ private:
         return res;
     }
 
+    GUI_TYPES::SCalibPoint getCalibLocalPoint(const size_t index) const {
+        assert(index < calibPoints.size());
+        const SCalibPoint &scpnt = calibPoints[index];
+        GUI_TYPES::SCalibPoint res;
+        res.botPos = scpnt.botPos;
+        const gp_Trsf partTr = context->Location(ais_part).Transformation();
+        const gp_Pnt local = scpnt.pnt->Component()->Pnt().Transformed(partTr.Inverted());
+        res.globalPos.x = local.X();
+        res.globalPos.y = local.Y();
+        res.globalPos.z = local.Z();
+        return res;
+    }
+
     void appendCalibPoint(const GUI_TYPES::SCalibPoint &calibPoint) {
         SCalibPoint scpnt;
         scpnt.botPos = calibPoint.botPos;
@@ -435,11 +460,26 @@ private:
         stpnt.pntLbl->SetPosition(globalPos);
         const std::string txt = taskPointName(taskPoints.size(), stpnt.taskType);
         stpnt.pntLbl->SetText(TCollection_ExtendedString(txt.c_str(), Standard_True));
+        gp_Dir zDir(taskPoint.normal.x, taskPoint.normal.y, taskPoint.normal.z);
+        stpnt.tPnt = new CTaskPnt(globalPos, zDir, 5.);
+        gp_Trsf trTrsf;
+        trTrsf.SetTranslation(gp_Pnt(), globalPos);
+        gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
+        gp_Quaternion delta;
+        delta.SetEulerAngles(gp_Extrinsic_XYZ,
+                             stpnt.angle.x * DEGREE_K,
+                             stpnt.angle.y * DEGREE_K,
+                             stpnt.angle.z * DEGREE_K);
+        gp_Trsf rotTrsf;
+        rotTrsf.SetRotation(normal * delta);
+        context->SetLocation(stpnt.tPnt, trTrsf * rotTrsf);
         taskPoints.push_back(stpnt);
         context->Display(stpnt.pnt, Standard_False);
         context->SetZLayer(stpnt.pntLbl, depthTestOffZlayer);
         context->Display(stpnt.pntLbl, Standard_False);
         context->Deactivate(stpnt.pntLbl);
+        context->Display(stpnt.tPnt, Standard_False);
+        context->Deactivate(stpnt.tPnt);
     }
 
     void changeTaskPoint(const size_t index, const GUI_TYPES::STaskPoint &taskPoint) {
@@ -449,8 +489,24 @@ private:
         const gp_Pnt globalPos(taskPoint.globalPos.x, taskPoint.globalPos.y, taskPoint.globalPos.z);
         stpnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
         stpnt.pntLbl->SetPosition(globalPos);
+        gp_Dir zDir(taskPoint.normal.x, taskPoint.normal.y, taskPoint.normal.z);
+        context->Erase(stpnt.tPnt, Standard_False);
+        stpnt.tPnt = new CTaskPnt(globalPos, zDir, 5.);
+        gp_Trsf trTrsf;
+        trTrsf.SetTranslation(gp_Pnt(), globalPos);
+        gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
+        gp_Quaternion delta;
+        delta.SetEulerAngles(gp_Extrinsic_XYZ,
+                             stpnt.angle.x * DEGREE_K,
+                             stpnt.angle.y * DEGREE_K,
+                             stpnt.angle.z * DEGREE_K);
+        gp_Trsf rotTrsf;
+        rotTrsf.SetRotation(normal * delta);
+        context->SetLocation(stpnt.tPnt, trTrsf * rotTrsf);
         context->RecomputePrsOnly(stpnt.pnt, Standard_False);
         context->RecomputePrsOnly(stpnt.pntLbl, Standard_False);
+        context->Display(stpnt.tPnt, Standard_False);
+        context->Deactivate(stpnt.tPnt);
     }
 
     void removeTaskPoint(const size_t index) {
@@ -521,6 +577,29 @@ private:
         }
     }
 
+    bool detectNormal(gp_Dir &normal, const gp_Pnt pnt, const Handle(AIS_Shape) &obj) const {
+        normal = gp_Dir(0., 0., 1.);
+        const gp_Trsf partTr = context->Location(obj).Transformation();
+        const gp_Pnt localCoord = pnt.Transformed(partTr.Inverted());
+        for (TopExp_Explorer anExp(obj->Shape(), TopAbs_FACE); anExp.More(); anExp.Next()) {
+            const TopoDS_Face face = TopoDS::Face(anExp.Current());
+            BRepClass3d_SolidClassifier classifier(face);
+            classifier.Perform(localCoord, Precision::Intersection());
+            if (classifier.State() == TopAbs_ON) {
+                Standard_Real umin, umax, vmin, vmax;
+                BRepTools::UVBounds(face, umin, umax, vmin, vmax);
+                Handle(Geom_Surface) aSurface = BRep_Tool::Surface(face);
+                GeomLProp_SLProps props(aSurface, umin, vmin,1, 0.01);
+                normal = props.Normal();
+                if(face.Orientation() == TopAbs_REVERSED)
+                    normal.Reverse();
+                normal.Transform(partTr);
+                return true;
+            }
+        }
+        return false;
+    }
+
     void updateLaserLine() {
         if (lsrClip && !ais_laser.IsNull()) {
             NCollection_Vector <Handle(AIS_Shape)> vecObj;
@@ -567,6 +646,7 @@ private:
         GUI_TYPES::SRotationAngle angle;
         Handle(AIS_Point) pnt;
         Handle(AIS_TextLabel) pntLbl;
+        Handle(CTaskPnt) tPnt;
     };
     std::vector <STaskPoint> taskPoints;
 
@@ -680,9 +760,19 @@ const TopoDS_Shape &CInteractiveContext::getPartShape() const
     return d_ptr->ais_part->Shape();
 }
 
+const gp_Trsf &CInteractiveContext::getPartTransform() const
+{
+    return d_ptr->context->Location(d_ptr->ais_part).Transformation();
+}
+
 const TopoDS_Shape &CInteractiveContext::getDeskShape() const
 {
     return d_ptr->ais_desk->Shape();
+}
+
+const gp_Trsf &CInteractiveContext::getDeskTransform() const
+{
+    return d_ptr->context->Location(d_ptr->ais_desk).Transformation();
 }
 
 const TopoDS_Shape &CInteractiveContext::getLsrHeadShape() const
@@ -690,9 +780,32 @@ const TopoDS_Shape &CInteractiveContext::getLsrHeadShape() const
     return d_ptr->ais_lsrhead->Shape();
 }
 
+const gp_Trsf &CInteractiveContext::getLsrHeadTransform() const
+{
+    return d_ptr->context->Location(d_ptr->ais_lsrhead).Transformation();
+}
+
 const TopoDS_Shape &CInteractiveContext::getGripShape() const
 {
     return d_ptr->ais_grip->Shape();
+}
+
+const gp_Trsf &CInteractiveContext::getGripTransform() const
+{
+    return d_ptr->context->Location(d_ptr->ais_grip).Transformation();
+}
+
+gp_Pnt CInteractiveContext::getLaserLineCalibration() const
+{
+    return d_ptr->ais_laser->getPos();
+}
+
+void CInteractiveContext::getLaserLine(gp_Pnt &pnt, gp_Dir &dir, double &lenght) const
+{
+    const gp_Trsf trsf = d_ptr->context->Location(d_ptr->ais_laser).Transformation();
+    pnt = d_ptr->ais_laser->getPos().Transformed(trsf);
+    dir = d_ptr->ais_laser->getDir().Transformed(trsf);
+    lenght = d_ptr->ais_laser->getClippedLen();
 }
 
 void CInteractiveContext::hideAllAdditionalObjects()
@@ -792,6 +905,11 @@ GUI_TYPES::SCalibPoint CInteractiveContext::getCalibPoint(const size_t index) co
     return d_ptr->getCalibPoint(index);
 }
 
+GUI_TYPES::SCalibPoint CInteractiveContext::getCalibLocalPoint(const size_t index) const
+{
+    return d_ptr->getCalibLocalPoint(index);
+}
+
 void CInteractiveContext::appendCalibPoint(const GUI_TYPES::SCalibPoint &calibPoint)
 {
     d_ptr->appendCalibPoint(calibPoint);
@@ -855,4 +973,13 @@ void CInteractiveContext::changePathPoint(const size_t index, const GUI_TYPES::S
 void CInteractiveContext::removePathPoint(const size_t index)
 {
     d_ptr->removePathPoint(index);
+}
+
+gp_Dir CInteractiveContext::detectNormal(const gp_Pnt pnt) const
+{
+    gp_Dir normal(0., 0., 1.);
+    bool res = d_ptr->detectNormal(normal, pnt, d_ptr->ais_part);
+    if (!res)
+        d_ptr->detectNormal(normal, pnt, d_ptr->ais_desk);
+    return normal;
 }

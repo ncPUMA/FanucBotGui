@@ -46,9 +46,15 @@ public:
     void setGripMdlTransform(const gp_Trsf &trsf);
 
     const TopoDS_Shape& getPartShape() const;
+    const gp_Trsf& getPartTransform() const;
     const TopoDS_Shape& getDeskShape() const;
+    const gp_Trsf& getDeskTransform() const;
     const TopoDS_Shape& getLsrHeadShape() const;
+    const gp_Trsf& getLsrHeadTransform() const;
     const TopoDS_Shape& getGripShape() const;
+    const gp_Trsf& getGripTransform() const;
+    gp_Pnt getLaserLineCalibration() const;
+    void getLaserLine(gp_Pnt &pnt, gp_Dir &dir, double &lenght) const;
 
     void hideAllAdditionalObjects();
     void showCalibObjects();
@@ -67,6 +73,7 @@ public:
     //Usr points
     size_t getCalibPointCount() const;
     GUI_TYPES::SCalibPoint getCalibPoint(const size_t index) const;
+    GUI_TYPES::SCalibPoint getCalibLocalPoint(const size_t index) const;
     void appendCalibPoint(const GUI_TYPES::SCalibPoint &calibPoint);
     void changeCalibPoint(const size_t index, const GUI_TYPES::SCalibPoint &calibPoint);
     void removeCalibPoint(const size_t index);
@@ -82,6 +89,8 @@ public:
     void appendPathPoint(const GUI_TYPES::SPathPoint &pathPoint);
     void changePathPoint(const size_t index, const GUI_TYPES::SPathPoint &pathPoint);
     void removePathPoint(const size_t index);
+
+    gp_Dir detectNormal(const gp_Pnt pnt) const;
 
 private:
     CInteractiveContextPrivate * const d_ptr;

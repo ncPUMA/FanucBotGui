@@ -66,6 +66,7 @@
     <addaction name="separator"/>
     <addaction name="actionClearJrnl"/>
     <addaction name="actionCalib"/>
+    <addaction name="actionPartPrntScr"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -271,6 +272,11 @@ p, li { white-space: pre-wrap; }
   <action name="actionPathPoints">
    <property name="text">
     <string>Точки траектории...</string>
+   </property>
+  </action>
+  <action name="actionPartPrntScr">
+   <property name="text">
+    <string>Снимок детали</string>
    </property>
   </action>
  </widget>

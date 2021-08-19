@@ -15,12 +15,14 @@ protected:
     void laserHeadPositionChanged(const BotSocket::SBotPosition &) final { }
     void gripPositionChanged(const BotSocket::SBotPosition &) final { }
     const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType) const final { return shape; }
+    const gp_Trsf& getShapeTransform(const BotSocket::EN_ShapeType) const final { return transform; }
     void shapeCalibrationChanged(const BotSocket::EN_ShapeType, const BotSocket::SBotPosition &) final {}
     void shapeTransformChanged(const BotSocket::EN_ShapeType, const gp_Trsf &) final {}
 
+    void makePartSnapshot(const char *) final { }
 private:
     TopoDS_Shape shape;
-
+    gp_Trsf transform;
 } emptyUi;
 
 
@@ -74,4 +76,14 @@ void CAbstractBotSocket::shapeTransformChanged(const BotSocket::EN_ShapeType shT
 const TopoDS_Shape &CAbstractBotSocket::getShape(const BotSocket::EN_ShapeType shType) const
 {
     return ui->getShape(shType);
+}
+
+const gp_Trsf &CAbstractBotSocket::getShapeTransform(const BotSocket::EN_ShapeType shType) const
+{
+    return ui->getShapeTransform(shType);
+}
+
+void CAbstractBotSocket::makePartSnapshot(const char *fname)
+{
+    ui->makePartSnapshot(fname);
 }

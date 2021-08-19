@@ -84,11 +84,16 @@ struct SCalibPoint
 
 struct STaskPoint
 {
-    STaskPoint() : taskType(ENBTT_MOVE) { }
+    STaskPoint() :
+        taskType(ENBTT_MOVE),
+        normal(SVertex(0., 0., 1.)),
+        zSimmetry(false) { }
 
     TBotTaskType taskType;
     SVertex globalPos;
     SRotationAngle angle;
+    SVertex normal;
+    bool zSimmetry;
 };
 
 struct SPathPoint
