@@ -2,11 +2,16 @@
 
 #include <QTimer>
 #include <QSettings>
+#include <QFile>
+#include <QTextStream>
+#include <QStringList>
 
 #include "../PartReference/pointpairspartreferencer.h"
 #include "../log/loguru.hpp"
 
-CFanucBotSocket::CFanucBotSocket()
+CFanucBotSocket::CFanucBotSocket() :
+    CAbstractBotSocket(),
+    calibWaitCounter(0)
 {
     VLOG_CALL;
 
@@ -109,6 +114,106 @@ void CFanucBotSocket::updateConnectionState()
                           : BotSocket::ENBS_FALL);
 }
 
+void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
+{
+    if (result != BotSocket::ENWR_OK)
+    {
+        curTask.clear();
+        tasksComplete(result);
+        return;
+    }
+
+    if (curTask.empty())
+    {
+        tasksComplete(result); //result == BotSocket::ENWR_OK
+        return;
+    }
+
+    GUI_TYPES::STaskPoint &p = curTask.front();
+    if (p.bNeedCalib)
+    {
+        p.bNeedCalib = false;
+        startCalib();
+    }
+    else
+    {
+        std::vector<xyzwpr_data> path;
+        auto it = curTask.begin();
+        while(it != curTask.end())
+        {
+            const GUI_TYPES::STaskPoint &p = *it;
+            if (p.bNeedCalib)
+                break;
+
+            LOG_F(INFO, "Task %d: %f %f %f %f %f %f", p.taskType, p.globalPos.x, p.globalPos.y, p.globalPos.z, p.angle.x, p.angle.y, p.angle.z);
+            if(p.taskType == GUI_TYPES::ENBTT_MOVE)
+                path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
+
+            it = curTask.erase(it);
+        }
+
+        fanuc_relay_.move_trajectory(path);
+    }
+}
+
+void CFanucBotSocket::startCalib()
+{
+    makePartSnapshot("snapshot.bmp");
+
+    QFile calibResFile("calib_result.txt");
+    if (calibResFile.exists())
+        calibResFile.remove();
+
+    calibWaitCounter = 0;
+    QTimer::singleShot(1000, this, &CFanucBotSocket::slCalibWaitTimeout);
+}
+
+void CFanucBotSocket::calibFinish(const gp_Trsf &delta)
+{
+    gp_Trsf modelPos = getShapeTransform(BotSocket::ENST_PART);
+    gp_Trsf newTransform = modelPos * delta;
+    if (!modelPos.TranslationPart().IsEqual(newTransform.TranslationPart(), gp::Resolution()))
+        CAbstractBotSocket::shapeTransformChanged(BotSocket::ENST_PART, newTransform);
+    completePath(BotSocket::ENWR_OK);
+}
+
+void CFanucBotSocket::slCalibWaitTimeout()
+{
+    static const int CALIB_ATTEMP_COUNT = 3;
+    QFile calibResFile("calib_result.txt");
+    if (!calibResFile.exists())
+    {
+        if (calibWaitCounter < CALIB_ATTEMP_COUNT)
+        {
+            ++calibWaitCounter;
+            QTimer::singleShot(1000, this, &CFanucBotSocket::slCalibWaitTimeout);
+        }
+        else
+        {
+            calibWaitCounter = 0;
+            calibFinish(gp_Trsf());
+        }
+    }
+    else
+    {
+        gp_Trsf delta;
+        if (calibResFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            QTextStream in(&calibResFile);
+            QStringList line = in.readLine().split(" ");
+            calibResFile.close();
+
+            if (line.size() > 2)
+            {
+                gp_Pnt pnt(line.at(0).toDouble(), line.at(1).toDouble(), line.at(2).toDouble());
+                gp_Trsf delta;
+                delta.SetTranslation(gp_Pnt(), pnt);
+            }
+        }
+        calibFinish(delta);
+    }
+}
+
 BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI_TYPES::SCalibPoint> &points)
 {
     VLOG_CALL;
@@ -184,21 +289,24 @@ void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &,
     }
     */
 
-    std::vector<xyzwpr_data> path;
-    path.reserve(taskPoints.size());
-    for(GUI_TYPES::STaskPoint p : taskPoints)
-    {
-        LOG_F(INFO, "Task %d: %f %f %f %f %f %f", p.taskType, p.globalPos.x, p.globalPos.y, p.globalPos.z, p.angle.x, p.angle.y, p.angle.z);
-        if(p.taskType == GUI_TYPES::ENBTT_MOVE)
-            path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
-    }
+//    std::vector<xyzwpr_data> path;
+//    path.reserve(taskPoints.size());
+//    for(GUI_TYPES::STaskPoint p : taskPoints)
+//    {
+//        LOG_F(INFO, "Task %d: %f %f %f %f %f %f", p.taskType, p.globalPos.x, p.globalPos.y, p.globalPos.z, p.angle.x, p.angle.y, p.angle.z);
+//        if(p.taskType == GUI_TYPES::ENBTT_MOVE)
+//            path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
+//    }
 
-    fanuc_relay_.move_trajectory(path);
+//    fanuc_relay_.move_trajectory(path);
+    curTask = taskPoints;
+    completePath(BotSocket::ENWR_OK);
 }
 
 void CFanucBotSocket::stopTasks()
 {
     VLOG_CALL;
+    curTask.clear();
     fanuc_relay_.stop();
 }
 

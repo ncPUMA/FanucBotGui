@@ -29,6 +29,18 @@ private:
 
     void updatePosition(const xyzwpr_data &pos);
     void updateConnectionState();
+
+private:
+    void completePath(const BotSocket::EN_WorkResult result);
+    void startCalib();
+    void calibFinish(const gp_Trsf &delta);
+
+private slots:
+    void slCalibWaitTimeout();
+
+private:
+    std::vector <GUI_TYPES::STaskPoint> curTask;
+    int calibWaitCounter;
 };
 
 #endif // CFANUCBOTSOCKET_H
