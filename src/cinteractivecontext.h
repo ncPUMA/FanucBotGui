@@ -56,6 +56,8 @@ public:
     gp_Pnt getLaserLineCalibration() const;
     void getLaserLine(gp_Pnt &pnt, gp_Dir &dir, double &lenght) const;
 
+    AIS_InteractiveObject& getAisPart();
+
     void hideAllAdditionalObjects();
     void showCalibObjects();
     void showTaskObjects();

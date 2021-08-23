@@ -35,8 +35,9 @@
 
 static constexpr double DEGREE_K = M_PI / 180.;
 
-static const Quantity_Color TXT_CLR  = Quantity_Color( .15  ,  .15, 0.15, Quantity_TOC_RGB);
-static const Quantity_Color FACE_CLR = Quantity_Color(0.1   , 0.1 , 0.1 , Quantity_TOC_RGB);
+static const Quantity_Color TXT_CLR  = Quantity_Color( .15    ,  .15    , 0.15   , Quantity_TOC_RGB);
+static const Quantity_Color FACE_CLR = Quantity_Color(0.1     , 0.1     , 0.1    , Quantity_TOC_RGB);
+static const Quantity_Color PART_CLR = Quantity_Color(0.570482, 0.283555, 0.12335, Quantity_TOC_RGB);
 
 class CInteractiveContextPrivate
 {
@@ -188,6 +189,7 @@ private:
         if (!ais_part.IsNull())
             context->Remove(ais_part, Standard_False);
         ais_part = new AIS_Shape(shape);
+
         context->SetDisplayMode(ais_part, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
         context->Display(ais_part, Standard_False);
     }
@@ -207,12 +209,12 @@ private:
         Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
         aShAspect->SetColor(Quantity_Color(Quantity_NOC_MATRAGRAY));
         drawer->SetShadingAspect(aShAspect);
-        context->SetLocalAttributes(ais_desk, drawer, Standard_False);
 
         Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
         lAspect->SetColor(FACE_CLR);
         drawer->SetFaceBoundaryAspect(lAspect);
         drawer->SetFaceBoundaryDraw(Standard_True);
+        context->SetLocalAttributes(ais_desk, drawer, Standard_False);
 
         context->SetDisplayMode(ais_desk, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
         context->Display(ais_desk, Standard_False);
@@ -233,12 +235,12 @@ private:
         Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
         aShAspect->SetColor(Quantity_Color(Quantity_NOC_STEELBLUE3));
         drawer->SetShadingAspect(aShAspect);
-        context->SetLocalAttributes(ais_lsrhead, drawer, Standard_False);
 
         Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
         lAspect->SetColor(FACE_CLR);
         drawer->SetFaceBoundaryAspect(lAspect);
         drawer->SetFaceBoundaryDraw(Standard_True);
+        context->SetLocalAttributes(ais_lsrhead, drawer, Standard_False);
 
         context->SetDisplayMode(ais_lsrhead, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
         context->Display(ais_lsrhead, Standard_False);
@@ -279,12 +281,12 @@ private:
         Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
         aShAspect->SetColor(Quantity_Color(Quantity_NOC_TOMATO3));
         drawer->SetShadingAspect(aShAspect);
-        context->SetLocalAttributes(ais_grip, drawer, Standard_False);
 
         Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
         lAspect->SetColor(FACE_CLR);
         drawer->SetFaceBoundaryAspect(lAspect);
         drawer->SetFaceBoundaryDraw(Standard_True);
+        context->SetLocalAttributes(ais_grip, drawer, Standard_False);
 
         context->SetDisplayMode(ais_grip, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
         context->Display(ais_grip, Standard_False);
@@ -298,6 +300,8 @@ private:
 
     void hideAllAdditionalObjects() {
         context->Erase(calibTrihedron, Standard_False);
+        context->Erase(ais_axis_cube, Standard_False);
+        context->Erase(ais_laser, Standard_False);
         context->Erase(ais_desk, Standard_False);
         context->Erase(ais_grip, Standard_False);
         context->Erase(ais_lsrhead, Standard_False);
@@ -313,11 +317,16 @@ private:
             context->Erase(sppnt.pnt, Standard_False);
             context->Erase(sppnt.pntLbl, Standard_False);
         }
+        resetCursorPosition();
     }
 
     void showCalibObjects() {
         context->Display(calibTrihedron, Standard_False);
         context->Deactivate(calibTrihedron);
+        context->Display(ais_axis_cube, Standard_False);
+        context->Deactivate(ais_axis_cube);
+        context->Display(ais_laser, Standard_False);
+        context->Deactivate(ais_laser);
         context->Display(ais_desk, Standard_False);
         context->Deactivate(ais_desk);
         context->Display(ais_grip, Standard_False);
@@ -332,6 +341,10 @@ private:
     }
 
     void showTaskObjects() {
+        context->Display(ais_axis_cube, Standard_False);
+        context->Deactivate(ais_axis_cube);
+        context->Display(ais_laser, Standard_False);
+        context->Deactivate(ais_laser);
         context->Display(ais_desk, Standard_False);
         context->Display(ais_grip, Standard_False);
         context->Display(ais_lsrhead, Standard_False);
@@ -434,7 +447,7 @@ private:
         using namespace GUI_TYPES;
         const std::map <GUI_TYPES::TBotTaskType, std::string> mapNames = {
             { ENBTT_MOVE , "Перемещение" },
-            { ENBTT_DRILL, "Сверление"   },
+            { ENBTT_DRILL, "Отверстие"   },
             { ENBTT_MARK , "Маркировка"  }
         };
         std::stringstream ss;
@@ -797,6 +810,11 @@ void CInteractiveContext::getLaserLine(gp_Pnt &pnt, gp_Dir &dir, double &lenght)
     pnt = d_ptr->ais_laser->getPos().Transformed(trsf);
     dir = d_ptr->ais_laser->getDir().Transformed(trsf);
     lenght = d_ptr->ais_laser->getClippedLen();
+}
+
+AIS_InteractiveObject &CInteractiveContext::getAisPart()
+{
+    return *d_ptr->ais_part.get();
 }
 
 void CInteractiveContext::hideAllAdditionalObjects()

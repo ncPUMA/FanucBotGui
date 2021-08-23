@@ -67,6 +67,8 @@ enum EN_GuiKeys
 
     //Common
     ENGK_SNAP_SCALE,
+    ENGK_SNAP_WIDTH,
+    ENGK_SNAP_HEIGHT,
 
     ENGK_LAST
 };
@@ -75,6 +77,8 @@ typedef int TGuiKey;
 static const std::map <TGuiKey, QString> guiKeyMap = {
     { ENGK_MSAA          , "msaa"           },
     { ENGK_SNAP_SCALE    , "snap_scale"     },
+    { ENGK_SNAP_WIDTH    , "snap_width"     },
+    { ENGK_SNAP_HEIGHT   , "snap_height"     },
     //The Part
     { ENGK_PART_TR_X     , "part/tr_x"     },
     { ENGK_PART_TR_Y     , "part/tr_y"     },
@@ -151,8 +155,10 @@ public:
         SGuiSettings res;
         settingsFile->beginGroup(GUI_PREFIX);
         //Common
-        res.msaa          = readGuiValue <TMSAA>  (ENGK_MSAA);
-        res.snapshotScale = readGuiValue <TScale> (ENGK_SNAP_SCALE);
+        res.msaa           = readGuiValue <TMSAA>  (ENGK_MSAA);
+        res.snapshotScale  = readGuiValue <TScale> (ENGK_SNAP_SCALE);
+        res.snapshotWidth  = readGuiValue <size_t> (ENGK_SNAP_WIDTH);
+        res.snapshotHeight = readGuiValue <size_t> (ENGK_SNAP_HEIGHT);
         settingsFile->endGroup();
 
         //The Part
@@ -215,6 +221,8 @@ public:
         settingsFile->beginGroup(GUI_PREFIX);
         writeGuiValue(ENGK_MSAA         , settings.msaa);
         writeGuiValue(ENGK_SNAP_SCALE   , settings.snapshotScale);
+        writeGuiValue(ENGK_SNAP_WIDTH   , settings.snapshotWidth);
+        writeGuiValue(ENGK_SNAP_HEIGHT  , settings.snapshotHeight);
         settingsFile->endGroup();
         //The Part
         writeGuiValue(ENGK_PART_TR_X    , settings.partTrX);

@@ -9,6 +9,7 @@ class CGuiSettingsWidgetPrivate
 
     GUI_TYPES::TMSAA msaa;
     GUI_TYPES::TScale snapshotScale;
+    size_t snapshotWidth, snapshotHeight;
 };
 
 
@@ -20,6 +21,8 @@ CGuiSettingsWidget::CGuiSettingsWidget(QWidget *parent) :
 {
     d_ptr->msaa = 0;
     d_ptr->snapshotScale = 0.;
+    d_ptr->snapshotWidth = 0ul;
+    d_ptr->snapshotHeight = 0ul;
 
     ui->setupUi(this);
 
@@ -43,8 +46,10 @@ CGuiSettingsWidget::~CGuiSettingsWidget()
 void CGuiSettingsWidget::initFromGuiSettings(const GUI_TYPES::SGuiSettings &settings)
 {
     //Common
-    d_ptr->msaa          = settings.msaa;
-    d_ptr->snapshotScale = settings.snapshotScale;
+    d_ptr->msaa           = settings.msaa;
+    d_ptr->snapshotScale  = settings.snapshotScale;
+    d_ptr->snapshotWidth  = settings.snapshotWidth;
+    d_ptr->snapshotHeight = settings.snapshotHeight;
 
     //The Part
     ui->dsbPartTrX->setValue    (settings.partTrX      );
@@ -105,8 +110,10 @@ GUI_TYPES::SGuiSettings CGuiSettingsWidget::getChangedSettings() const
 {
     GUI_TYPES::SGuiSettings settings;
     //Common
-    settings.msaa          = d_ptr->msaa;
-    settings.snapshotScale = d_ptr->snapshotScale;
+    settings.msaa           = d_ptr->msaa;
+    settings.snapshotScale  = d_ptr->snapshotScale;
+    settings.snapshotWidth  = d_ptr->snapshotWidth;
+    settings.snapshotHeight = d_ptr->snapshotHeight;
 
     //The Part
     settings.partTrX       = ui->dsbPartTrX->value();

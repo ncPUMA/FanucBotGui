@@ -12,6 +12,8 @@ struct SGuiSettings
         //common
         msaa(0),
         snapshotScale(5.),
+        snapshotWidth(2000ul),
+        snapshotHeight(2000ul),
         //The Part
         partTrX(0.),
         partTrY(0.),
@@ -70,6 +72,8 @@ struct SGuiSettings
     //common
     TMSAA msaa;
     TScale snapshotScale;
+    size_t snapshotWidth;
+    size_t snapshotHeight;
 
     //The Part
     TDistance partTrX;

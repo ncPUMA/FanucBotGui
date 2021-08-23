@@ -21,7 +21,7 @@ public:
 
     void setContext(CInteractiveContext &context);
     void setScaleWidget(QDoubleSpinBox &box);
-    void createSnapshot(const char *fname);
+    void createSnapshot(const char *fname, const size_t width, const size_t height);
 
     void setScale(const double scale);
     double getScale() const;

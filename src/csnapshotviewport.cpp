@@ -3,12 +3,13 @@
 
 #include <QWheelEvent>
 #include <QDoubleSpinBox>
+#include <QImage>
 
 #include <AIS_InteractiveContext.hxx>
 #include <V3d_View.hxx>
 #include <AIS_ViewController.hxx>
 
-#include <Image_AlienPixMap.hxx>
+//#include <Image_AlienPixMap.hxx>
 
 #include "cinteractivecontext.h"
 #include "caspectwindow.h"
@@ -33,7 +34,8 @@ class CSnapshotViewportPrivate : public AIS_ViewController
 
 
 
-static const Quantity_Color BG_CLR   = Quantity_Color( .7765,  .9 , 1.  , Quantity_TOC_RGB);
+static const Quantity_Color BG_CLR   = Quantity_Color(1., 1., 1., Quantity_TOC_RGB);
+static const Quantity_Color FACE_CLR = Quantity_Color(0., 0., 0., Quantity_TOC_RGB);
 
 CSnapshotViewport::CSnapshotViewport(QWidget *parent) :
     QWidget(parent),
@@ -53,6 +55,10 @@ CSnapshotViewport::CSnapshotViewport(QWidget *parent) :
 
 CSnapshotViewport::~CSnapshotViewport()
 {
+    AIS_InteractiveObject &ais_part = d_ptr->context->getAisPart();
+    d_ptr->context->context().UnsetLocalAttributes(&ais_part, Standard_False);
+    d_ptr->context->context().Redisplay(&ais_part, Standard_True);
+
     d_ptr->view->Remove();
     delete d_ptr;
     delete ui;
@@ -78,12 +84,24 @@ void CSnapshotViewport::setContext(CInteractiveContext &context)
     lastPoint.Translate(len * gp_Vec(dir));
     d_ptr->view->SetEye(pos.X(), pos.Y(), pos.Z());
     d_ptr->view->SetAt(lastPoint.X(), lastPoint.Y(), lastPoint.Z());
-    d_ptr->view->SetUp(V3d_Ypos);
 
     //Final
     d_ptr->view->ChangeRenderingParams().IsAntialiasingEnabled = Standard_True;
     d_ptr->view->SetBackgroundColor(BG_CLR);
     d_ptr->view->MustBeResized();
+
+    AIS_InteractiveObject &ais_part = d_ptr->context->getAisPart();
+    Handle(Prs3d_Drawer) drawer = new Prs3d_Drawer();
+    Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
+    aShAspect->SetColor(BG_CLR);
+    drawer->SetShadingAspect(aShAspect);
+
+    Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
+    lAspect->SetColor(FACE_CLR);
+    drawer->SetFaceBoundaryAspect(lAspect);
+    drawer->SetFaceBoundaryDraw(Standard_True);
+    d_ptr->context->context().SetLocalAttributes(&ais_part, drawer, Standard_False);
+    d_ptr->context->context().Redisplay(&ais_part, Standard_True);
 }
 
 void CSnapshotViewport::setScaleWidget(QDoubleSpinBox &box)
@@ -94,16 +112,33 @@ void CSnapshotViewport::setScaleWidget(QDoubleSpinBox &box)
                                  SLOT(slSpinChanged(double)));
 }
 
-void CSnapshotViewport::createSnapshot(const char *fname)
+void CSnapshotViewport::createSnapshot(const char *fname, const size_t width, const size_t height)
 {
     Image_PixMap pix;
     V3d_ImageDumpOptions params;
-    params.Width = width();
-    params.Height = height();
+    params.Width = width;
+    params.Height = height;
     d_ptr->view->ToPixMap(pix, params);
-    Image_AlienPixMap bmpImg;
-    bmpImg.InitCopy(pix);
-    bmpImg.Save(fname);
+
+//    Not working on Windows (possibly due to RGB24 format problem?):
+//    Image_AlienPixMap bmpImg;
+//    bmpImg.InitCopy(pix);
+//    bmpImg.Save(fname);
+
+    QImage img(pix.Width(), pix.Height(), QImage::Format_RGB32);
+    for (Standard_Size y = 0; y < pix.Height(); y++)
+    {
+        uchar * const pRowSrc = pix.ChangeRow(y);
+        uchar * const pRowDest = img.scanLine(y);
+        for (Standard_Size x = 0; x < pix.Width(); x++)
+        {
+            pRowDest[x * 4    ] = pRowSrc[x * 3 + 2];
+            pRowDest[x * 4 + 1] = pRowSrc[x * 3 + 1];
+            pRowDest[x * 4 + 2] = pRowSrc[x * 3 + 0];
+            pRowDest[x * 4 + 3] = 0;
+        }
+    }
+    img.save(fname);
 }
 
 void CSnapshotViewport::setScale(const double scale)

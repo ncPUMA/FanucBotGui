@@ -39,9 +39,11 @@ void CSnapshotDialog::setFileName(const char *fname)
     d_ptr->fName = fname;
 }
 
-void CSnapshotDialog::setScale(const double scale)
+void CSnapshotDialog::init(const double scale, const size_t width, const size_t height)
 {
     ui->viewport->setScale(scale);
+    ui->sbWidth->setValue(static_cast <int> (width));
+    ui->sbHeight->setValue(static_cast <int> (height));
 }
 
 double CSnapshotDialog::getScale() const
@@ -49,9 +51,19 @@ double CSnapshotDialog::getScale() const
     return ui->viewport->getScale();
 }
 
+size_t CSnapshotDialog::getWidth() const
+{
+    return static_cast <size_t> (ui->sbWidth->value());
+}
+
+size_t CSnapshotDialog::getHeight() const
+{
+    return static_cast <size_t> (ui->sbHeight->value());
+}
+
 void CSnapshotDialog::makeSnapshot()
 {
-    ui->viewport->createSnapshot(d_ptr->fName.c_str());
+    ui->viewport->createSnapshot(d_ptr->fName.c_str(), getWidth(), getHeight());
 }
 
 void CSnapshotDialog::slSnapshot()

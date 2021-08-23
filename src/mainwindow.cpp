@@ -268,10 +268,10 @@ private:
         QLabel * const txtAttach = new QLabel(MainWindow::tr(" Захват: "), tBar);
         txtAttach->setFont(fnt);
         txtAttach->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        tBar->addWidget(txtAttach);
+        attachActions << tBar->addWidget(txtAttach);
         attachLamp->setParent(tBar);
         attachLamp->setPixmap(red);
-        tBar->addWidget(attachLamp);
+        attachActions << tBar->addWidget(attachLamp);
     }
 
     void updateBotLamps(const QSize iconSize, const BotSocket::EN_BotState state)
@@ -316,6 +316,7 @@ private:
     CAbstractSettingsStorage *settingsStorage;
 
     QLabel * const stateLamp, * const attachLamp;
+    QList <QAction *> attachActions;
     QTimer * const lampTm;
     CUiIface uiIface;
 };
@@ -341,6 +342,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->wSettings, SIGNAL(sigApplyRequest()), SLOT(slCallibApply()));
 
     ui->teJrnl->document()->setMaximumBlockCount(MAX_JRNL_ROW_COUNT);
+
+    ui->actionPathPoints->setVisible(false);
 }
 
 MainWindow::~MainWindow()
@@ -390,6 +393,9 @@ void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
     ui->wSettings->initFromGuiSettings(settings);
     ui->mainView->setGuiSettings(settings);
     ui->mainView->fitInView();
+
+    foreach(QAction * const action, d_ptr->attachActions)
+        action->setVisible(settings.gripVis);
 }
 
 void MainWindow::setBotSocket(CAbstractBotSocket &botSocket)
@@ -513,16 +519,21 @@ void MainWindow::slCallibCalc()
 
 void MainWindow::slPartPrntScr()
 {
-    const GUI_TYPES::TScale newScale = ui->mainView->partPrntScr();
-    if (ui->mainView->getSnapshotScale() != newScale &&
+    const GUI_TYPES::SGuiSettings oldSettings = ui->mainView->getGuiSettings();
+    const GUI_TYPES::SGuiSettings newSettings = ui->mainView->partPrntScr();
+    const bool needSave =
+            oldSettings.snapshotScale  != newSettings.snapshotScale ||
+            oldSettings.snapshotWidth  != newSettings.snapshotWidth ||
+            oldSettings.snapshotHeight != newSettings.snapshotHeight;
+    if (needSave &&
         QMessageBox::question(this,
                               tr("Снимок детали"),
                               tr("Сохранить новые настройки снимка детали?")) == QMessageBox::Yes)
     {
-        GUI_TYPES::SGuiSettings settings = ui->mainView->getGuiSettings();
-        settings.snapshotScale = newScale;
-        ui->mainView->setSnapshotScale(newScale);
-        d_ptr->settingsStorage->saveGuiSettings(settings);
+        ui->mainView->setSnapshotParams(newSettings.snapshotScale,
+                                        newSettings.snapshotWidth,
+                                        newSettings.snapshotHeight);
+        d_ptr->settingsStorage->saveGuiSettings(newSettings);
     }
 }
 
@@ -536,6 +547,9 @@ void MainWindow::slCallibApply()
     d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   );
 
     d_ptr->settingsStorage->saveGuiSettings(settings);
+
+    foreach(QAction * const action, d_ptr->attachActions)
+        action->setVisible(settings.gripVis);
 }
 
 void MainWindow::slStart()

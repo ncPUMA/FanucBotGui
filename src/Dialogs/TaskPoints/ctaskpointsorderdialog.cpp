@@ -81,7 +81,7 @@ public:
         using namespace GUI_TYPES;
         switch(taskType) {
             case ENBTT_MOVE : result = tr("Перемещение"); break;
-            case ENBTT_DRILL: result = tr("Сверление")  ; break;
+            case ENBTT_DRILL: result = tr("Отверстие")  ; break;
             case ENBTT_MARK : result = tr("Маркировка") ; break;
         }
         return result;

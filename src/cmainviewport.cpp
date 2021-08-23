@@ -107,6 +107,7 @@ class CMainViewportPrivate : public AIS_ViewController
         context->setDisableTepthTestZLayer(zLayerIdWithoutDepthTest);
         context->init(*cntxt);
         view = cntxt->CurrentViewer()->CreateView().get();
+        view->Camera()->SetProjectionType(Graphic3d_Camera::Projection_Perspective);
 
         //Aspect
         aspect = new CAspectWindow(*q_ptr);
@@ -283,9 +284,10 @@ class CMainViewportPrivate : public AIS_ViewController
         context->hideAllAdditionalObjects();
         switch(state) {
             case GUI_TYPES::ENUS_CALIBRATION : context->showCalibObjects(); break;
-            case GUI_TYPES::ENUS_TASK_EDITING: context->showTaskObjects();  break;
-            default: context->resetCursorPosition(); break;
+            default: context->showTaskObjects();
         }
+        context->resetCursorPosition();
+        context->setGripVisible(guiSettings.gripVis, state != GUI_TYPES::ENUS_CALIBRATION);
         view->Redraw();
     }
 
@@ -489,9 +491,12 @@ GUI_TYPES::TMSAA CMainViewport::getMSAA() const
     return static_cast <GUI_TYPES::TMSAA> (d_ptr->view->RenderingParams().NbMsaaSamples);
 }
 
-void CMainViewport::setSnapshotScale(const GUI_TYPES::TScale scale)
+void CMainViewport::setSnapshotParams(const GUI_TYPES::TScale scale,
+                                      const size_t width, const size_t height)
 {
-    d_ptr->guiSettings.snapshotScale = scale;
+    d_ptr->guiSettings.snapshotScale  = scale;
+    d_ptr->guiSettings.snapshotWidth  = width;
+    d_ptr->guiSettings.snapshotHeight = height;
 }
 
 GUI_TYPES::TScale CMainViewport::getSnapshotScale() const
@@ -708,21 +713,30 @@ std::vector<GUI_TYPES::SPathPoint> CMainViewport::getPathPoints() const
     return res;
 }
 
-GUI_TYPES::TScale CMainViewport::partPrntScr()
+GUI_TYPES::SGuiSettings CMainViewport::partPrntScr()
 {
     d_ptr->context->hideAllAdditionalObjects();
+
     CSnapshotDialog dialog(this);
     dialog.setContext(*d_ptr->context);
     dialog.setFileName("partSnapshot.bmp");
-    dialog.setScale(d_ptr->guiSettings.snapshotScale);
+    dialog.init(d_ptr->guiSettings.snapshotScale,
+                d_ptr->guiSettings.snapshotWidth,
+                d_ptr->guiSettings.snapshotHeight);
     dialog.exec();
     switch(d_ptr->uiState) {
         case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
-        case GUI_TYPES::ENUS_TASK_EDITING: d_ptr->context->showTaskObjects();  break;
-        default: d_ptr->context->resetCursorPosition(); break;
+        default: d_ptr->context->showTaskObjects();
     }
+    d_ptr->context->resetCursorPosition();
+    d_ptr->context->setGripVisible(d_ptr->guiSettings.gripVis, d_ptr->uiState != GUI_TYPES::ENUS_CALIBRATION);
     d_ptr->view->Redraw();
-    return dialog.getScale();
+
+    GUI_TYPES::SGuiSettings changedSettings = d_ptr->guiSettings;
+    changedSettings.snapshotScale  = dialog.getScale();
+    changedSettings.snapshotWidth  = dialog.getWidth();
+    changedSettings.snapshotHeight = dialog.getHeight();
+    return changedSettings;
 }
 
 void CMainViewport::makePartSnapshot(const char *fname)
@@ -731,15 +745,18 @@ void CMainViewport::makePartSnapshot(const char *fname)
     CSnapshotDialog dialog(this);
     dialog.setContext(*d_ptr->context);
     dialog.setFileName(fname);
-    dialog.setScale(d_ptr->guiSettings.snapshotScale);
+    dialog.init(d_ptr->guiSettings.snapshotScale,
+                d_ptr->guiSettings.snapshotWidth,
+                d_ptr->guiSettings.snapshotHeight);
     QMetaObject::invokeMethod(&dialog, "makeSnapshot", Qt::QueuedConnection);
     QMetaObject::invokeMethod(&dialog, "reject", Qt::QueuedConnection);
     dialog.exec();
     switch(d_ptr->uiState) {
         case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
-        case GUI_TYPES::ENUS_TASK_EDITING: d_ptr->context->showTaskObjects();  break;
-        default: d_ptr->context->resetCursorPosition(); break;
+        default: d_ptr->context->showTaskObjects();
     }
+    d_ptr->context->resetCursorPosition();
+    d_ptr->context->setGripVisible(d_ptr->guiSettings.gripVis, d_ptr->uiState != GUI_TYPES::ENUS_CALIBRATION);
     d_ptr->view->Redraw();
 }
 
@@ -876,7 +893,7 @@ QString CMainViewport::taskName(const GUI_TYPES::TBotTaskType taskType) const
     using namespace GUI_TYPES;
     const std::map <TBotTaskType, QString> mapNames = {
         { ENBTT_MOVE , tr("Перемещение") },
-        { ENBTT_DRILL, tr("Сверление")   },
+        { ENBTT_DRILL, tr("Отверстие")   },
         { ENBTT_MARK , tr("Маркировка")  }
     };
     return extract_map_value(mapNames, taskType, QString());
@@ -921,25 +938,25 @@ void CMainViewport::fillTaskAddCntxtMenu(QMenu &menu)
         menu.addAction(taskName(ENBTT_MARK),
                        this,
                        &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MARK);
-        menu.addSeparator();
-        menu.addAction(tr("Точка траектории"),
-                       this,
-                       &CMainViewport::slAddPathPoint);
+//        menu.addSeparator();
+//        menu.addAction(tr("Точка траектории"),
+//                       this,
+//                       &CMainViewport::slAddPathPoint);
     }
     else if(d_ptr->context->isDeskDetected()) {
         menu.addAction(taskName(GUI_TYPES::ENBTT_MOVE),
                        this,
                        &CMainViewport::slAddTaskPoint)->setProperty("taskType", GUI_TYPES::ENBTT_MOVE);
-        menu.addSeparator();
-        menu.addAction(tr("Точка траектории"),
-                       this,
-                       &CMainViewport::slAddPathPoint);
+//        menu.addSeparator();
+//        menu.addAction(tr("Точка траектории"),
+//                       this,
+//                       &CMainViewport::slAddPathPoint);
     }
-    else if (d_ptr->context->isGripDetected() || d_ptr->context->isLsrheadDetected()) {
-        menu.addAction(tr("Точка траектории"),
-                       this,
-                       &CMainViewport::slAddPathPoint);
-    }
+//    else if (d_ptr->context->isGripDetected() || d_ptr->context->isLsrheadDetected()) {
+//        menu.addAction(tr("Точка траектории"),
+//                       this,
+//                       &CMainViewport::slAddPathPoint);
+//    }
     else {
         size_t index = 0;
         if (d_ptr->context->isTaskPointDetected(index))

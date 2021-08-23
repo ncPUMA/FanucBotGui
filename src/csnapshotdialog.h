@@ -21,8 +21,10 @@ public:
 
     void setContext(CInteractiveContext &context);
     void setFileName(const char *fname);
-    void setScale(const double scale);
+    void init(const double scale, const size_t width, const size_t height);
     double getScale() const;
+    size_t getWidth() const;
+    size_t getHeight() const;
 
     Q_INVOKABLE void makeSnapshot();
 
