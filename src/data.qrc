@@ -22,5 +22,6 @@
         <file>Data/Models/table_lifted.step</file>
         <file>Data/Models/table_grid_15x15.step</file>
         <file>Data/Models/tool_camera_flir.step</file>
+        <file>Data/Models/plate.stp</file>
     </qresource>
 </RCC>
