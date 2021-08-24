@@ -352,9 +352,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-inline static TopoDS_Shape loadShape(const char *fName) {
+inline static TopoDS_Shape loadShape(const std::string fName) {
     TopoDS_Shape result;
-    QFile modelFile(fName);
+    QFile modelFile(QString::fromStdString(fName));
     if (modelFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         const QByteArray stepData = modelFile.readAll();
         CStepLoader loader;
@@ -369,21 +369,21 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
     ui->mainView->init(driver);
     ui->mainView->setStatsVisible(ui->actionFPS->isChecked());
 
-    //load default models
-    ui->mainView->setPartModel(loadShape(":/Models/Data/Models/turbine_blade.stp"));
-    ui->mainView->setDeskModel(loadShape(":/Models/Data/Models/WTTGA-001 - Configurable Table.stp"));
-    ui->mainView->setLsrheadModel(loadShape(":/Models/Data/Models/Neje tool 30W Laser Module.stp"));
-    ui->mainView->setGripModel(loadShape(":/Models/Data/Models/MHZ2_16D_grip.stp"));
-
-    ui->mainView->setShading(true);
-    ui->mainView->setUiState(GUI_TYPES::ENUS_TASK_EDITING);
-
     ui->mainView->addSubscriber(&d_ptr->uiIface);
 }
 
 void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
 {
     d_ptr->settingsStorage = &storage;
+
+    ui->mainView->setPartModel   (loadShape(storage.loadModelPath(GUI_TYPES::ENMP_PART   )));
+    ui->mainView->setDeskModel   (loadShape(storage.loadModelPath(GUI_TYPES::ENMP_DESK   )));
+    ui->mainView->setLsrheadModel(loadShape(storage.loadModelPath(GUI_TYPES::ENMP_LSRHEAD)));
+    ui->mainView->setGripModel   (loadShape(storage.loadModelPath(GUI_TYPES::ENMP_GRIP   )));
+
+    ui->mainView->setShading(true);
+    ui->mainView->setUiState(GUI_TYPES::ENUS_TASK_EDITING);
+
     const GUI_TYPES::SGuiSettings settings = storage.loadGuiSettings();
     for(auto pair : d_ptr->mapMsaa) {
         pair.second->blockSignals(true);

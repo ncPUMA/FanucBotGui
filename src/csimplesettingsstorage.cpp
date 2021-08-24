@@ -70,6 +70,12 @@ enum EN_GuiKeys
     ENGK_SNAP_WIDTH,
     ENGK_SNAP_HEIGHT,
 
+    //Models
+    ENGK_MDL_PART,
+    ENGK_MDL_GRIP,
+    ENGK_MDL_DESK,
+    ENGK_MDL_LHEAD,
+
     ENGK_LAST
 };
 typedef int TGuiKey;
@@ -131,7 +137,12 @@ static const std::map <TGuiKey, QString> guiKeyMap = {
     { ENGK_GRIP_ROTATE_Y , "grip/rotate_y" },
     { ENGK_GRIP_ROTATE_Z , "grip/rotate_z" },
     { ENGK_GRIP_SCALE    , "grip/scale"    },
-    { ENGK_GRIP_VIS      , "grip/vis"      }
+    { ENGK_GRIP_VIS      , "grip/vis"      },
+    //Models
+    { ENGK_MDL_PART , "model/part" },
+    { ENGK_MDL_GRIP , "model/grip" },
+    { ENGK_MDL_DESK , "model/desk" },
+    { ENGK_MDL_LHEAD, "model/lhead" }
 };
 
 class CSimpleSettingsStoragePrivate
@@ -279,6 +290,43 @@ public:
         writeGuiValue(ENGK_GRIP_VIS     , settings.gripVis);
     }
 
+    inline static std::string defMdlName(const GUI_TYPES::EN_ModelPurpose model) {
+        switch(model) {
+            using namespace GUI_TYPES;
+            case ENMP_DESK   : return ":/Models/Data/Models/table_lifted.step";
+            case ENMP_PART   : return ":/Models/Data/Models/turbine_blade.stp";
+            case ENMP_LSRHEAD: return ":/Models/Data/Models/tool_camera_flir.step";
+            case ENMP_GRIP   : return ":/Models/Data/Models/MHZ2_16D_grip.stp";
+        }
+        assert(false);
+        return std::string();
+    }
+
+    inline static EN_GuiKeys keyForMdl(const GUI_TYPES::EN_ModelPurpose model) {
+        switch(model) {
+            using namespace GUI_TYPES;
+            case ENMP_DESK   : return ENGK_MDL_DESK;
+            case ENMP_PART   : return ENGK_MDL_PART;
+            case ENMP_LSRHEAD: return ENGK_MDL_LHEAD;
+            case ENMP_GRIP   : return ENGK_MDL_GRIP;
+        }
+        return ENGK_LAST;
+    }
+
+    std::string loadModelPath(const GUI_TYPES::EN_ModelPurpose model) {
+        std::string result = defMdlName(model);
+        auto it = guiKeyMap.find(keyForMdl(model));
+        if (it != guiKeyMap.cend()) {
+            settingsFile->beginGroup(GUI_PREFIX);
+            if (!settingsFile->contains(it->second))
+                settingsFile->setValue(it->second, QString::fromStdString(result));
+            else
+                result = settingsFile->value(it->second).toString().toStdString();
+            settingsFile->endGroup();
+        }
+        return result;
+    }
+
 private:
     template <typename T>
     T readGuiValue(const TGuiKey key) const {
@@ -327,4 +375,9 @@ GUI_TYPES::SGuiSettings CSimpleSettingsStorage::loadGuiSettings()
 void CSimpleSettingsStorage::saveGuiSettings(const GUI_TYPES::SGuiSettings &settings)
 {
     d_ptr->saveGuiSettings(settings);
+}
+
+std::string CSimpleSettingsStorage::loadModelPath(const GUI_TYPES::EN_ModelPurpose model)
+{
+    return d_ptr->loadModelPath(model);
 }

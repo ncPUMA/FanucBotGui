@@ -117,6 +117,14 @@ inline static Value extract_map_value(const Map &map,
     return res;
 }
 
+enum EN_ModelPurpose
+{
+    ENMP_DESK,
+    ENMP_PART,
+    ENMP_LSRHEAD,
+    ENMP_GRIP
+};
+
 }
 
 #endif // GUI_TYPES_H

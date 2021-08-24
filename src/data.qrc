@@ -19,5 +19,8 @@
         <file>Data/Models/WTTGA-001 - Configurable Table.stp</file>
         <file>Data/Models/Neje tool 30W Laser Module.stp</file>
         <file>Data/Models/MHZ2_16D_grip.stp</file>
+        <file>Data/Models/table_lifted.step</file>
+        <file>Data/Models/table_grid_15x15.step</file>
+        <file>Data/Models/tool_camera_flir.step</file>
     </qresource>
 </RCC>

@@ -107,7 +107,6 @@ class CMainViewportPrivate : public AIS_ViewController
         context->setDisableTepthTestZLayer(zLayerIdWithoutDepthTest);
         context->init(*cntxt);
         view = cntxt->CurrentViewer()->CreateView().get();
-        view->Camera()->SetProjectionType(Graphic3d_Camera::Projection_Perspective);
 
         //Aspect
         aspect = new CAspectWindow(*q_ptr);

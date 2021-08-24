@@ -122,6 +122,9 @@ DISTFILES += \
     Data/Models/WTTGA-001 - Configurable Table.stp \
     Data/Models/gripper_v1.step \
     Data/Models/plate.stp \
+    Data/Models/table_grid_15x15.step \
+    Data/Models/table_lifted.step \
+    Data/Models/tool_camera_flir.step \
     Data/Models/turbine_blade.stp \
     Data/StyleSheets/style.qss \
     ../LICENSE \
