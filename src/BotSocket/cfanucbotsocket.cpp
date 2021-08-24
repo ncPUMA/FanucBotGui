@@ -99,7 +99,7 @@ xyzwpr_data botposition2xyzwpr(const GUI_TYPES::SVertex &pos, const GUI_TYPES::S
 
 void CFanucBotSocket::updatePosition(const xyzwpr_data &pos)
 {
-    gripPositionChanged(xyzwpr2botposition(pos, world2user_));
+    laserHeadPositionChanged(xyzwpr2botposition(pos, world2user_));
 }
 
 void CFanucBotSocket::prepare(const std::vector <GUI_TYPES::STaskPoint> &)
