@@ -146,8 +146,7 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
                 break;
 
             LOG_F(INFO, "Task %d: %f %f %f %f %f %f", p.taskType, p.globalPos.x, p.globalPos.y, p.globalPos.z, p.angle.x, p.angle.y, p.angle.z);
-            if(p.taskType == GUI_TYPES::ENBTT_MOVE)
-                path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
+            path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
 
             it = curTask.erase(it);
         }
