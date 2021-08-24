@@ -34,7 +34,7 @@
      <widget class="QWidget" name="scrollAreaWidgetContents">
       <property name="geometry">
        <rect>
-        <x>-411</x>
+        <x>-497</x>
         <y>0</y>
         <width>2329</width>
         <height>224</height>
@@ -958,7 +958,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Длинна луча</string>
+               <string>Длина луча</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
