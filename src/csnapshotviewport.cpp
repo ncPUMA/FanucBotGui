@@ -95,6 +95,7 @@ void CSnapshotViewport::setContext(CInteractiveContext &context)
     Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
     aShAspect->SetColor(BG_CLR);
     drawer->SetShadingAspect(aShAspect);
+    drawer->SetShadingModel(Graphic3d_TOSM_UNLIT);
 
     Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
     lAspect->SetColor(FACE_CLR);
