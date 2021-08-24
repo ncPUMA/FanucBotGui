@@ -8,8 +8,7 @@
 #include <AIS_InteractiveContext.hxx>
 #include <V3d_View.hxx>
 #include <AIS_ViewController.hxx>
-
-//#include <Image_AlienPixMap.hxx>
+#include <gp_Quaternion.hxx>
 
 #include "cinteractivecontext.h"
 #include "caspectwindow.h"
@@ -84,7 +83,11 @@ void CSnapshotViewport::setContext(CInteractiveContext &context)
     lastPoint.Translate(len * gp_Vec(dir));
     d_ptr->view->SetEye(pos.X(), pos.Y(), pos.Z());
     d_ptr->view->SetAt(lastPoint.X(), lastPoint.Y(), lastPoint.Z());
-    d_ptr->view->Rotate(V3d_Z, M_PI_2);
+    const gp_Trsf trsf = d_ptr->context->getLsrHeadTransform();
+    const gp_Quaternion rotation = trsf.GetRotation();
+    Standard_Real alpha, beta, gamma;
+    rotation.GetEulerAngles(gp_Extrinsic_XYZ, alpha, beta, gamma);
+    d_ptr->view->Rotate(V3d_Z, M_PI_2 + gamma);
 
     //Final
     d_ptr->view->ChangeRenderingParams().IsAntialiasingEnabled = Standard_True;
@@ -121,11 +124,6 @@ void CSnapshotViewport::createSnapshot(const char *fname, const size_t width, co
     params.Width = width;
     params.Height = height;
     d_ptr->view->ToPixMap(pix, params);
-
-//    Not working on Windows (possibly due to RGB24 format problem?):
-//    Image_AlienPixMap bmpImg;
-//    bmpImg.InitCopy(pix);
-//    bmpImg.Save(fname);
 
     QImage img(pix.Width(), pix.Height(), QImage::Format_RGB32);
     for (Standard_Size y = 0; y < pix.Height(); y++)
