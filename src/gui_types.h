@@ -40,6 +40,7 @@ typedef int TBotTaskType;
 typedef double TDistance;
 typedef double TDegree;
 typedef double TScale;
+typedef double TDelay;
 
 struct SVertex
 {
@@ -87,6 +88,7 @@ struct STaskPoint
     STaskPoint() :
         taskType(ENBTT_MOVE),
         normal(SVertex(0., 0., 1.)),
+        delay(0.),
         zSimmetry(false),
         bNeedCalib(false) { }
 
@@ -94,6 +96,7 @@ struct STaskPoint
     SVertex globalPos;
     SRotationAngle angle;
     SVertex normal;
+    TDelay delay;
     bool zSimmetry;
     bool bNeedCalib;
 };
