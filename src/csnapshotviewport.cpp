@@ -84,6 +84,7 @@ void CSnapshotViewport::setContext(CInteractiveContext &context)
     lastPoint.Translate(len * gp_Vec(dir));
     d_ptr->view->SetEye(pos.X(), pos.Y(), pos.Z());
     d_ptr->view->SetAt(lastPoint.X(), lastPoint.Y(), lastPoint.Z());
+    d_ptr->view->Rotate(V3d_Z, M_PI_2);
 
     //Final
     d_ptr->view->ChangeRenderingParams().IsAntialiasingEnabled = Standard_True;
