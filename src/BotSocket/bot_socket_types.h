@@ -33,7 +33,7 @@ struct SBotPosition
     inline bool isEqual(const SBotPosition &other,
                         const TDistance distPrecision = 0., const TDegree rotPrecition = 0.) const {
         if (globalPos.isEqual(other.globalPos, distPrecision) &&
-                globalRotation.isEqual(globalRotation, rotPrecition))
+                globalRotation.isEqual(other.globalRotation, rotPrecition))
             return true;
         return false;
     }
