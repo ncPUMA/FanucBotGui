@@ -116,6 +116,7 @@ DISTFILES += \
     Data/Icons/stop.png \
     Data/Lamps/green.png \
     Data/Lamps/red.png \
+    Data/Models/45deg AdjMirr Adapter Left Rev1.STEP \
     Data/Models/LDLSR30w.STEP \
     Data/Models/MHZ2_16D_grip.stp \
     Data/Models/Neje tool 30W Laser Module.stp \

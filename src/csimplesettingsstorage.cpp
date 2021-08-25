@@ -294,7 +294,7 @@ public:
         switch(model) {
             using namespace GUI_TYPES;
             case ENMP_DESK   : return ":/Models/Data/Models/table_lifted.step";
-            case ENMP_PART   : return ":/Models/Data/Models/turbine_blade.stp";
+            case ENMP_PART   : return ":/Models/Data/Models/45deg AdjMirr Adapter Left Rev1.STEP";
             case ENMP_LSRHEAD: return ":/Models/Data/Models/tool_camera_flir.step";
             case ENMP_GRIP   : return ":/Models/Data/Models/MHZ2_16D_grip.stp";
         }

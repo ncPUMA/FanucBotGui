@@ -1002,7 +1002,7 @@ void CMainViewport::slAddCalibPoint()
     initPoint.globalPos.x = cursorPos.X();
     initPoint.globalPos.y = cursorPos.Y();
     initPoint.globalPos.z = cursorPos.Z();
-    initPoint.botPos      = d_ptr->gripPos.globalPos;
+    initPoint.botPos      = d_ptr->lheadPos.globalPos;
     CAddCalibPointDialog dialog(this, initPoint);
     if (dialog.exec() == QDialog::Accepted)
     {
