@@ -78,16 +78,25 @@ void CSnapshotViewport::setContext(CInteractiveContext &context)
     gp_Dir dir;
     Standard_Real len;
     d_ptr->context->getLaserLine(pos, dir, len);
+
+    /**
+     *  TODO: parametrize camera distance (e.g. 80 mm)
+     *        (plays a role when we look towards physycally-inspired
+     *                                     rendering and perspective)
+     */
+    Standard_Real len_cam = 0;
+
+    pos.Translate(-len_cam * gp_Vec(dir));
+    d_ptr->view->SetEye(pos.X(), pos.Y(), pos.Z());
     pos.Translate(len * gp_Vec(dir));
     gp_Pnt lastPoint = pos;
-    lastPoint.Translate(len * gp_Vec(dir));
-    d_ptr->view->SetEye(pos.X(), pos.Y(), pos.Z());
     d_ptr->view->SetAt(lastPoint.X(), lastPoint.Y(), lastPoint.Z());
+
     const gp_Trsf trsf = d_ptr->context->getLsrHeadTransform();
     const gp_Quaternion rotation = trsf.GetRotation();
-    Standard_Real alpha, beta, gamma;
-    rotation.GetEulerAngles(gp_Extrinsic_XYZ, alpha, beta, gamma);
-    d_ptr->view->Rotate(V3d_Z, M_PI_2 + gamma);
+    gp_Vec orient(1, 0, 0);
+    const gp_Vec orient_rot = rotation.Multiply(orient);
+    d_ptr->view->SetUp(orient_rot.X(), orient_rot.Y(), orient_rot.Z());
 
     //Final
     d_ptr->view->ChangeRenderingParams().IsAntialiasingEnabled = Standard_True;
