@@ -35,9 +35,10 @@
 
 static constexpr double DEGREE_K = M_PI / 180.;
 
-static const Quantity_Color TXT_CLR  = Quantity_Color( .15    ,  .15    , 0.15   , Quantity_TOC_RGB);
+static const Quantity_Color TXT_CLR  = Quantity_Color( .05    ,  .05    , 0.05   , Quantity_TOC_RGB);
 static const Quantity_Color FACE_CLR = Quantity_Color(0.1     , 0.1     , 0.1    , Quantity_TOC_RGB);
 static const Quantity_Color PART_CLR = Quantity_Color(0.570482, 0.283555, 0.12335, Quantity_TOC_RGB);
+static const Quantity_Color PNT_CLR  = Quantity_Color( .05    ,  .05    ,  .05   , Quantity_TOC_RGB);
 
 class CInteractiveContextPrivate
 {
@@ -401,7 +402,9 @@ private:
         scpnt.botPos = calibPoint.botPos;
         const gp_Pnt globalPos(calibPoint.globalPos.x, calibPoint.globalPos.y, calibPoint.globalPos.z);
         scpnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
+        scpnt.pnt->SetColor(PNT_CLR);
         scpnt.pntLbl = new AIS_TextLabel();
+        scpnt.pntLbl->SetColor(TXT_CLR);
         scpnt.pntLbl->SetPosition(globalPos);
         std::stringstream ss;
         ss << "C" << calibPoints.size() + 1;
@@ -460,7 +463,9 @@ private:
         stpnt.task = taskPoint;
         const gp_Pnt globalPos(taskPoint.globalPos.x, taskPoint.globalPos.y, taskPoint.globalPos.z);
         stpnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
+        stpnt.pnt->SetColor(PNT_CLR);
         stpnt.pntLbl = new AIS_TextLabel();
+        stpnt.pntLbl->SetColor(TXT_CLR);
         stpnt.pntLbl->SetPosition(globalPos);
         const std::string txt = taskPointName(taskPoints.size(), taskPoint.taskType);
         stpnt.pntLbl->SetText(TCollection_ExtendedString(txt.c_str(), Standard_True));
@@ -545,7 +550,9 @@ private:
         sppnt.angle = pathPoint.angle;
         const gp_Pnt globalPos(pathPoint.globalPos.x, pathPoint.globalPos.y, pathPoint.globalPos.z);
         sppnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
+        sppnt.pnt->SetColor(PNT_CLR);
         sppnt.pntLbl = new AIS_TextLabel();
+        sppnt.pntLbl->SetColor(TXT_CLR);
         sppnt.pntLbl->SetPosition(globalPos);
         std::stringstream ss;
         ss << "P" << pathPoints.size() + 1;
