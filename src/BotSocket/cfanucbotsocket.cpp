@@ -199,7 +199,7 @@ void CFanucBotSocket::slCalibWaitTimeout()
         if (calibResFile.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             QTextStream in(&calibResFile);
-            QStringList line = in.readLine().split(" ");
+            QStringList line = in.readLine().split(";");
             calibResFile.close();
 
             if (line.size() > 2)
