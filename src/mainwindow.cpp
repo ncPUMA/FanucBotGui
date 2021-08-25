@@ -538,6 +538,7 @@ void MainWindow::slPartPrntScr()
                                         newSettings.snapshotWidth,
                                         newSettings.snapshotHeight);
         d_ptr->settingsStorage->saveGuiSettings(newSettings);
+        ui->wSettings->initFromGuiSettings(newSettings);
     }
 }
 
