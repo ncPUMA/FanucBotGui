@@ -759,6 +759,34 @@ void CMainViewport::makePartSnapshot(const char *fname)
     d_ptr->view->Redraw();
 }
 
+template <typename T>
+inline static std::vector <T> movedPoints(const std::vector <T> points,
+                                          const gp_Vec &globalDelta)
+{
+    std::vector <T> result(points);
+    for(auto &p : result)
+    {
+        p.globalPos.x += globalDelta.X();
+        p.globalPos.y += globalDelta.Y();
+        p.globalPos.z += globalDelta.Z();
+    }
+    return result;
+}
+
+void CMainViewport::makeCorrectionBySnapshot(const gp_Vec &globalDelta)
+{
+    //Part correction
+    d_ptr->guiSettings.partTrX += globalDelta.X();
+    d_ptr->guiSettings.partTrY += globalDelta.Y();
+    d_ptr->guiSettings.partTrZ += globalDelta.Z();
+    d_ptr->context->setPartMdlTransform(d_ptr->calcPartTrsf());
+
+    //Points correction
+    setCalibrationPoints(movedPoints(getCallibrationLocalPoints(), globalDelta));
+    setTaskPoints(movedPoints(getTaskPoints(), globalDelta));
+    setPathPoints(movedPoints(getPathPoints(), globalDelta));
+}
+
 QPaintEngine *CMainViewport::paintEngine() const
 {
     return nullptr;

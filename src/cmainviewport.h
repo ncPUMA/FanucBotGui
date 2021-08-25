@@ -102,6 +102,7 @@ public:
 
     GUI_TYPES::SGuiSettings partPrntScr();
     void makePartSnapshot(const char *fname);
+    void makeCorrectionBySnapshot(const gp_Vec &globalDelta);
 
 protected:
     QPaintEngine* paintEngine() const final;

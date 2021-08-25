@@ -32,14 +32,14 @@ private:
 
 private:
     void completePath(const BotSocket::EN_WorkResult result);
-    void startCalib();
-    void calibFinish(const gp_Trsf &delta);
+    void calibFinish(const gp_Vec &delta);
 
 private slots:
     void slCalibWaitTimeout();
 
 private:
     std::vector <GUI_TYPES::STaskPoint> curTask;
+    int lastTaskDelay;
     int calibWaitCounter;
 };
 

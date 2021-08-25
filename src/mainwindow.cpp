@@ -212,6 +212,10 @@ protected:
         viewport->makePartSnapshot(fname);
     }
 
+    void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta) final {
+        viewport->makeCorrectionBySnapshot(globalDelta);
+    }
+
 private:
     CMainViewport *viewport;
     QTextEdit *jrnl;

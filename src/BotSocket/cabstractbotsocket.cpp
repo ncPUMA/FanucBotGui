@@ -20,6 +20,7 @@ protected:
     void shapeTransformChanged(const BotSocket::EN_ShapeType, const gp_Trsf &) final {}
 
     void makePartSnapshot(const char *) final { }
+    void snapshotCalibrationDataRecieved(const gp_Vec &) final { }
 private:
     TopoDS_Shape shape;
     gp_Trsf transform;
@@ -86,4 +87,9 @@ const gp_Trsf &CAbstractBotSocket::getShapeTransform(const BotSocket::EN_ShapeTy
 void CAbstractBotSocket::makePartSnapshot(const char *fname)
 {
     ui->makePartSnapshot(fname);
+}
+
+void CAbstractBotSocket::snapshotCalibrationDataRecieved(const gp_Vec &globalDelta)
+{
+    ui->snapshotCalibrationDataRecieved(globalDelta);
 }

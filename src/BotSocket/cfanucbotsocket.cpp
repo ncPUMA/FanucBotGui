@@ -6,11 +6,14 @@
 #include <QTextStream>
 #include <QStringList>
 
+#include <Precision.hxx>
+
 #include "../PartReference/pointpairspartreferencer.h"
 #include "../log/loguru.hpp"
 
 CFanucBotSocket::CFanucBotSocket() :
     CAbstractBotSocket(),
+    lastTaskDelay(0),
     calibWaitCounter(0)
 {
     VLOG_CALL;
@@ -51,10 +54,10 @@ CFanucBotSocket::CFanucBotSocket() :
     connect(&fanuc_relay_, &FanucRelaySocket::connection_state_changed, this, &CFanucBotSocket::updateConnectionState);
     // TODO: another signal / monitor position
     connect(&fanuc_relay_, &FanucRelaySocket::trajectory_enqueue_finished, this, [&](){
-        tasksComplete(BotSocket::ENWR_OK);
+        completePath(BotSocket::ENWR_OK);
     });
     connect(&fanuc_relay_, &FanucRelaySocket::trajectory_xyzwpr_point_enqueue_fail, this, [&](){
-        tasksComplete(BotSocket::ENWR_ERROR);
+        completePath(BotSocket::ENWR_ERROR);
     });
 }
 
@@ -133,46 +136,53 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
     if (p.bNeedCalib)
     {
         p.bNeedCalib = false;
-        startCalib();
+        QFile calibResFile("calib_result.txt");
+        if (calibResFile.exists())
+            calibResFile.remove();
+
+        makePartSnapshot("snapshot.bmp");
+
+        calibWaitCounter = 0;
+        QTimer::singleShot(1000, this, &CFanucBotSocket::slCalibWaitTimeout);
+    }
+    else if(lastTaskDelay > 0)
+    {
+        QTimer::singleShot(lastTaskDelay, this, [&]() {
+            completePath(BotSocket::ENWR_OK);
+        });
+        lastTaskDelay = 0;
     }
     else
     {
         std::vector<xyzwpr_data> path;
         auto it = curTask.begin();
-        while(it != curTask.end())
-        {
-            const GUI_TYPES::STaskPoint &p = *it;
-            if (p.bNeedCalib)
-                break;
-
-            LOG_F(INFO, "Task %d: %f %f %f %f %f %f", p.taskType, p.globalPos.x, p.globalPos.y, p.globalPos.z, p.angle.x, p.angle.y, p.angle.z);
-            path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
-
-            it = curTask.erase(it);
-        }
-
+        LOG_F(INFO, "Task %d: %f %f %f %f %f %f",
+              p.taskType,
+              p.globalPos.x, p.globalPos.y, p.globalPos.z,
+              p.angle.x, p.angle.y, p.angle.z);
+        path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
+        lastTaskDelay = static_cast <int> (p.delay * 1000.);
+        it = curTask.erase(it);
         fanuc_relay_.move_trajectory(path);
     }
 }
 
-void CFanucBotSocket::startCalib()
+void CFanucBotSocket::calibFinish(const gp_Vec &delta)
 {
-    makePartSnapshot("snapshot.bmp");
-
-    QFile calibResFile("calib_result.txt");
-    if (calibResFile.exists())
-        calibResFile.remove();
-
-    calibWaitCounter = 0;
-    QTimer::singleShot(1000, this, &CFanucBotSocket::slCalibWaitTimeout);
-}
-
-void CFanucBotSocket::calibFinish(const gp_Trsf &delta)
-{
-    gp_Trsf modelPos = getShapeTransform(BotSocket::ENST_PART);
-    gp_Trsf newTransform = modelPos * delta;
-    if (!modelPos.TranslationPart().IsEqual(newTransform.TranslationPart(), gp::Resolution()))
-        CAbstractBotSocket::shapeTransformChanged(BotSocket::ENST_PART, newTransform);
+    if (!delta.IsEqual(gp_Vec(), Precision::Confusion(), Precision::Angular()))
+    {
+        //Current task correction
+        gp_Trsf lHeadPos = getShapeTransform(BotSocket::ENST_LSRHEAD);
+        gp_Quaternion quatLsrHead = lHeadPos.GetRotation();
+        const gp_Vec rotatedDelta = quatLsrHead.Multiply(delta);
+        for (auto &p : curTask)
+        {
+            p.globalPos.x += rotatedDelta.X();
+            p.globalPos.y += rotatedDelta.Y();
+            p.globalPos.z += rotatedDelta.Z();
+        }
+        snapshotCalibrationDataRecieved(rotatedDelta);
+    }
     completePath(BotSocket::ENWR_OK);
 }
 
@@ -190,12 +200,12 @@ void CFanucBotSocket::slCalibWaitTimeout()
         else
         {
             calibWaitCounter = 0;
-            calibFinish(gp_Trsf());
+            calibFinish(gp_Vec());
         }
     }
     else
     {
-        gp_Trsf delta;
+        gp_Vec delta;
         if (calibResFile.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             QTextStream in(&calibResFile);
@@ -203,11 +213,9 @@ void CFanucBotSocket::slCalibWaitTimeout()
             calibResFile.close();
 
             if (line.size() > 2)
-            {
-                gp_Pnt pnt(line.at(0).toDouble(), line.at(1).toDouble(), line.at(2).toDouble());
-                gp_Trsf delta;
-                delta.SetTranslation(gp_Pnt(), pnt);
-            }
+                delta = gp_Vec(line.at(0).toDouble(),
+                               line.at(1).toDouble(),
+                               line.at(2).toDouble());
         }
         calibFinish(delta);
     }
