@@ -527,6 +527,7 @@ private:
         STaskPoint &stpnt = taskPoints[index];
         context->Remove(stpnt.pnt, Standard_False);
         context->Remove(stpnt.pntLbl, Standard_False);
+        context->Remove(stpnt.tPnt, Standard_False);
         taskPoints.erase(taskPoints.cbegin() + index);
         for(size_t i = 0; i < taskPoints.size(); ++i)
         {
