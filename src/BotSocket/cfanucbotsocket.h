@@ -41,6 +41,7 @@ private:
     std::vector <GUI_TYPES::STaskPoint> curTask;
     int lastTaskDelay;
     int calibWaitCounter;
+    bool bNeedCalib;
 };
 
 #endif // CFANUCBOTSOCKET_H
