@@ -653,7 +653,6 @@ void CMainViewport::setCalibrationPoints(const std::vector<GUI_TYPES::SCalibPoin
     for (const auto &pnt : points)
         d_ptr->context->appendCalibPoint(pnt);
     d_ptr->viewer->Redraw();
-    setCalibResult(BotSocket::ENCR_FALL);
 }
 
 std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
