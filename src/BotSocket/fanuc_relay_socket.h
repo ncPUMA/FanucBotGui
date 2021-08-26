@@ -47,5 +47,5 @@ private:
     std::vector<joint_data> path_joint_;
     std::vector<xyzwpr_data> path_xyzwpr_;
     simple_message::int_t path_idx_;
-    simple_message::int_t prefix1 = 0, prefix2 = 0;
+    simple_message::int_t prefix1_ = 0, prefix2_ = 0;
 };

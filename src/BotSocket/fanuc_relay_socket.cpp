@@ -280,10 +280,10 @@ void FanucRelaySocket::start_connection()
         bigendian_ = settings.value("bigendian", false).toBool();
         QString host = settings.value("server_ip", "127.0.0.1").toString();
         int port = settings.value("server_relay_port", 11000).toInt();
-        prefix1 = settings.value("prefix1", prefix1).toInt();
-        prefix2 = settings.value("prefix2", prefix2).toInt();
+        prefix1_ = settings.value("prefix1", prefix1_).toInt();
+        prefix2_ = settings.value("prefix2", prefix2_).toInt();
         LOG_F(INFO, "Connecting to %s:%d", host.toLocal8Bit().data(), port);
-        LOG_F(INFO, "Bigendian: %d, prefix1: %d, prefix2: %d", bigendian_, prefix1, prefix2);
+        LOG_F(INFO, "Bigendian: %d, prefix1: %d, prefix2: %d", bigendian_, prefix1_, prefix2_);
 
         socket_.connectToHost(host, port);
     }
@@ -391,8 +391,8 @@ void FanucRelaySocket::move_point(const xyzwpr_data &pos, int sequence_number)
     }
     for(int i=0; i<6; i++)
         cmd.xyz_data.xyzwpr[i] = pos.xyzwpr[i];
-    cmd.xyz_data.prefix1 = prefix1;
-    cmd.xyz_data.prefix2 = prefix2;
+    cmd.xyz_data.prefix1 = prefix1_;
+    cmd.xyz_data.prefix2 = prefix2_;
     LOG_F(INFO, "XYZWPR TRAJ PT: i=%d X=%f Y=%f Z=%f W=%f P=%f R=%f", cmd.sequence, pos.xyzwpr[0], pos.xyzwpr[1], pos.xyzwpr[2],
                                                                                     pos.xyzwpr[3], pos.xyzwpr[4], pos.xyzwpr[5]);
     if(!send_cmd(cmd))

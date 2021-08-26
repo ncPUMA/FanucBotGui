@@ -43,6 +43,9 @@ CFanucBotSocket::CFanucBotSocket() :
                                   u2w_d[8],u2w_d[9],u2w_d[10],u2w_d[11]);
         }
     }
+    flip_ = settings.value("flip", flip_).toBool();
+    up_ = settings.value("up", up_).toBool();
+    top_ = settings.value("top", top_).toBool();
 
     connect(&fanuc_state_, &FanucStateSocket::xyzwpr_position_received, this, &CFanucBotSocket::updatePosition);
 
@@ -94,10 +97,34 @@ BotSocket::SBotPosition xyzwpr2botposition(const xyzwpr_data &pos, const gp_Trsf
     return BotSocket::SBotPosition(p.xyzwpr[0], p.xyzwpr[1], p.xyzwpr[2], p.xyzwpr[3], p.xyzwpr[4], p.xyzwpr[5]);
 }
 
-xyzwpr_data botposition2xyzwpr(const GUI_TYPES::SVertex &pos, const GUI_TYPES::SRotationAngle &angle, const gp_Trsf &user2world)
+xyzwpr_data botposition2xyzwpr(const GUI_TYPES::STaskPoint &pos, const gp_Trsf &user2world)
 {
     xyzwpr_data p;
-    p.xyzwpr = {pos.x, pos.y, pos.z, angle.x, angle.y, angle.z};
+
+    //normal represent as the ZAxis
+    gp_Dir zDir(pos.normal.x, pos.normal.y, pos.normal.z);
+
+    //normal rotation angles from global coord system
+    gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
+
+    //delta rotation from global coord system
+    gp_Quaternion delta;
+    delta.SetEulerAngles(gp_Extrinsic_XYZ,
+                         pos.angle.x * M_PI / 180.,
+                         pos.angle.y * M_PI / 180.,
+                         pos.angle.z * M_PI / 180.);
+
+    //final rotation from global coord system
+    gp_Quaternion finalRotationZAxis = normal * delta;
+
+    double ax = 0, ay = 0, az = 0;
+    finalRotationZAxis.GetEulerAngles(gp_Extrinsic_XYZ,
+                         ax,
+                         ay,
+                         az);
+
+    p.xyzwpr = {pos.globalPos.x, pos.globalPos.y, pos.globalPos.z, ax * 180/M_PI, ay * 180/M_PI, az * 180/M_PI};
+
     return transform(p, user2world);
 }
 
@@ -127,12 +154,6 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
         return;
     }
 
-    if (curTask.empty())
-    {
-        tasksComplete(result); //result == BotSocket::ENWR_OK
-        return;
-    }
-
     if (bNeedCalib)
     {
         bNeedCalib = false;
@@ -152,19 +173,28 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
         });
         lastTaskDelay = 0;
     }
+    else if (curTask.empty())
+    {
+        tasksComplete(result); //result == BotSocket::ENWR_OK
+        return;
+    }
     else
     {
-        std::vector<xyzwpr_data> path;
         GUI_TYPES::STaskPoint &p = curTask.front();
-        LOG_F(INFO, "Task %d: %f %f %f %f %f %f",
+        LOG_F(INFO, "Task %d: xyz = %f %f %f normal = %f %f %f angle = %f %f %f",
               p.taskType,
               p.globalPos.x, p.globalPos.y, p.globalPos.z,
+              p.normal.x, p.normal.y, p.normal.z,
               p.angle.x, p.angle.y, p.angle.z);
-        path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
+
+        xyzwpr_data point = botposition2xyzwpr(p, user2world_);
+        point.flip = flip_;
+        point.up = up_;
+        point.top = top_;
         lastTaskDelay = static_cast <int> (p.delay * 1000.);
-        bNeedCalib = curTask.bNeedCalib;
+        bNeedCalib = p.bNeedCalib;
         curTask.erase(curTask.begin());
-        fanuc_relay_.move_trajectory(path);
+        fanuc_relay_.move_point(point);
     }
 }
 
@@ -259,9 +289,7 @@ BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI
         r.y *= 180. / M_PI;
         r.z *= 180. / M_PI;
 
-        // TODO: update part model here
         BotSocket::SBotPosition part_position(translation.X(), translation.Y(), translation.Z(), r.x, r.y, r.z);
-
         shapeCalibrationChanged(BotSocket::ENST_PART, part_position);
 
         return BotSocket::ENCR_OK;
@@ -274,39 +302,6 @@ void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &,
 {
     VLOG_CALL;
 
-    /**
-      Rotation extracting example
-
-    for(const GUI_TYPES::STaskPoint &stpnt : taskPoints)
-    {
-        //normal represent as the ZAxis
-        gp_Dir zDir(stpnt.normal.x, stpnt.normal.y, stpnt.normal.z);
-
-        //normal rotation angles from global coord system
-        gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
-
-        //delta rotation from global coord system
-        gp_Quaternion delta;
-        delta.SetEulerAngles(gp_Extrinsic_XYZ,
-                             stpnt.angle.x * M_PI / 180.,
-                             stpnt.angle.y * M_PI / 180.,
-                             stpnt.angle.z * M_PI / 180.);
-
-        //final rotation from global coord system
-        gp_Quaternion finalRotationZAxis = normal * delta;
-    }
-    */
-
-//    std::vector<xyzwpr_data> path;
-//    path.reserve(taskPoints.size());
-//    for(GUI_TYPES::STaskPoint p : taskPoints)
-//    {
-//        LOG_F(INFO, "Task %d: %f %f %f %f %f %f", p.taskType, p.globalPos.x, p.globalPos.y, p.globalPos.z, p.angle.x, p.angle.y, p.angle.z);
-//        if(p.taskType == GUI_TYPES::ENBTT_MOVE)
-//            path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
-//    }
-
-//    fanuc_relay_.move_trajectory(path);
     curTask = taskPoints;
     bNeedCalib = false;
     lastTaskDelay = 0;

@@ -26,6 +26,7 @@ private:
     FanucRelaySocket fanuc_relay_;
 
     gp_Trsf world2user_, user2world_;
+    bool flip_ = false, up_ = true, top_ = true;
 
     void updatePosition(const xyzwpr_data &pos);
     void updateConnectionState();
