@@ -313,6 +313,7 @@ private:
         for(auto stpnt : taskPoints) {
             context->Erase(stpnt.pnt, Standard_False);
             context->Erase(stpnt.pntLbl, Standard_False);
+            context->Erase(stpnt.tPnt, Standard_False);
         }
         for(auto sppnt : pathPoints) {
             context->Erase(sppnt.pnt, Standard_False);
@@ -353,6 +354,8 @@ private:
             context->Display(stpnt.pnt, Standard_False);
             context->Display(stpnt.pntLbl, Standard_False);
             context->Deactivate(stpnt.pntLbl);
+            context->Display(stpnt.tPnt, Standard_False);
+            context->Deactivate(stpnt.tPnt);
         }
         for(auto sppnt : pathPoints) {
             context->Display(sppnt.pnt, Standard_False);
