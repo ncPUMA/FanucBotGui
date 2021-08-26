@@ -108,6 +108,8 @@ private:
         context->Deactivate(calibTrihedron);
 
         //Add cursor
+        cursorPnt->SetColor(PNT_CLR);
+        cursorLbl->SetColor(TXT_CLR);
         context->Load(cursorPnt, Standard_False);
         context->SetZLayer(cursorPnt, depthTestOffZlayer);
         context->Deactivate(cursorPnt);
