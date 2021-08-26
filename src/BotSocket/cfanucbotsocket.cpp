@@ -161,10 +161,12 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
         if (calibResFile.exists())
             calibResFile.remove();
 
-        makePartSnapshot("snapshot.bmp");
+        QTimer::singleShot(2000, this, [this](){
+            makePartSnapshot("snapshot.bmp");
+        });
 
         calibWaitCounter = 0;
-        QTimer::singleShot(1000, this, &CFanucBotSocket::slCalibWaitTimeout);
+        QTimer::singleShot(3000, this, &CFanucBotSocket::slCalibWaitTimeout);
     }
     else if(lastTaskDelay > 0)
     {
@@ -193,7 +195,11 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
         point.top = top_;
         lastTaskDelay = static_cast <int> (p.delay * 1000.);
         bNeedCalib = p.bNeedCalib;
-        curTask.erase(curTask.begin());
+        // if point needs calibration, move to it after calibration
+        if(bNeedCalib)
+            p.bNeedCalib = false;
+        else
+            curTask.erase(curTask.begin());
         fanuc_relay_.move_point(point);
     }
 }
