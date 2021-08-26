@@ -14,7 +14,8 @@
 CFanucBotSocket::CFanucBotSocket() :
     CAbstractBotSocket(),
     lastTaskDelay(0),
-    calibWaitCounter(0)
+    calibWaitCounter(0),
+    bNeedCalib(false)
 {
     VLOG_CALL;
 
@@ -132,10 +133,9 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
         return;
     }
 
-    GUI_TYPES::STaskPoint &p = curTask.front();
-    if (p.bNeedCalib)
+    if (bNeedCalib)
     {
-        p.bNeedCalib = false;
+        bNeedCalib = false;
         QFile calibResFile("calib_result.txt");
         if (calibResFile.exists())
             calibResFile.remove();
@@ -155,14 +155,15 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
     else
     {
         std::vector<xyzwpr_data> path;
-        auto it = curTask.begin();
+        GUI_TYPES::STaskPoint &p = curTask.front();
         LOG_F(INFO, "Task %d: %f %f %f %f %f %f",
               p.taskType,
               p.globalPos.x, p.globalPos.y, p.globalPos.z,
               p.angle.x, p.angle.y, p.angle.z);
         path.emplace_back(botposition2xyzwpr(p.globalPos, p.angle, user2world_));
         lastTaskDelay = static_cast <int> (p.delay * 1000.);
-        it = curTask.erase(it);
+        bNeedCalib = curTask.bNeedCalib;
+        curTask.erase(curTask.begin());
         fanuc_relay_.move_trajectory(path);
     }
 }
@@ -307,6 +308,9 @@ void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &,
 
 //    fanuc_relay_.move_trajectory(path);
     curTask = taskPoints;
+    bNeedCalib = false;
+    lastTaskDelay = 0;
+    calibWaitCounter = 0;
     completePath(BotSocket::ENWR_OK);
 }
 
