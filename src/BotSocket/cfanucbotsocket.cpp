@@ -142,6 +142,10 @@ void CFanucBotSocket::prepare(const std::vector <GUI_TYPES::STaskPoint> &)
 void CFanucBotSocket::updateConnectionState()
 {
     bool ok = fanuc_state_.connected() && fanuc_relay_.connected();
+    if(!fanuc_state_.connected() && fanuc_relay_.connected())
+    {
+        fanuc_relay_.disconnectFromHost();
+    }
     socketStateChanged(ok ? BotSocket::ENBS_NOT_ATTACHED
                           : BotSocket::ENBS_FALL);
 }

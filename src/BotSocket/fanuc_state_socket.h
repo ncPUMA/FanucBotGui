@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QTimer>
 #include <QtNetwork/QTcpSocket>
 #include "fanuc_socket_types.h"
 #include "simple_message.h"
@@ -28,10 +29,14 @@ private slots:
     void joint_data_received(const simple_message::real_t   joint_data[10], int sequence);
     void xyzwpr_data_received(const simple_message::real_t   xyzwpr_data[6], int config, int sequence);
 
+    void watchdog();
+
 private:
     void start_connection();
 
     QTcpSocket socket_;
     bool bigendian_ = false;
     simple_message::int_t prefix1 = 0, prefix2 = 0;
+    bool watchdog_ = true;
+    QTimer watchdog_timer_;
 };

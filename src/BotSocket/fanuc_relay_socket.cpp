@@ -43,6 +43,12 @@ void FanucRelaySocket::on_disconnected()
     emit connection_state_changed(false);
 }
 
+void FanucRelaySocket::disconnectFromHost()
+{
+    VLOG_CALL;
+    socket_.disconnectFromHost();
+}
+
 void FanucRelaySocket::on_error(QAbstractSocket::SocketError error)
 {
     VLOG_CALL;

@@ -19,6 +19,7 @@ public slots:
     void move_point(const joint_data &pos);
     void move_trajectory(const std::vector<joint_data> &path);
     void stop();
+    void disconnectFromHost();
 
 signals:
     void trajectory_xyzwpr_point_enqueued(const xyzwpr_data &pos, int sequence_number);

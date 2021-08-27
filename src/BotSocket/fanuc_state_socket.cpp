@@ -22,6 +22,8 @@ FanucStateSocket::FanucStateSocket(QObject *parent):
     connect(&socket_, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(on_error(QAbstractSocket::SocketError)));
 #endif
 
+    connect(&watchdog_timer_, &QTimer::timeout, this, &FanucStateSocket::watchdog);
+
     start_connection();
 }
 
@@ -33,14 +35,31 @@ bool FanucStateSocket::connected() const
 void FanucStateSocket::on_connected()
 {
     VLOG_CALL;
+    watchdog_ = true;
+    watchdog_timer_.start(5000);
     emit connection_state_changed(true);
 }
 
 void FanucStateSocket::on_disconnected()
 {
     VLOG_CALL;
+    watchdog_timer_.stop();
     QTimer::singleShot(1000, this, &FanucStateSocket::start_connection);
     emit connection_state_changed(false);
+}
+
+void FanucStateSocket::watchdog()
+{
+    if(watchdog_)
+    {
+        VLOG_CALL;
+        LOG_F(WARNING, "watchdog");
+        socket_.disconnectFromHost();
+    }
+    else
+    {
+        watchdog_ = true;
+    }
 }
 
 void FanucStateSocket::on_error(QAbstractSocket::SocketError error)
@@ -100,6 +119,8 @@ void FanucStateSocket::on_readyread()
 
         if(!get_prefix_header(packet, &prefix, &header))
             continue;
+
+        watchdog_ = false;
 
         if(bigendian_)
             bswap(packet);
