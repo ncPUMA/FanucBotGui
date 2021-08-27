@@ -40,6 +40,7 @@ private slots:
 
 private:
     std::vector <GUI_TYPES::STaskPoint> curTask;
+    int camDelay_;
     int lastTaskDelay;
     int calibWaitCounter;
     bool bNeedCalib;

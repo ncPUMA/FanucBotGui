@@ -46,6 +46,7 @@ CFanucBotSocket::CFanucBotSocket() :
     flip_ = settings.value("flip", flip_).toBool();
     up_ = settings.value("up", up_).toBool();
     top_ = settings.value("top", top_).toBool();
+    camDelay_ = settings.value("cam_delay", 3000).toBool();
 
     connect(&fanuc_state_, &FanucStateSocket::xyzwpr_position_received, this, &CFanucBotSocket::updatePosition);
 
@@ -161,12 +162,12 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
         if (calibResFile.exists())
             calibResFile.remove();
 
-        QTimer::singleShot(2000, this, [this](){
+        QTimer::singleShot(camDelay_, this, [this](){
             makePartSnapshot("snapshot.bmp");
         });
 
         calibWaitCounter = 0;
-        QTimer::singleShot(3000, this, &CFanucBotSocket::slCalibWaitTimeout);
+        QTimer::singleShot(camDelay_ + 1000, this, &CFanucBotSocket::slCalibWaitTimeout);
     }
     else if(lastTaskDelay > 0)
     {
