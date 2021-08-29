@@ -45,6 +45,10 @@
     <addaction name="actionTaskPoints"/>
     <addaction name="actionPathPoints"/>
     <addaction name="separator"/>
+    <addaction name="actionSavePoints"/>
+    <addaction name="actionLoadPoints"/>
+    <addaction name="actionResetPoints"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuView">
@@ -277,6 +281,21 @@ p, li { white-space: pre-wrap; }
   <action name="actionPartPrntScr">
    <property name="text">
     <string>Снимок детали</string>
+   </property>
+  </action>
+  <action name="actionSavePoints">
+   <property name="text">
+    <string>Сохранить задания...</string>
+   </property>
+  </action>
+  <action name="actionLoadPoints">
+   <property name="text">
+    <string>Загрузить задания...</string>
+   </property>
+  </action>
+  <action name="actionResetPoints">
+   <property name="text">
+    <string>Сброс заданий</string>
    </property>
   </action>
  </widget>

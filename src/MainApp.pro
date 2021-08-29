@@ -14,6 +14,7 @@ SOURCES += \
     BotSocket/cfanucbotsocket.cpp \
     BotSocket/fanuc_relay_socket.cpp \
     BotSocket/fanuc_state_socket.cpp \
+    cjsonfilepointssaver.cpp \
     log/loguru.cpp \
     Dialogs/CalibPoints/caddcalibpointdialog.cpp \
     Dialogs/CalibPoints/ccalibpointsorderdialog.cpp \
@@ -52,6 +53,8 @@ HEADERS += \
     BotSocket/fanuc_relay_socket.h \
     BotSocket/fanuc_state_socket.h \
     BotSocket/simple_message.h \
+    cabstractpointssaver.h \
+    cjsonfilepointssaver.h \
     log/loguru.hpp \
     Dialogs/CalibPoints/caddcalibpointdialog.h \
     Dialogs/CalibPoints/ccalibpointsorderdialog.h \
@@ -109,6 +112,9 @@ unix: LIBS += -ldl -lpthread
 
 DISTFILES += \
     ../.gitignore \
+    Data/Icons/25234_cd_folder_orange_icon.png \
+    Data/Icons/25252_folder_orange_icon.png \
+    Data/Icons/25481_delete_pen_signature_icon.png \
     Data/Icons/fps-counter.png \
     Data/Icons/open.png \
     Data/Icons/play.png \

@@ -9,6 +9,9 @@
         <file>Data/Icons/play.png</file>
         <file>Data/Icons/shading.png</file>
         <file>Data/Icons/fps-counter.png</file>
+        <file>Data/Icons/25234_cd_folder_orange_icon.png</file>
+        <file>Data/Icons/25252_folder_orange_icon.png</file>
+        <file>Data/Icons/25481_delete_pen_signature_icon.png</file>
     </qresource>
     <qresource prefix="/Styles">
         <file>Data/StyleSheets/style.qss</file>

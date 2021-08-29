@@ -18,6 +18,8 @@
 #include "Dialogs/TaskPoints/ctaskpointsorderdialog.h"
 #include "Dialogs/PathPoints/cpathpointsorderdialog.h"
 
+#include "cjsonfilepointssaver.h"
+
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
 static const int STATE_LAMP_UPDATE_INTERVAL = 200;
 
@@ -463,6 +465,62 @@ void MainWindow::slPathPointsOrderDlg()
         ui->mainView->setHomePoints(dialog.getHomePoints());
 }
 
+void MainWindow::slSavePoints()
+{
+    QString fName = QFileDialog::getSaveFileName(this,
+                                                 tr("Сохранение задания"),
+                                                 QString(),
+                                                 tr("Task (*.task)"));
+    if (!fName.isEmpty())
+    {
+        const QStringList ls = fName.split(".");
+        if (ls.last() != QString(".task"))
+            fName.append(".task");
+
+        CJsonFilePointsSaver saver;
+        saver.setFileName(fName.toLatin1());
+        const bool res = saver.savePoints(ui->mainView->getTaskPoints(),
+                                          ui->mainView->getHomePoints());
+        if (!res)
+            QMessageBox::critical(this,
+                                  tr("Сохранение задания"),
+                                  tr("Не удалось сохранить задание"));
+    }
+}
+
+void MainWindow::slLoadPoints()
+{
+    const QString fName = QFileDialog::getOpenFileName(this,
+                                                       tr("Загрузка задания"),
+                                                       QString(),
+                                                       tr("Task (*.task)"));
+    if (!fName.isEmpty())
+    {
+        std::vector <GUI_TYPES::STaskPoint> taskPoints;
+        std::vector <GUI_TYPES::SHomePoint> homePoints;
+        CJsonFilePointsSaver saver;
+        saver.setFileName(fName.toLatin1());
+        const bool bRes = saver.loadPoints(taskPoints, homePoints);
+        if (!bRes || (taskPoints.empty() && homePoints.empty()))
+        {
+            QMessageBox::critical(this,
+                                  tr("Загрузка задания"),
+                                  tr("Не удалось загрузить задание"));
+        }
+        else
+        {
+            ui->mainView->setTaskPoints(taskPoints);
+            ui->mainView->setHomePoints(homePoints);
+        }
+    }
+}
+
+void MainWindow::slResetPoints()
+{
+    ui->mainView->setTaskPoints(std::vector<GUI_TYPES::STaskPoint> ());
+    ui->mainView->setHomePoints(std::vector<GUI_TYPES::SHomePoint> ());
+}
+
 void MainWindow::slExit()
 {
     close();
@@ -593,6 +651,9 @@ void MainWindow::configMenu()
     connect(ui->actionCalibPoints, SIGNAL(triggered(bool)), SLOT(slCalibPointsOrderDlg()));
     connect(ui->actionTaskPoints, SIGNAL(triggered(bool)), SLOT(slTaskPointsOrderDlg()));
     connect(ui->actionPathPoints, SIGNAL(triggered(bool)), SLOT(slPathPointsOrderDlg()));
+    connect(ui->actionSavePoints, SIGNAL(triggered(bool)), SLOT(slSavePoints()));
+    connect(ui->actionLoadPoints, SIGNAL(triggered(bool)), SLOT(slLoadPoints()));
+    connect(ui->actionResetPoints, SIGNAL(triggered(bool)), SLOT(slResetPoints()));
     connect(ui->actionExit, SIGNAL(triggered(bool)), SLOT(slExit()));
 
     //Menu "View"
@@ -633,6 +694,19 @@ void MainWindow::configToolBar()
                            tr("Счетчик FPS"),
                            ui->actionFPS,
                            SLOT(toggle()));
+    ui->toolBar->addSeparator();
+    ui->toolBar->addAction(QIcon(":/icons/Data/Icons/25234_cd_folder_orange_icon.png"),
+                           ui->actionSavePoints->text(),
+                           ui->actionSavePoints,
+                           SLOT(trigger()));
+    ui->toolBar->addAction(QIcon(":/icons/Data/Icons/25252_folder_orange_icon.png"),
+                           ui->actionLoadPoints->text(),
+                           ui->actionLoadPoints,
+                           SLOT(trigger()));
+    ui->toolBar->addAction(QIcon(":/icons/Data/Icons/25481_delete_pen_signature_icon.png"),
+                           ui->actionResetPoints->text(),
+                           ui->actionResetPoints,
+                           SLOT(trigger()));
 
     //Stretch
     QLabel * const strech = new QLabel(" ", ui->toolBar);
