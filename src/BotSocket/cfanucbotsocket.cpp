@@ -308,7 +308,7 @@ BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI
     return result;
 }
 
-void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SPathPoint> &,
+void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SHomePoint> &,
                                  const std::vector<GUI_TYPES::STaskPoint> &taskPoints)
 {
     VLOG_CALL;

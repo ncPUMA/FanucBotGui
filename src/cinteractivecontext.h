@@ -6,7 +6,7 @@
 namespace GUI_TYPES {
 struct SCalibPoint;
 struct STaskPoint;
-struct SPathPoint;
+struct SHomePoint;
 }
 
 class CInteractiveContextPrivate;
@@ -86,11 +86,11 @@ public:
     void changeTaskPoint(const size_t index, const GUI_TYPES::STaskPoint &taskPoint);
     void removeTaskPoint(const size_t index);
 
-    size_t getPathPointCount() const;
-    GUI_TYPES::SPathPoint getPathPoint(const size_t index) const;
-    void appendPathPoint(const GUI_TYPES::SPathPoint &pathPoint);
-    void changePathPoint(const size_t index, const GUI_TYPES::SPathPoint &pathPoint);
-    void removePathPoint(const size_t index);
+    size_t getHomePointCount() const;
+    GUI_TYPES::SHomePoint getHomePoint(const size_t index) const;
+    void appendHomePoint(const GUI_TYPES::SHomePoint &homePoint);
+    void changeHomePoint(const size_t index, const GUI_TYPES::SHomePoint &homePoint);
+    void removeHomePoint(const size_t index);
 
     gp_Dir detectNormal(const gp_Pnt pnt) const;
 

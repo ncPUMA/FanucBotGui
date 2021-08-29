@@ -12,7 +12,7 @@ protected:
         return BotSocket::ENCR_FALL;
     }
     void prepare(const std::vector <GUI_TYPES::STaskPoint> &) final { }
-    void startTasks(const std::vector <GUI_TYPES::SPathPoint> &,
+    void startTasks(const std::vector <GUI_TYPES::SHomePoint> &,
                     const std::vector <GUI_TYPES::STaskPoint> &) final { }
     void stopTasks() final { }
     void shapeTransformChanged(const BotSocket::EN_ShapeType) final { }
@@ -58,10 +58,10 @@ void CAbstractUi::prepare(const std::vector<GUI_TYPES::STaskPoint> &points)
     d_ptr->bot->prepare(points);
 }
 
-void CAbstractUi::startTasks(const std::vector <GUI_TYPES::SPathPoint> &pathPoints,
+void CAbstractUi::startTasks(const std::vector<GUI_TYPES::SHomePoint> &homePoints,
                              const std::vector<GUI_TYPES::STaskPoint> &taskPoints)
 {
-    d_ptr->bot->startTasks(pathPoints, taskPoints);
+    d_ptr->bot->startTasks(homePoints, taskPoints);
 }
 
 void CAbstractUi::stopTasks()

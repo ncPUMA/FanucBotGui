@@ -317,7 +317,7 @@ private:
             context->Erase(stpnt.pntLbl, Standard_False);
             context->Erase(stpnt.tPnt, Standard_False);
         }
-        for(auto sppnt : pathPoints) {
+        for(auto sppnt : homePoints) {
             context->Erase(sppnt.pnt, Standard_False);
             context->Erase(sppnt.pntLbl, Standard_False);
         }
@@ -359,7 +359,7 @@ private:
             context->Display(stpnt.tPnt, Standard_False);
             context->Deactivate(stpnt.tPnt);
         }
-        for(auto sppnt : pathPoints) {
+        for(auto sppnt : homePoints) {
             context->Display(sppnt.pnt, Standard_False);
             context->Display(sppnt.pntLbl, Standard_False);
             context->Deactivate(sppnt.pntLbl);
@@ -539,59 +539,54 @@ private:
         }
     }
 
-    GUI_TYPES::SPathPoint getPathPoint(const size_t index) const {
-        assert(index < pathPoints.size());
-        const SPathPoint &sppnt = pathPoints[index];
-        GUI_TYPES::SPathPoint res;
-        res.angle = sppnt.angle;
-        const gp_Pnt global = sppnt.pnt->Component()->Pnt();
-        res.globalPos.x = global.X();
-        res.globalPos.y = global.Y();
-        res.globalPos.z = global.Z();
+    GUI_TYPES::SHomePoint getHomePoint(const size_t index) const {
+        assert(index < homePoints.size());
+        const SHomePoint &sppnt = homePoints[index];
+        const GUI_TYPES::SHomePoint res = sppnt.homePnt;
         return res;
     }
 
-    void appendPathPoint(const GUI_TYPES::SPathPoint &pathPoint) {
-        SPathPoint sppnt;
-        sppnt.angle = pathPoint.angle;
-        const gp_Pnt globalPos(pathPoint.globalPos.x, pathPoint.globalPos.y, pathPoint.globalPos.z);
+    void appendHomePoint(const GUI_TYPES::SHomePoint &homePoint) {
+        SHomePoint sppnt;
+        sppnt.homePnt = homePoint;
+        const gp_Pnt globalPos(homePoint.globalPos.x, homePoint.globalPos.y, homePoint.globalPos.z);
         sppnt.pnt = new AIS_Point(new Geom_CartesianPoint(globalPos));
         sppnt.pnt->SetColor(PNT_CLR);
         sppnt.pntLbl = new AIS_TextLabel();
         sppnt.pntLbl->SetColor(TXT_CLR);
         sppnt.pntLbl->SetPosition(globalPos);
         std::stringstream ss;
-        ss << "P" << pathPoints.size() + 1;
+        ss << "P" << homePoints.size() + 1;
         sppnt.pntLbl->SetText(TCollection_ExtendedString(ss.str().c_str(), Standard_True));
-        pathPoints.push_back(sppnt);
+        homePoints.push_back(sppnt);
         context->Display(sppnt.pnt, Standard_False);
         context->SetZLayer(sppnt.pntLbl, depthTestOffZlayer);
         context->Display(sppnt.pntLbl, Standard_False);
         context->Deactivate(sppnt.pntLbl);
     }
 
-    void changePathPoint(const size_t index, const GUI_TYPES::SPathPoint &pathPoint) {
-        assert(index < pathPoints.size());
-        SPathPoint &sppnt = pathPoints[index];
-        sppnt.angle = pathPoint.angle;
-        const gp_Pnt globalPos(pathPoint.globalPos.x, pathPoint.globalPos.y, pathPoint.globalPos.z);
+    void changeHomePoint(const size_t index, const GUI_TYPES::SHomePoint &homePoint) {
+        assert(index < homePoints.size());
+        SHomePoint &sppnt = homePoints[index];
+        sppnt.homePnt = homePoint;
+        const gp_Pnt globalPos(homePoint.globalPos.x, homePoint.globalPos.y, homePoint.globalPos.z);
         sppnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
         sppnt.pntLbl->SetPosition(globalPos);
         context->RecomputePrsOnly(sppnt.pnt, Standard_False);
         context->RecomputePrsOnly(sppnt.pntLbl, Standard_False);
     }
 
-    void removePathPoint(const size_t index) {
-        assert(index < pathPoints.size());
-        SPathPoint &sppnt = pathPoints[index];
+    void removeHomePoint(const size_t index) {
+        assert(index < homePoints.size());
+        SHomePoint &sppnt = homePoints[index];
         context->Remove(sppnt.pnt, Standard_False);
         context->Remove(sppnt.pntLbl, Standard_False);
-        pathPoints.erase(pathPoints.cbegin() + index);
-        for(size_t i = 0; i < pathPoints.size(); ++i) {
+        homePoints.erase(homePoints.cbegin() + index);
+        for(size_t i = 0; i < homePoints.size(); ++i) {
             std::stringstream ss;
             ss << "P" << i + 1;
-            pathPoints[i].pntLbl->SetText(TCollection_ExtendedString(ss.str().c_str(), Standard_True));
-            context->RecomputePrsOnly(pathPoints[i].pntLbl, Standard_False);
+            homePoints[i].pntLbl->SetText(TCollection_ExtendedString(ss.str().c_str(), Standard_True));
+            context->RecomputePrsOnly(homePoints[i].pntLbl, Standard_False);
         }
     }
 
@@ -667,13 +662,13 @@ private:
     };
     std::vector <STaskPoint> taskPoints;
 
-    struct SPathPoint
+    struct SHomePoint
     {
-        GUI_TYPES::SRotationAngle angle;
+        GUI_TYPES::SHomePoint homePnt;
         Handle(AIS_Point) pnt;
         Handle(AIS_TextLabel) pntLbl;
     };
-    std::vector <SPathPoint> pathPoints;
+    std::vector <SHomePoint> homePoints;
 };
 
 
@@ -908,7 +903,7 @@ bool CInteractiveContext::isPathPointDetected(size_t &index) const
 {
     Handle(AIS_InteractiveObject) curShape = d_ptr->curShape();
     index = 0;
-    for (auto sppnt : d_ptr->pathPoints)
+    for (auto sppnt : d_ptr->homePoints)
     {
         if (sppnt.pnt == curShape)
             return true;
@@ -972,29 +967,29 @@ void CInteractiveContext::removeTaskPoint(const size_t index)
     d_ptr->removeTaskPoint(index);
 }
 
-size_t CInteractiveContext::getPathPointCount() const
+size_t CInteractiveContext::getHomePointCount() const
 {
-    return d_ptr->pathPoints.size();
+    return d_ptr->homePoints.size();
 }
 
-GUI_TYPES::SPathPoint CInteractiveContext::getPathPoint(const size_t index) const
+GUI_TYPES::SHomePoint CInteractiveContext::getHomePoint(const size_t index) const
 {
-    return d_ptr->getPathPoint(index);
+    return d_ptr->getHomePoint(index);
 }
 
-void CInteractiveContext::appendPathPoint(const GUI_TYPES::SPathPoint &pathPoint)
+void CInteractiveContext::appendHomePoint(const GUI_TYPES::SHomePoint &homePoint)
 {
-    d_ptr->appendPathPoint(pathPoint);
+    d_ptr->appendHomePoint(homePoint);
 }
 
-void CInteractiveContext::changePathPoint(const size_t index, const GUI_TYPES::SPathPoint &pathPoint)
+void CInteractiveContext::changeHomePoint(const size_t index, const GUI_TYPES::SHomePoint &homePoint)
 {
-    d_ptr->changePathPoint(index, pathPoint);
+    d_ptr->changeHomePoint(index, homePoint);
 }
 
-void CInteractiveContext::removePathPoint(const size_t index)
+void CInteractiveContext::removeHomePoint(const size_t index)
 {
-    d_ptr->removePathPoint(index);
+    d_ptr->removeHomePoint(index);
 }
 
 gp_Dir CInteractiveContext::detectNormal(const gp_Pnt pnt) const

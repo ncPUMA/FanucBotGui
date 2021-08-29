@@ -99,14 +99,16 @@ struct STaskPoint
     TDelay delay;
     bool zSimmetry;
     bool bNeedCalib;
+    bool bUseHomePnt;
 };
 
-struct SPathPoint
+struct SHomePoint
 {
-    SPathPoint() {}
+    SHomePoint() {}
 
     SVertex globalPos;
     SRotationAngle angle;
+    SVertex normal;
 };
 
 template <typename Key, typename Value, typename Map>

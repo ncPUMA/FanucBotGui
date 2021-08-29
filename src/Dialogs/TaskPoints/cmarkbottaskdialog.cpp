@@ -21,6 +21,7 @@ CMarkBotTaskDialog::CMarkBotTaskDialog(QWidget *parent, const GUI_TYPES::STaskPo
     ui->dsbNormalZ->setValue(initData.normal.z);
     ui->checkZSimmetry->setChecked(initData.zSimmetry);
     ui->dsbDelay->setValue(initData.delay);
+    ui->checkHomePnt->setChecked(initData.bUseHomePnt);
 
     connect(ui->pbOk, &QAbstractButton::clicked, this, &QDialog::accept);
     connect(ui->pbCancel, &QAbstractButton::clicked, this, &QDialog::reject);
@@ -47,5 +48,6 @@ GUI_TYPES::STaskPoint CMarkBotTaskDialog::getTaskPoint() const
     res.normal.z = ui->dsbNormalZ->value();
     res.zSimmetry = ui->checkZSimmetry->isChecked();
     res.delay = ui->dsbDelay->value();
+    res.bUseHomePnt = ui->checkHomePnt->isChecked();
     return res;
 }

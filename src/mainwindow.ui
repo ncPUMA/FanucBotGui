@@ -271,7 +271,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionPathPoints">
    <property name="text">
-    <string>Точки траектории...</string>
+    <string>Домашняя точка...</string>
    </property>
   </action>
   <action name="actionPartPrntScr">

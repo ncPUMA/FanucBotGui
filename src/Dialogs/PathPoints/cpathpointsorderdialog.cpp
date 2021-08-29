@@ -29,11 +29,11 @@ public:
     CPathPointsOrderModel(QObject *parent = nullptr) :
         QAbstractTableModel(parent) { }
 
-    void setPathPoints(const std::vector<GUI_TYPES::SPathPoint> &pathPnts) {
+    void setHomePoints(const std::vector<GUI_TYPES::SHomePoint> &homePnts) {
         beginResetModel();
         points.clear();
         size_t cntr = 0;
-        for(const auto &spp : pathPnts) {
+        for(const auto &spp : homePnts) {
             SPoint pnt;
             pnt.name = tr("P%1").arg(++cntr);
             pnt.pnt = spp;
@@ -42,8 +42,8 @@ public:
         endResetModel();
     }
 
-    std::vector<GUI_TYPES::SPathPoint> getPathPoints() const {
-        std::vector<GUI_TYPES::SPathPoint> result;
+    std::vector<GUI_TYPES::SHomePoint> getHomePoints() const {
+        std::vector<GUI_TYPES::SHomePoint> result;
         for(const auto &pnt : points)
             result.push_back(pnt.pnt);
         return result;
@@ -197,7 +197,7 @@ private:
     struct SPoint
     {
         QString name;
-        GUI_TYPES::SPathPoint pnt;
+        GUI_TYPES::SHomePoint pnt;
     };
     std::vector <SPoint> points;
 };
@@ -240,14 +240,14 @@ protected:
                           const QModelIndex &index) const final {
         (void)option;
 
-        std::vector <GUI_TYPES::SPathPoint> points = mdl.getPathPoints();
+        std::vector <GUI_TYPES::SHomePoint> points = mdl.getHomePoints();
         const size_t row = static_cast <size_t> (index.row());
         if (row < points.size()) {
-            GUI_TYPES::SPathPoint &pnt = points[row];
+            GUI_TYPES::SHomePoint &pnt = points[row];
             CAddPathPointDialog dlg(parent, pnt);
             if (dlg.exec() == QDialog::Accepted) {
-                pnt = dlg.getPathPoint();
-                mdl.setPathPoints(points);
+                pnt = dlg.getHomePoint();
+                mdl.setHomePoints(points);
             }
         }
         return nullptr;
@@ -270,7 +270,7 @@ class CPathPointsOrderDialogPrivate
 
 
 
-CPathPointsOrderDialog::CPathPointsOrderDialog(const std::vector<GUI_TYPES::SPathPoint> &pathPnts,
+CPathPointsOrderDialog::CPathPointsOrderDialog(const std::vector<GUI_TYPES::SHomePoint> &homePnts,
                                                QWidget *parent) :
     QDialog(parent),
     ui(new Ui::CPathPointsOrderDialog),
@@ -278,7 +278,7 @@ CPathPointsOrderDialog::CPathPointsOrderDialog(const std::vector<GUI_TYPES::SPat
 {
     ui->setupUi(this);
 
-    d_ptr->mdl.setPathPoints(pathPnts);
+    d_ptr->mdl.setHomePoints(homePnts);
     ui->tableView->setModel(&d_ptr->mdl);
     ui->tableView->resizeColumnsToContents();
 
@@ -295,7 +295,7 @@ CPathPointsOrderDialog::~CPathPointsOrderDialog()
     delete d_ptr;
 }
 
-std::vector<GUI_TYPES::SPathPoint> CPathPointsOrderDialog::getPathPoints() const
+std::vector<GUI_TYPES::SHomePoint> CPathPointsOrderDialog::getHomePoints() const
 {
-    return d_ptr->mdl.getPathPoints();
+    return d_ptr->mdl.getHomePoints();
 }

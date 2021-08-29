@@ -30,7 +30,7 @@ protected:
     virtual void uiStateChanged() = 0;
     virtual void calibrationChanged() = 0;
     virtual void tasksChanged() = 0;
-    virtual void pathPointsChanged() = 0;
+    virtual void homePointsChanged() = 0;
 
 private:
     CAbstractMainViewportSubscriber(const CAbstractMainViewportSubscriber &) = delete;
@@ -97,8 +97,8 @@ public:
     std::vector <GUI_TYPES::SCalibPoint> getCallibrationLocalPoints() const;
     void setTaskPoints(const std::vector <GUI_TYPES::STaskPoint> &points);
     std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const;
-    void setPathPoints(const std::vector <GUI_TYPES::SPathPoint> &points);
-    std::vector <GUI_TYPES::SPathPoint> getPathPoints() const;
+    void setHomePoints(const std::vector <GUI_TYPES::SHomePoint> &points);
+    std::vector <GUI_TYPES::SHomePoint> getHomePoints() const;
 
     GUI_TYPES::SGuiSettings partPrntScr();
     void makePartSnapshot(const char *fname);
@@ -119,7 +119,7 @@ private:
     void fillCalibCntxtMenu(QMenu &menu);
     void fillTaskAddCntxtMenu(QMenu &menu);
     void taskPointsChanged();
-    void pathPointsChanged();
+    void homePointsChanged();
 
 private slots:
     void slAddCalibPoint();

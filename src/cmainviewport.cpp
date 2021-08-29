@@ -59,7 +59,7 @@ protected:
     void uiStateChanged() final { }
     void calibrationChanged() final { }
     void tasksChanged() final { }
-    void pathPointsChanged() final { }
+    void homePointsChanged() final { }
 
 } emptySub;
 
@@ -355,11 +355,11 @@ class CMainViewportPrivate : public AIS_ViewController
                     updatePntTransform(pnt, pntTrsf);
                     context->changeTaskPoint(i, pnt);
                 }
-                const size_t pathPntCount = context->getPathPointCount();
-                for(size_t i = 0; i < pathPntCount; ++i) {
-                    GUI_TYPES::SPathPoint pnt = context->getPathPoint(i);
+                const size_t homePntCount = context->getHomePointCount();
+                for(size_t i = 0; i < homePntCount; ++i) {
+                    GUI_TYPES::SHomePoint pnt = context->getHomePoint(i);
                     updatePntTransform(pnt, pntTrsf);
-                    context->changePathPoint(i, pnt);
+                    context->changeHomePoint(i, pnt);
                 }
                 view->Redraw();
                 break;
@@ -692,22 +692,22 @@ std::vector<GUI_TYPES::STaskPoint> CMainViewport::getTaskPoints() const
     return res;
 }
 
-void CMainViewport::setPathPoints(const std::vector<GUI_TYPES::SPathPoint> &points)
+void CMainViewport::setHomePoints(const std::vector<GUI_TYPES::SHomePoint> &points)
 {
-    while(d_ptr->context->getPathPointCount() > 0)
-        d_ptr->context->removePathPoint(0);
+    while(d_ptr->context->getHomePointCount() > 0)
+        d_ptr->context->removeHomePoint(0);
     for (const auto &pnt : points)
-        d_ptr->context->appendPathPoint(pnt);
+        d_ptr->context->appendHomePoint(pnt);
     d_ptr->viewer->Redraw();
-    pathPointsChanged();
+    homePointsChanged();
 }
 
-std::vector<GUI_TYPES::SPathPoint> CMainViewport::getPathPoints() const
+std::vector<GUI_TYPES::SHomePoint> CMainViewport::getHomePoints() const
 {
-    std::vector <GUI_TYPES::SPathPoint> res;
-    const size_t count = d_ptr->context->getPathPointCount();
+    std::vector <GUI_TYPES::SHomePoint> res;
+    const size_t count = d_ptr->context->getHomePointCount();
     for(size_t i = 0; i < count; ++i)
-        res.push_back(d_ptr->context->getPathPoint(i));
+        res.push_back(d_ptr->context->getHomePoint(i));
     return res;
 }
 
@@ -783,7 +783,7 @@ void CMainViewport::makeCorrectionBySnapshot(const gp_Vec &globalDelta)
     //Points correction
     setCalibrationPoints(movedPoints(getCallibrationLocalPoints(), globalDelta));
     setTaskPoints(movedPoints(getTaskPoints(), globalDelta));
-    setPathPoints(movedPoints(getPathPoints(), globalDelta));
+    setHomePoints(movedPoints(getHomePoints(), globalDelta));
 }
 
 QPaintEngine *CMainViewport::paintEngine() const
@@ -964,25 +964,25 @@ void CMainViewport::fillTaskAddCntxtMenu(QMenu &menu)
         menu.addAction(taskName(ENBTT_MARK),
                        this,
                        &CMainViewport::slAddTaskPoint)->setProperty("taskType", ENBTT_MARK);
-//        menu.addSeparator();
-//        menu.addAction(tr("Точка траектории"),
-//                       this,
-//                       &CMainViewport::slAddPathPoint);
+        menu.addSeparator();
+        menu.addAction(tr("Домашняя точка"),
+                       this,
+                       &CMainViewport::slAddPathPoint);
     }
     else if(d_ptr->context->isDeskDetected()) {
         menu.addAction(taskName(GUI_TYPES::ENBTT_MOVE),
                        this,
                        &CMainViewport::slAddTaskPoint)->setProperty("taskType", GUI_TYPES::ENBTT_MOVE);
-//        menu.addSeparator();
-//        menu.addAction(tr("Точка траектории"),
-//                       this,
-//                       &CMainViewport::slAddPathPoint);
+        menu.addSeparator();
+        menu.addAction(tr("Домашняя точка"),
+                       this,
+                       &CMainViewport::slAddPathPoint);
     }
-//    else if (d_ptr->context->isGripDetected() || d_ptr->context->isLsrheadDetected()) {
-//        menu.addAction(tr("Точка траектории"),
-//                       this,
-//                       &CMainViewport::slAddPathPoint);
-//    }
+    else if (d_ptr->context->isGripDetected() || d_ptr->context->isLsrheadDetected()) {
+        menu.addAction(tr("Домашняя точка"),
+                       this,
+                       &CMainViewport::slAddPathPoint);
+    }
     else {
         size_t index = 0;
         if (d_ptr->context->isTaskPointDetected(index))
@@ -1016,10 +1016,10 @@ void CMainViewport::taskPointsChanged()
         s->tasksChanged();
 }
 
-void CMainViewport::pathPointsChanged()
+void CMainViewport::homePointsChanged()
 {
     for(auto s : d_ptr->subs)
-        s->pathPointsChanged();
+        s->homePointsChanged();
 }
 
 void CMainViewport::slAddCalibPoint()
@@ -1130,15 +1130,24 @@ void CMainViewport::slRemoveTaskPoint()
 void CMainViewport::slAddPathPoint()
 {
     const gp_Pnt cursorPos = d_ptr->context->lastCursorPosition();
-    GUI_TYPES::SPathPoint initPoint;
+    GUI_TYPES::SHomePoint initPoint;
     initPoint.globalPos.x = cursorPos.X();
     initPoint.globalPos.y = cursorPos.Y();
     initPoint.globalPos.z = cursorPos.Z();
+
+    const gp_Dir normal = d_ptr->context->detectNormal(cursorPos);
+    initPoint.normal.x = normal.X();
+    initPoint.normal.y = normal.Y();
+    initPoint.normal.z = normal.Z();
+
     CAddPathPointDialog dialog(this, initPoint);
     if (dialog.exec() == QDialog::Accepted)
     {
-        d_ptr->context->appendPathPoint(dialog.getPathPoint());
-        pathPointsChanged();
+        const size_t cnt = d_ptr->context->getHomePointCount();
+        for(size_t i = 0; i < cnt; ++i)
+            d_ptr->context->removeHomePoint(0);
+        d_ptr->context->appendHomePoint(dialog.getHomePoint());
+        homePointsChanged();
         d_ptr->viewer->Redraw();
     }
 }
@@ -1148,14 +1157,14 @@ void CMainViewport::slChangePathPoint()
     assert(sender() != nullptr);
 
     const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
-    if (index < d_ptr->context->getPathPointCount())
+    if (index < d_ptr->context->getHomePointCount())
     {
-        const GUI_TYPES::SPathPoint pathPoint = d_ptr->context->getPathPoint(index);
+        const GUI_TYPES::SHomePoint pathPoint = d_ptr->context->getHomePoint(index);
         CAddPathPointDialog dialog(this, pathPoint);
         if (dialog.exec() == QDialog::Accepted)
         {
-            d_ptr->context->changePathPoint(index, dialog.getPathPoint());
-            pathPointsChanged();
+            d_ptr->context->changeHomePoint(index, dialog.getHomePoint());
+            homePointsChanged();
             d_ptr->viewer->Redraw();
         }
     }
@@ -1166,10 +1175,10 @@ void CMainViewport::slRemovePathPoint()
     assert(sender() != nullptr);
 
     const size_t index = static_cast <size_t> (sender()->property("index").toULongLong());
-    if (index < d_ptr->context->getPathPointCount())
+    if (index < d_ptr->context->getHomePointCount())
     {
-        d_ptr->context->removePathPoint(index);
-        pathPointsChanged();
+        d_ptr->context->removeHomePoint(index);
+        homePointsChanged();
         d_ptr->viewer->Redraw();
     }
 }

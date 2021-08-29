@@ -204,7 +204,7 @@ protected:
         updateUiState();
     }
 
-    void pathPointsChanged() final {
+    void homePointsChanged() final {
         updateUiState();
     }
 
@@ -346,8 +346,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->wSettings, SIGNAL(sigApplyRequest()), SLOT(slCallibApply()));
 
     ui->teJrnl->document()->setMaximumBlockCount(MAX_JRNL_ROW_COUNT);
-
-    ui->actionPathPoints->setVisible(false);
 }
 
 MainWindow::~MainWindow()
@@ -450,9 +448,9 @@ void MainWindow::slTaskPointsOrderDlg()
 
 void MainWindow::slPathPointsOrderDlg()
 {
-    CPathPointsOrderDialog dialog(ui->mainView->getPathPoints());
+    CPathPointsOrderDialog dialog(ui->mainView->getHomePoints());
     if (dialog.exec() == QDialog::Accepted)
-        ui->mainView->setPathPoints(dialog.getPathPoints());
+        ui->mainView->setHomePoints(dialog.getHomePoints());
 }
 
 void MainWindow::slExit()
@@ -560,7 +558,7 @@ void MainWindow::slCallibApply()
 void MainWindow::slStart()
 {
     ui->mainView->setUiState(GUI_TYPES::ENUS_BOT_WORKED);
-    d_ptr->uiIface.startTasks(ui->mainView->getPathPoints(),
+    d_ptr->uiIface.startTasks(ui->mainView->getHomePoints(),
                               ui->mainView->getTaskPoints());
 }
 

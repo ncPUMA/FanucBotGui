@@ -16,11 +16,11 @@ class CPathPointsOrderDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit CPathPointsOrderDialog(const std::vector <GUI_TYPES::SPathPoint> &pathPnts,
+    explicit CPathPointsOrderDialog(const std::vector <GUI_TYPES::SHomePoint> &homePnts,
                                     QWidget *parent = nullptr);
     ~CPathPointsOrderDialog();
 
-    std::vector<GUI_TYPES::SPathPoint> getPathPoints() const;
+    std::vector<GUI_TYPES::SHomePoint> getHomePoints() const;
 
 private:
     Ui::CPathPointsOrderDialog *ui;

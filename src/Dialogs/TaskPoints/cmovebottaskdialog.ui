@@ -372,6 +372,13 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_6">
      <item>
+      <widget class="QCheckBox" name="checkHomePnt">
+       <property name="text">
+        <string>Использовать домашнюю точку</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
