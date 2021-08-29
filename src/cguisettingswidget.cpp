@@ -1,6 +1,8 @@
 #include "cguisettingswidget.h"
 #include "ui_cguisettingswidget.h"
 
+#include <QTimer>
+
 #include "sguisettings.h"
 
 class CGuiSettingsWidgetPrivate
@@ -10,6 +12,8 @@ class CGuiSettingsWidgetPrivate
     GUI_TYPES::TMSAA msaa;
     GUI_TYPES::TScale snapshotScale;
     size_t snapshotWidth, snapshotHeight;
+    std::vector <QDoubleSpinBox *> partSpins;
+    QTimer partTm;
 };
 
 
@@ -35,6 +39,24 @@ CGuiSettingsWidget::CGuiSettingsWidget(QWidget *parent) :
     connect(ui->pbCalc, SIGNAL(clicked(bool)), this, SIGNAL(sigCalcCalibration()));
     connect(ui->pbShowMore, &QPushButton::clicked, this, &CGuiSettingsWidget::slShowMoreOrLess);
     connect(ui->pbShowLess, &QPushButton::clicked, this, &CGuiSettingsWidget::slShowMoreOrLess);
+
+    d_ptr->partTm.setSingleShot(true);
+    d_ptr->partTm.setInterval(100);
+    connect(&d_ptr->partTm, SIGNAL(timeout()), this, SIGNAL(sigApplyRequest()));
+    d_ptr->partSpins = {
+        ui->dsbPartTrX,
+        ui->dsbPartTrY,
+        ui->dsbPartTrZ,
+        ui->dsbPartCenterX,
+        ui->dsbPartCenterY,
+        ui->dsbPartCenterZ,
+        ui->dsbPartRotateX,
+        ui->dsbPartRotateY,
+        ui->dsbPartRotateZ,
+        ui->dsbPartScale
+    };
+    for(auto spin : d_ptr->partSpins)
+        connect(spin, SIGNAL(valueChanged(double)), SLOT(slPartChanged()));
 }
 
 CGuiSettingsWidget::~CGuiSettingsWidget()
@@ -52,6 +74,8 @@ void CGuiSettingsWidget::initFromGuiSettings(const GUI_TYPES::SGuiSettings &sett
     d_ptr->snapshotHeight = settings.snapshotHeight;
 
     //The Part
+    for(auto spin : d_ptr->partSpins)
+        spin->blockSignals(true);
     ui->dsbPartTrX->setValue    (settings.partTrX      );
     ui->dsbPartTrY->setValue    (settings.partTrY      );
     ui->dsbPartTrZ->setValue    (settings.partTrZ      );
@@ -62,6 +86,8 @@ void CGuiSettingsWidget::initFromGuiSettings(const GUI_TYPES::SGuiSettings &sett
     ui->dsbPartRotateY->setValue(settings.partRotationY);
     ui->dsbPartRotateZ->setValue(settings.partRotationZ);
     ui->dsbPartScale->setValue  (settings.partScale    );
+    for(auto spin : d_ptr->partSpins)
+        spin->blockSignals(false);
     //The Desk
     ui->dsbDeskTrX->setValue    (settings.deskTrX      );
     ui->dsbDeskTrY->setValue    (settings.deskTrY      );
@@ -179,4 +205,10 @@ void CGuiSettingsWidget::slShowMoreOrLess()
     ui->gbLHead->setVisible(bShowMore);
     ui->gbGrip->setVisible(bShowMore);
     ui->pbShowLess->setVisible(bShowMore);
+}
+
+void CGuiSettingsWidget::slPartChanged()
+{
+    if (!d_ptr->partTm.isActive())
+        d_ptr->partTm.start();
 }

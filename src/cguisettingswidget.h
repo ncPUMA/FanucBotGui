@@ -32,6 +32,7 @@ signals:
 
 private slots:
     void slShowMoreOrLess();
+    void slPartChanged();
 
 private:
     Ui::CGuiSettingsWidget *ui;
