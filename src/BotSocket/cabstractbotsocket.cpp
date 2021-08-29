@@ -21,6 +21,7 @@ protected:
 
     void makePartSnapshot(const char *) final { }
     void snapshotCalibrationDataRecieved(const gp_Vec &) final { }
+    bool execSnapshotCalibrationWarning() final { return false; }
 private:
     TopoDS_Shape shape;
     gp_Trsf transform;
@@ -92,4 +93,9 @@ void CAbstractBotSocket::makePartSnapshot(const char *fname)
 void CAbstractBotSocket::snapshotCalibrationDataRecieved(const gp_Vec &globalDelta)
 {
     ui->snapshotCalibrationDataRecieved(globalDelta);
+}
+
+bool CAbstractBotSocket::execSnapshotCalibrationWarning()
+{
+    return ui->execSnapshotCalibrationWarning();
 }

@@ -216,6 +216,16 @@ protected:
         viewport->makeCorrectionBySnapshot(globalDelta);
     }
 
+    bool execSnapshotCalibrationWarning() final {
+        return QMessageBox::warning(viewport,
+                                    MainWindow::tr("Ошибка калибровки"),
+                                    MainWindow::tr("Не удалось определить положение детали. "
+                                            "Продолжить обработку без смещения детали?"),
+                                    QMessageBox::Yes | QMessageBox::No,
+                                    QMessageBox::No)
+                == QMessageBox::Yes;
+    }
+
 private:
     CMainViewport *viewport;
     QTextEdit *jrnl;

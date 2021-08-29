@@ -254,10 +254,21 @@ void CFanucBotSocket::slCalibWaitTimeout()
             QStringList line = in.readLine().split(";");
             calibResFile.close();
 
-            if (line.size() > 2)
-                delta = gp_Vec(line.at(0).toDouble(),
-                               line.at(1).toDouble(),
-                               line.at(2).toDouble());
+            if (line.size() == 4)
+            {
+                if (line.at(3).toInt() == 0)
+                {
+                    delta = gp_Vec(line.at(0).toDouble(),
+                                   line.at(1).toDouble(),
+                                   line.at(2).toDouble());
+                }
+                else if (!execSnapshotCalibrationWarning())
+                {
+                    curTask.clear();
+                    completePath(BotSocket::ENWR_ERROR);
+                    return;
+                }
+            }
         }
         calibFinish(delta);
     }

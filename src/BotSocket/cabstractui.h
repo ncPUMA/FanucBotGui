@@ -42,6 +42,7 @@ protected:
 
     virtual void makePartSnapshot(const char *fname) = 0;
     virtual void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta) = 0;
+    virtual bool execSnapshotCalibrationWarning() = 0;
 
 private:
     CAbstractUi(const CAbstractUi &) = delete;

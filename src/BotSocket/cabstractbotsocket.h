@@ -40,6 +40,7 @@ protected:
 
     void makePartSnapshot(const char *fname);
     void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta);
+    bool execSnapshotCalibrationWarning();
 
 private:
     CAbstractBotSocket(const CAbstractBotSocket &) = delete;
