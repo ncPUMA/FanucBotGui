@@ -162,6 +162,8 @@ void CFanucBotSocket::updateConnectionState()
 
 void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
 {
+    VLOG_CALL;
+
     if (result != BotSocket::ENWR_OK)
     {
         curTask.clear();
@@ -171,6 +173,7 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
 
     if (bNeedCalib)
     {
+        LOG_F(INFO, "need calibration");
         bNeedCalib = false;
         QFile calibResFile("calib_result.txt");
         if (calibResFile.exists())
@@ -185,6 +188,7 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
     }
     else if(lastTaskDelay > 0)
     {
+        LOG_F(INFO, "task delay %d", lastTaskDelay);
         QTimer::singleShot(lastTaskDelay, this, [&]() {
             completePath(BotSocket::ENWR_OK);
         });
@@ -192,6 +196,7 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
     }
     else if (curTask.empty())
     {
+        LOG_F(INFO, "finish");
         tasksComplete(result); //result == BotSocket::ENWR_OK
         return;
     }
@@ -206,7 +211,11 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
 
         if(p.bUseHomePnt && !homePoints.empty())
         {
+            LOG_F(INFO, "home point");
             xyzwpr_data point = botposition2xyzwpr(homePoints[0], user2world_);
+            point.flip = flip_;
+            point.up = up_;
+            point.top = top_;
             p.bUseHomePnt = false;
             fanuc_relay_.move_point(point);
         }
@@ -230,12 +239,17 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
 
 void CFanucBotSocket::calibFinish(const gp_Vec &delta)
 {
+    VLOG_CALL;
+
     if (!delta.IsEqual(gp_Vec(), Precision::Confusion(), Precision::Angular()))
     {
         //Current task correction
         gp_Trsf lHeadPos = getShapeTransform(BotSocket::ENST_LSRHEAD);
         gp_Quaternion quatLsrHead = lHeadPos.GetRotation();
         const gp_Vec rotatedDelta = quatLsrHead.Multiply(delta);
+
+        LOG_F(INFO, "Delta: %f %f %f; Rotated delta: %f %f %f", delta.X(), delta.Y(), delta.Z(), rotatedDelta.X(), rotatedDelta.Y(), rotatedDelta.Z());
+
         for (auto &p : curTask)
         {
             p.globalPos.x += rotatedDelta.X();
@@ -249,10 +263,13 @@ void CFanucBotSocket::calibFinish(const gp_Vec &delta)
 
 void CFanucBotSocket::slCalibWaitTimeout()
 {
+    VLOG_CALL;
+
     static const int CALIB_ATTEMP_COUNT = 3;
     QFile calibResFile("calib_result.txt");
     if (!calibResFile.exists())
     {
+        LOG_F(INFO, "Waiting for file; %d time", calibWaitCounter);
         if (calibWaitCounter < CALIB_ATTEMP_COUNT)
         {
             ++calibWaitCounter;
@@ -260,12 +277,23 @@ void CFanucBotSocket::slCalibWaitTimeout()
         }
         else
         {
+            LOG_F(WARNING, "No file after timeout");
             calibWaitCounter = 0;
-            calibFinish(gp_Vec());
+            if (!execSnapshotCalibrationWarning())
+            {
+                curTask.clear();
+                completePath(BotSocket::ENWR_ERROR);
+                return;
+            }
+            else
+            {
+                calibFinish(gp_Vec());
+            }
         }
     }
     else
     {
+        LOG_F(INFO, "Calib file found");
         gp_Vec delta;
         if (calibResFile.open(QIODevice::ReadOnly | QIODevice::Text))
         {
@@ -277,6 +305,7 @@ void CFanucBotSocket::slCalibWaitTimeout()
             {
                 if (line.at(3).toInt() == 0)
                 {
+                    LOG_F(INFO, "Delta ok");
                     delta = gp_Vec(line.at(0).toDouble(),
                                    line.at(1).toDouble(),
                                    line.at(2).toDouble());
