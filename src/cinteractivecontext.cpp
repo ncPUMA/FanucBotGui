@@ -60,7 +60,6 @@ private:
 
     void init(AIS_InteractiveContext &cntxt) {
         context = &cntxt;
-//        context->SetAutoActivateSelection(false);
 
         Handle(Prs3d_Drawer) drawer = context->DefaultDrawer();
         Handle(Prs3d_DatumAspect) datum = drawer->DatumAspect();
@@ -306,6 +305,7 @@ private:
         for(auto sppnt : homePoints) {
             context->Erase(sppnt.pnt, Standard_False);
             context->Erase(sppnt.pntLbl, Standard_False);
+            context->Erase(sppnt.tPnt, Standard_False);
         }
         for(auto vec : pathVec)
             context->Erase(vec, Standard_False);
@@ -349,6 +349,8 @@ private:
             context->Display(sppnt.pnt, Standard_False);
             context->Display(sppnt.pntLbl, Standard_False);
             context->Deactivate(sppnt.pntLbl);
+            context->Display(sppnt.tPnt, Standard_False);
+            context->Deactivate(sppnt.tPnt);
         }
         for(auto vec : pathVec) {
             context->Display(vec, Standard_False);
@@ -554,11 +556,26 @@ private:
         std::stringstream ss;
         ss << "P" << homePoints.size() + 1;
         sppnt.pntLbl->SetText(TCollection_ExtendedString(ss.str().c_str(), Standard_True));
+        gp_Dir zDir(homePoint.normal.x, homePoint.normal.y, homePoint.normal.z);
+        sppnt.tPnt = new CTaskPnt(globalPos, zDir, 5.);
+        gp_Trsf trTrsf;
+        trTrsf.SetTranslation(gp_Pnt(), globalPos);
+        gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
+        gp_Quaternion delta;
+        delta.SetEulerAngles(gp_Extrinsic_XYZ,
+                             homePoint.angle.x * DEGREE_K,
+                             homePoint.angle.y * DEGREE_K,
+                             homePoint.angle.z * DEGREE_K);
+        gp_Trsf rotTrsf;
+        rotTrsf.SetRotation(normal * delta);
+        context->SetLocation(sppnt.tPnt, trTrsf * rotTrsf);
         homePoints.push_back(sppnt);
         context->Display(sppnt.pnt, Standard_False);
         context->SetZLayer(sppnt.pntLbl, depthTestOffZlayer);
         context->Display(sppnt.pntLbl, Standard_False);
         context->Deactivate(sppnt.pntLbl);
+        context->Display(sppnt.tPnt, Standard_False);
+        context->Deactivate(sppnt.tPnt);
         redrawPathVec();
     }
 
@@ -569,8 +586,24 @@ private:
         const gp_Pnt globalPos(homePoint.globalPos.x, homePoint.globalPos.y, homePoint.globalPos.z);
         sppnt.pnt->SetComponent(new Geom_CartesianPoint(globalPos));
         sppnt.pntLbl->SetPosition(globalPos);
+        gp_Dir zDir(homePoint.normal.x, homePoint.normal.y, homePoint.normal.z);
+        context->Erase(sppnt.tPnt, Standard_False);
+        sppnt.tPnt = new CTaskPnt(globalPos, zDir, 5.);
+        gp_Trsf trTrsf;
+        trTrsf.SetTranslation(gp_Pnt(), globalPos);
+        gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
+        gp_Quaternion delta;
+        delta.SetEulerAngles(gp_Extrinsic_XYZ,
+                             homePoint.angle.x * DEGREE_K,
+                             homePoint.angle.y * DEGREE_K,
+                             homePoint.angle.z * DEGREE_K);
+        gp_Trsf rotTrsf;
+        rotTrsf.SetRotation(normal * delta);
+        context->SetLocation(sppnt.tPnt, trTrsf * rotTrsf);
         context->RecomputePrsOnly(sppnt.pnt, Standard_False);
         context->RecomputePrsOnly(sppnt.pntLbl, Standard_False);
+        context->Display(sppnt.tPnt, Standard_False);
+        context->Deactivate(sppnt.tPnt);
         redrawPathVec();
     }
 
@@ -579,6 +612,7 @@ private:
         SHomePoint &sppnt = homePoints[index];
         context->Remove(sppnt.pnt, Standard_False);
         context->Remove(sppnt.pntLbl, Standard_False);
+        context->Remove(sppnt.tPnt, Standard_False);
         homePoints.erase(homePoints.cbegin() + index);
         for(size_t i = 0; i < homePoints.size(); ++i) {
             std::stringstream ss;
@@ -702,6 +736,7 @@ private:
         GUI_TYPES::SHomePoint homePnt;
         Handle(AIS_Point) pnt;
         Handle(AIS_TextLabel) pntLbl;
+        Handle(CTaskPnt) tPnt;
     };
     std::vector <SHomePoint> homePoints;
 
