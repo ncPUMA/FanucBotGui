@@ -85,17 +85,17 @@ public:
                 case ENC_GLOBAL_POS: {
                     const GUI_TYPES::SVertex &vertex = points[row].pnt.globalPos;
                     result = tr("X:%1 Y:%2 Z:%3")
-                            .arg(vertex.x, 12, 'f', 6, QChar('0'))
-                            .arg(vertex.y, 12, 'f', 6, QChar('0'))
-                            .arg(vertex.z, 12, 'f', 6, QChar('0'));
+                            .arg(vertex.x, 12, 'f', 2, QChar('0'))
+                            .arg(vertex.y, 12, 'f', 2, QChar('0'))
+                            .arg(vertex.z, 12, 'f', 2, QChar('0'));
                     break;
                 }
                 case ENC_ANGLE: {
                     const GUI_TYPES::SRotationAngle &angle = points[row].pnt.angle;
                     result = tr("α:%1 β:%2 γ:%3")
-                            .arg(angle.x, 12, 'f', 6, QChar('0'))
-                            .arg(angle.y, 12, 'f', 6, QChar('0'))
-                            .arg(angle.z, 12, 'f', 6, QChar('0'));
+                            .arg(angle.x, 12, 'f', 2, QChar('0'))
+                            .arg(angle.y, 12, 'f', 2, QChar('0'))
+                            .arg(angle.z, 12, 'f', 2, QChar('0'));
                     break;
                 }
             }

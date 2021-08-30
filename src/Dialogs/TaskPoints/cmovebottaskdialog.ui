@@ -44,7 +44,7 @@
         <item row="0" column="1">
          <widget class="QDoubleSpinBox" name="dsbGlobalX">
           <property name="decimals">
-           <number>6</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-10000.000000000000000</double>
@@ -76,7 +76,7 @@
         <item row="1" column="1">
          <widget class="QDoubleSpinBox" name="dsbGlobalY">
           <property name="decimals">
-           <number>6</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-10000.000000000000000</double>
@@ -108,7 +108,7 @@
         <item row="2" column="1">
          <widget class="QDoubleSpinBox" name="dsbGlobalZ">
           <property name="decimals">
-           <number>6</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-10000.000000000000000</double>
@@ -175,7 +175,7 @@
         <item row="1" column="1">
          <widget class="QDoubleSpinBox" name="dsbBeta">
           <property name="decimals">
-           <number>6</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-10000.000000000000000</double>
@@ -207,7 +207,7 @@
         <item row="2" column="1">
          <widget class="QDoubleSpinBox" name="dsbGamma">
           <property name="decimals">
-           <number>6</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-10000.000000000000000</double>
@@ -223,7 +223,7 @@
         <item row="0" column="1">
          <widget class="QDoubleSpinBox" name="dsbApha">
           <property name="decimals">
-           <number>6</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-10000.000000000000000</double>
@@ -274,7 +274,7 @@
         <item row="1" column="1">
          <widget class="QDoubleSpinBox" name="dsbNormalY">
           <property name="decimals">
-           <number>6</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-10000.000000000000000</double>
@@ -306,7 +306,7 @@
         <item row="2" column="1">
          <widget class="QDoubleSpinBox" name="dsbNormalZ">
           <property name="decimals">
-           <number>6</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-10000.000000000000000</double>
@@ -338,7 +338,7 @@
         <item row="0" column="1">
          <widget class="QDoubleSpinBox" name="dsbNormalX">
           <property name="decimals">
-           <number>6</number>
+           <number>2</number>
           </property>
           <property name="minimum">
            <double>-10000.000000000000000</double>
