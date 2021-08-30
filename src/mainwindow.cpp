@@ -474,7 +474,7 @@ void MainWindow::slSavePoints()
     if (!fName.isEmpty())
     {
         const QStringList ls = fName.split(".");
-        if (ls.last() != QString(".task"))
+        if (ls.last() != QString("task"))
             fName.append(".task");
 
         CJsonFilePointsSaver saver;
