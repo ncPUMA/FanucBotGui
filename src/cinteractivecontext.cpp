@@ -58,22 +58,6 @@ private:
 
     ~CInteractiveContextPrivate() { }
 
-    static AIS_ViewCube* createCube() {
-        AIS_ViewCube * const aViewCube = new AIS_ViewCube();
-        aViewCube->SetDrawEdges(Standard_False);
-        aViewCube->SetDrawVertices(Standard_False);
-        aViewCube->SetBoxTransparency(1.);
-        aViewCube->AIS_InteractiveObject::SetColor(TXT_CLR);
-        TCollection_AsciiString emptyStr;
-        aViewCube->SetBoxSideLabel(V3d_Xpos, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Ypos, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Zpos, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Xneg, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Yneg, emptyStr);
-        aViewCube->SetBoxSideLabel(V3d_Zneg, emptyStr);
-        return aViewCube;
-    }
-
     void init(AIS_InteractiveContext &cntxt) {
         context = &cntxt;
 //        context->SetAutoActivateSelection(false);
@@ -95,10 +79,9 @@ private:
         drawer->SetFaceBoundaryDraw(Standard_True);
 
         //Add AIS_ViewCube
-        ais_axis_cube = createCube();
+        ais_axis_cube = new AIS_ViewCube();
         context->Display(ais_axis_cube, Standard_False);
         context->SetDisplayMode(ais_axis_cube, 1, Standard_False);
-        context->Deactivate(ais_axis_cube);
 
         //Add calib. trihedron
         Geom_Axis2Placement coords(gp_Pnt(0., 0., 0.), gp_Dir(0., 0., 1.), gp_Dir(1., 0., 0.));
@@ -333,7 +316,6 @@ private:
         context->Display(calibTrihedron, Standard_False);
         context->Deactivate(calibTrihedron);
         context->Display(ais_axis_cube, Standard_False);
-        context->Deactivate(ais_axis_cube);
         context->Display(ais_laser, Standard_False);
         context->Deactivate(ais_laser);
         context->Display(ais_desk, Standard_False);
@@ -351,7 +333,6 @@ private:
 
     void showTaskObjects() {
         context->Display(ais_axis_cube, Standard_False);
-        context->Deactivate(ais_axis_cube);
         context->Display(ais_laser, Standard_False);
         context->Deactivate(ais_laser);
         context->Display(ais_desk, Standard_False);
