@@ -46,7 +46,7 @@ CFanucBotSocket::CFanucBotSocket() :
     flip_ = settings.value("flip", flip_).toBool();
     up_ = settings.value("up", up_).toBool();
     top_ = settings.value("top", top_).toBool();
-    camDelay_ = settings.value("cam_delay", 3000).toBool();
+    camDelay_ = settings.value("cam_delay", 3000).toInt();
 
     connect(&fanuc_state_, &FanucStateSocket::xyzwpr_position_received, this, &CFanucBotSocket::updatePosition);
 
