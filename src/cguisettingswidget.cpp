@@ -209,6 +209,6 @@ void CGuiSettingsWidget::slShowMoreOrLess()
 
 void CGuiSettingsWidget::slPartChanged()
 {
-    if (!d_ptr->partTm.isActive())
+//    if (!d_ptr->partTm.isActive())
         d_ptr->partTm.start();
 }

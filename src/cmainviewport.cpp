@@ -217,12 +217,36 @@ class CMainViewportPrivate : public AIS_ViewController
                               gripPos.globalRotation.z);
     }
 
+    template <typename T>
+    inline static void translatePoints(std::vector <T> &vec, const gp_Trsf trsf) {
+        for(auto &spnt : vec) {
+            gp_Pnt pnt(spnt.globalPos.x, spnt.globalPos.y, spnt.globalPos.z);
+            pnt.Transform(trsf);
+            spnt.globalPos.x = pnt.X();
+            spnt.globalPos.y = pnt.Y();
+            spnt.globalPos.z = pnt.Z();
+        }
+    }
+
     void setGuiSettings(const GUI_TYPES::SGuiSettings &settings) {
+        const gp_Trsf oldPartTr = calcPartTrsf();
         guiSettings = settings;
         view->ChangeRenderingParams().NbMsaaSamples = settings.msaa;
         if (guiSettings.snapshotScale == 0.)
             guiSettings.snapshotScale = SNAP_SCALE;
-        context->setPartMdlTransform(calcPartTrsf());
+
+        //Part and Points
+        const gp_Trsf newPartTr = calcPartTrsf();
+        const gp_Trsf pointsDeltaTr = newPartTr * oldPartTr.Inverted();
+        std::vector <GUI_TYPES::SCalibPoint> calibVec = getCallibrationPoints();
+        translatePoints(calibVec, pointsDeltaTr);
+        setCalibrationPoints(calibVec);
+        std::vector <GUI_TYPES::STaskPoint> taskVec = getTaskPoints();
+        translatePoints(taskVec, pointsDeltaTr);
+        setTaskPoints(taskVec);
+        context->setPartMdlTransform(newPartTr);
+
+        //Desk
         context->setDeskMdlTransform(calcDeskTrsf());
         const gp_Pnt start = gp_Pnt(guiSettings.lheadLsrTrX,
                                     guiSettings.lheadLsrTrY,
@@ -416,6 +440,38 @@ class CMainViewportPrivate : public AIS_ViewController
             }
             default: break;
         }
+    }
+
+    void setCalibrationPoints(const std::vector<GUI_TYPES::SCalibPoint> &points) {
+        while(context->getCalibPointCount() > 0)
+            context->removeCalibPoint(0);
+        for (const auto &pnt : points)
+            context->appendCalibPoint(pnt);
+        viewer->Redraw();
+    }
+
+    std::vector<GUI_TYPES::SCalibPoint> getCallibrationPoints() const {
+        std::vector <GUI_TYPES::SCalibPoint> res;
+        const size_t count = context->getCalibPointCount();
+        for(size_t i = 0; i < count; ++i)
+            res.push_back(context->getCalibPoint(i));
+        return res;
+    }
+
+    void setTaskPoints(const std::vector <GUI_TYPES::STaskPoint> &points) {
+        while(context->getTaskPointCount() > 0)
+            context->removeTaskPoint(0);
+        for (const auto &pnt : points)
+            context->appendTaskPoint(pnt);
+        viewer->Redraw();
+    }
+
+    std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const {
+        std::vector <GUI_TYPES::STaskPoint> res;
+        const size_t count = context->getTaskPointCount();
+        for(size_t i = 0; i < count; ++i)
+            res.push_back(context->getTaskPoint(i));
+        return res;
     }
 
     CMainViewport * const q_ptr;
@@ -648,20 +704,12 @@ void CMainViewport::shapeTransformChanged(const BotSocket::EN_ShapeType shType, 
 
 void CMainViewport::setCalibrationPoints(const std::vector<GUI_TYPES::SCalibPoint> &points)
 {
-    while(d_ptr->context->getCalibPointCount() > 0)
-        d_ptr->context->removeCalibPoint(0);
-    for (const auto &pnt : points)
-        d_ptr->context->appendCalibPoint(pnt);
-    d_ptr->viewer->Redraw();
+    d_ptr->setCalibrationPoints(points);
 }
 
 std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationPoints() const
 {
-    std::vector <GUI_TYPES::SCalibPoint> res;
-    const size_t count = d_ptr->context->getCalibPointCount();
-    for(size_t i = 0; i < count; ++i)
-        res.push_back(d_ptr->context->getCalibPoint(i));
-    return res;
+    return d_ptr->getCallibrationPoints();
 }
 
 std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationLocalPoints() const
@@ -675,21 +723,13 @@ std::vector<GUI_TYPES::SCalibPoint> CMainViewport::getCallibrationLocalPoints() 
 
 void CMainViewport::setTaskPoints(const std::vector<GUI_TYPES::STaskPoint> &points)
 {
-    while(d_ptr->context->getTaskPointCount() > 0)
-        d_ptr->context->removeTaskPoint(0);
-    for (const auto &pnt : points)
-        d_ptr->context->appendTaskPoint(pnt);
-    d_ptr->viewer->Redraw();
+    d_ptr->setTaskPoints(points);
     taskPointsChanged();
 }
 
 std::vector<GUI_TYPES::STaskPoint> CMainViewport::getTaskPoints() const
 {
-    std::vector <GUI_TYPES::STaskPoint> res;
-    const size_t count = d_ptr->context->getTaskPointCount();
-    for(size_t i = 0; i < count; ++i)
-        res.push_back(d_ptr->context->getTaskPoint(i));
-    return res;
+    return d_ptr->getTaskPoints();
 }
 
 void CMainViewport::setHomePoints(const std::vector<GUI_TYPES::SHomePoint> &points)
