@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     loguru::add_file("log.txt", loguru::Truncate, loguru::Verbosity_MAX);
 
     QApplication a(argc, argv);
-    a.setFont(QFont(a.font().family(), 12));
+    a.setFont(QFont(a.font().family(), 16));
 
     static Handle(OpenGl_GraphicDriver) aGraphicDriver;
     if (aGraphicDriver.IsNull())

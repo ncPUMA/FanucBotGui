@@ -40,6 +40,7 @@ static const Quantity_Color TXT_CLR  = Quantity_Color( .05    ,  .05    , 0.05  
 static const Quantity_Color FACE_CLR = Quantity_Color(0.1     , 0.1     , 0.1    , Quantity_TOC_RGB);
 static const Quantity_Color PART_CLR = Quantity_Color(0.570482, 0.283555, 0.12335, Quantity_TOC_RGB);
 static const Quantity_Color PNT_CLR  = Quantity_Color( .05    ,  .05    ,  .05   , Quantity_TOC_RGB);
+static const double TXT_HEIGHT = 20;
 
 class CInteractiveContextPrivate
 {
@@ -111,6 +112,7 @@ private:
         //Add cursor
         cursorPnt->SetColor(PNT_CLR);
         cursorLbl->SetColor(TXT_CLR);
+        cursorLbl->SetHeight(TXT_HEIGHT);
         context->Load(cursorPnt, Standard_False);
         context->SetZLayer(cursorPnt, depthTestOffZlayer);
         context->Deactivate(cursorPnt);
@@ -417,6 +419,7 @@ private:
         scpnt.pnt->SetColor(PNT_CLR);
         scpnt.pntLbl = new AIS_TextLabel();
         scpnt.pntLbl->SetColor(TXT_CLR);
+        scpnt.pntLbl->SetHeight(TXT_HEIGHT);
         scpnt.pntLbl->SetPosition(globalPos);
         std::stringstream ss;
         ss << "C" << calibPoints.size() + 1;
@@ -478,6 +481,7 @@ private:
         stpnt.pnt->SetColor(PNT_CLR);
         stpnt.pntLbl = new AIS_TextLabel();
         stpnt.pntLbl->SetColor(TXT_CLR);
+        stpnt.pntLbl->SetHeight(TXT_HEIGHT);
         stpnt.pntLbl->SetPosition(globalPos);
         const std::string txt = taskPointName(taskPoints.size(), taskPoint.taskType);
         stpnt.pntLbl->SetText(TCollection_ExtendedString(txt.c_str(), Standard_True));
@@ -564,6 +568,7 @@ private:
         sppnt.pnt->SetColor(PNT_CLR);
         sppnt.pntLbl = new AIS_TextLabel();
         sppnt.pntLbl->SetColor(TXT_CLR);
+        sppnt.pntLbl->SetHeight(TXT_HEIGHT);
         sppnt.pntLbl->SetPosition(globalPos);
         std::stringstream ss;
         ss << "P" << homePoints.size() + 1;

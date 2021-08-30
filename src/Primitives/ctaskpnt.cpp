@@ -66,7 +66,7 @@ void CTaskPnt::Compute (const Handle(PrsMgr_PresentationManager3d)& ,
         Quantity_Color clr(Quantity_NOC_STEELBLUE3);
         if (HasColor())
             Color(clr);
-        myDrawer->SetLineAspect(new Prs3d_LineAspect(clr, Aspect_TOL_SOLID, 1.5));
+        myDrawer->SetLineAspect(new Prs3d_LineAspect(clr, Aspect_TOL_SOLID, 3.0));
         Handle(Graphic3d_Group) aLineGroup = thePrs->NewGroup();
         aLineGroup->SetGroupPrimitivesAspect(myDrawer->LineAspect()->Aspect());
         Handle(Graphic3d_ArrayOfSegments) aPrims = new Graphic3d_ArrayOfSegments(2);
