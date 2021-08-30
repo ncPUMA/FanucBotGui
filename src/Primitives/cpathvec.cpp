@@ -36,6 +36,7 @@ void CPathVec::Compute (const Handle(PrsMgr_PresentationManager3d)& ,
 
   // Draw Line
   {
+    myDrawer->SetLineAspect(new Prs3d_LineAspect(Quantity_NOC_DARKSLATEGRAY, Aspect_TOL_DOT, 1.));
     Handle(Graphic3d_Group) aLineGroup = thePrs->NewGroup();
     aLineGroup->SetGroupPrimitivesAspect (myDrawer->LineAspect()->Aspect());
     Handle(Graphic3d_ArrayOfSegments) aPrims = new Graphic3d_ArrayOfSegments(2);
