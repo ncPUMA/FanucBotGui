@@ -79,7 +79,7 @@
                <double>10000.000000000000000</double>
               </property>
               <property name="singleStep">
-               <double>0.100000000000000</double>
+               <double>1.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -271,7 +271,7 @@
                <double>10000.000000000000000</double>
               </property>
               <property name="singleStep">
-               <double>0.100000000000000</double>
+               <double>1.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -287,7 +287,7 @@
                <double>10000.000000000000000</double>
               </property>
               <property name="singleStep">
-               <double>0.100000000000000</double>
+               <double>1.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -1446,6 +1446,62 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>dsbPartTrX</tabstop>
+  <tabstop>dsbPartTrY</tabstop>
+  <tabstop>dsbPartTrZ</tabstop>
+  <tabstop>dsbPartCenterX</tabstop>
+  <tabstop>dsbPartCenterY</tabstop>
+  <tabstop>dsbPartCenterZ</tabstop>
+  <tabstop>dsbPartRotateX</tabstop>
+  <tabstop>dsbPartRotateY</tabstop>
+  <tabstop>dsbPartRotateZ</tabstop>
+  <tabstop>dsbPartScale</tabstop>
+  <tabstop>pbShowMore</tabstop>
+  <tabstop>pbShowLess</tabstop>
+  <tabstop>dsbDeskTrX</tabstop>
+  <tabstop>dsbDeskTrY</tabstop>
+  <tabstop>dsbDeskTrZ</tabstop>
+  <tabstop>dsbDeskCenterX</tabstop>
+  <tabstop>dsbDeskCenterY</tabstop>
+  <tabstop>dsbDeskCenterZ</tabstop>
+  <tabstop>dsbDeskRotateX</tabstop>
+  <tabstop>dsbDeskRotateY</tabstop>
+  <tabstop>dsbDeskRotateZ</tabstop>
+  <tabstop>dsbDeskScale</tabstop>
+  <tabstop>dsbLHeadTrX</tabstop>
+  <tabstop>dsbLHeadTrY</tabstop>
+  <tabstop>dsbLHeadTrZ</tabstop>
+  <tabstop>dsbLHeadCenterX</tabstop>
+  <tabstop>dsbLHeadCenterY</tabstop>
+  <tabstop>dsbLHeadCenterZ</tabstop>
+  <tabstop>dsbLHeadRotateX</tabstop>
+  <tabstop>dsbLHeadRotateY</tabstop>
+  <tabstop>dsbLHeadRotateZ</tabstop>
+  <tabstop>dsbLHeadScale</tabstop>
+  <tabstop>dsbLHeadLaserTrX</tabstop>
+  <tabstop>dsbLHeadLaserTrY</tabstop>
+  <tabstop>dsbLHeadLaserTrZ</tabstop>
+  <tabstop>dsbLHeadNormalX</tabstop>
+  <tabstop>dsbLHeadNormalY</tabstop>
+  <tabstop>dsbLHeadNormalZ</tabstop>
+  <tabstop>dsbLHeadLaserLenght</tabstop>
+  <tabstop>checkLHeadLaserClip</tabstop>
+  <tabstop>dsbGripTrX</tabstop>
+  <tabstop>dsbGripTrY</tabstop>
+  <tabstop>dsbGripTrZ</tabstop>
+  <tabstop>dsbGripCenterX</tabstop>
+  <tabstop>dsbGripCenterY</tabstop>
+  <tabstop>dsbGripCenterZ</tabstop>
+  <tabstop>dsbGripRotateX</tabstop>
+  <tabstop>dsbGripRotateY</tabstop>
+  <tabstop>dsbGripRotateZ</tabstop>
+  <tabstop>dsbGripScale</tabstop>
+  <tabstop>checkGripVis</tabstop>
+  <tabstop>pbCalc</tabstop>
+  <tabstop>pbApply</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

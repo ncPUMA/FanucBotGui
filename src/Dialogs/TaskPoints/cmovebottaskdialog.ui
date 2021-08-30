@@ -471,6 +471,23 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>dsbGlobalX</tabstop>
+  <tabstop>dsbGlobalY</tabstop>
+  <tabstop>dsbGlobalZ</tabstop>
+  <tabstop>dsbApha</tabstop>
+  <tabstop>dsbBeta</tabstop>
+  <tabstop>dsbGamma</tabstop>
+  <tabstop>dsbNormalX</tabstop>
+  <tabstop>dsbNormalY</tabstop>
+  <tabstop>dsbNormalZ</tabstop>
+  <tabstop>checkCalib</tabstop>
+  <tabstop>checkZSimmetry</tabstop>
+  <tabstop>checkHomePnt</tabstop>
+  <tabstop>dsbDelay</tabstop>
+  <tabstop>pbOk</tabstop>
+  <tabstop>pbCancel</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
