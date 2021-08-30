@@ -14,6 +14,7 @@ SOURCES += \
     BotSocket/cfanucbotsocket.cpp \
     BotSocket/fanuc_relay_socket.cpp \
     BotSocket/fanuc_state_socket.cpp \
+    Primitives/cpathvec.cpp \
     cjsonfilepointssaver.cpp \
     log/loguru.cpp \
     Dialogs/CalibPoints/caddcalibpointdialog.cpp \
@@ -53,6 +54,7 @@ HEADERS += \
     BotSocket/fanuc_relay_socket.h \
     BotSocket/fanuc_state_socket.h \
     BotSocket/simple_message.h \
+    Primitives/cpathvec.h \
     cabstractpointssaver.h \
     cjsonfilepointssaver.h \
     log/loguru.hpp \

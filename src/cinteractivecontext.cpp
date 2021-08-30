@@ -32,6 +32,7 @@
 
 #include "Primitives/claservec.h"
 #include "Primitives/ctaskpnt.h"
+#include "Primitives/cpathvec.h"
 
 static constexpr double DEGREE_K = M_PI / 180.;
 
@@ -321,6 +322,8 @@ private:
             context->Erase(sppnt.pnt, Standard_False);
             context->Erase(sppnt.pntLbl, Standard_False);
         }
+        for(auto vec : pathVec)
+            context->Erase(vec, Standard_False);
         resetCursorPosition();
     }
 
@@ -363,6 +366,10 @@ private:
             context->Display(sppnt.pnt, Standard_False);
             context->Display(sppnt.pntLbl, Standard_False);
             context->Deactivate(sppnt.pntLbl);
+        }
+        for(auto vec : pathVec) {
+            context->Display(vec, Standard_False);
+            context->Deactivate(vec);
         }
     }
 
@@ -494,6 +501,7 @@ private:
         context->Deactivate(stpnt.pntLbl);
         context->Display(stpnt.tPnt, Standard_False);
         context->Deactivate(stpnt.tPnt);
+        redrawPathVec();
     }
 
     void changeTaskPoint(const size_t index, const GUI_TYPES::STaskPoint &taskPoint) {
@@ -522,6 +530,7 @@ private:
         context->RecomputePrsOnly(stpnt.pntLbl, Standard_False);
         context->Display(stpnt.tPnt, Standard_False);
         context->Deactivate(stpnt.tPnt);
+        redrawPathVec();
     }
 
     void removeTaskPoint(const size_t index) {
@@ -537,6 +546,7 @@ private:
             taskPoints[i].pntLbl->SetText(TCollection_ExtendedString(txt.c_str(), Standard_True));
             context->RecomputePrsOnly(taskPoints[i].pntLbl, Standard_False);
         }
+        redrawPathVec();
     }
 
     GUI_TYPES::SHomePoint getHomePoint(const size_t index) const {
@@ -563,6 +573,7 @@ private:
         context->SetZLayer(sppnt.pntLbl, depthTestOffZlayer);
         context->Display(sppnt.pntLbl, Standard_False);
         context->Deactivate(sppnt.pntLbl);
+        redrawPathVec();
     }
 
     void changeHomePoint(const size_t index, const GUI_TYPES::SHomePoint &homePoint) {
@@ -574,6 +585,7 @@ private:
         sppnt.pntLbl->SetPosition(globalPos);
         context->RecomputePrsOnly(sppnt.pnt, Standard_False);
         context->RecomputePrsOnly(sppnt.pntLbl, Standard_False);
+        redrawPathVec();
     }
 
     void removeHomePoint(const size_t index) {
@@ -588,6 +600,7 @@ private:
             homePoints[i].pntLbl->SetText(TCollection_ExtendedString(ss.str().c_str(), Standard_True));
             context->RecomputePrsOnly(homePoints[i].pntLbl, Standard_False);
         }
+        redrawPathVec();
     }
 
     bool detectNormal(gp_Dir &normal, const gp_Pnt pnt, const Handle(AIS_Shape) &obj) const {
@@ -621,6 +634,42 @@ private:
             vecObj.Append(ais_desk);
             ais_laser->clipLenght(context, vecObj);
             context->RecomputePrsOnly(ais_laser, Standard_False);
+        }
+    }
+
+    void redrawPathVec() {
+        for(auto vec : pathVec)
+            context->Remove(vec, Standard_False);
+        pathVec.clear();
+
+        bool firstPnt = true;
+        bool bHome = !homePoints.empty();
+        gp_Pnt lastPos;
+        gp_Pnt homePos;
+        if (bHome)
+            homePos = homePoints.front().pnt->Component()->Pnt();
+        for(auto taskPnt : taskPoints) {
+            const gp_Pnt nextPoint = taskPnt.pnt->Component()->Pnt();
+            if (taskPnt.task.bUseHomePnt && bHome) {
+                if (!firstPnt) {
+                    Handle(CPathVec) vec = new CPathVec(lastPos, homePos);
+                    context->Display(vec, Standard_False);
+                    context->Deactivate(vec);
+                    pathVec.push_back(vec);
+                }
+                Handle(CPathVec) vec = new CPathVec(homePos, nextPoint);
+                context->Display(vec, Standard_False);
+                context->Deactivate(vec);
+                pathVec.push_back(vec);
+            }
+            else if (!firstPnt) {
+                Handle(CPathVec) vec = new CPathVec(lastPos, nextPoint);
+                context->Display(vec, Standard_False);
+                context->Deactivate(vec);
+                pathVec.push_back(vec);
+            }
+            firstPnt = false;
+            lastPos = nextPoint;
         }
     }
 
@@ -669,6 +718,8 @@ private:
         Handle(AIS_TextLabel) pntLbl;
     };
     std::vector <SHomePoint> homePoints;
+
+    std::vector <Handle(CPathVec)> pathVec;
 };
 
 
