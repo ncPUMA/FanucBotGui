@@ -15,7 +15,7 @@ public:
 
     BotSocket::EN_CalibResult execCalibration(const std::vector <GUI_TYPES::SCalibPoint> &points);
     void prepare(const std::vector <GUI_TYPES::STaskPoint> &points);
-    void startTasks(const std::vector <GUI_TYPES::SHomePoint> &,
+    void startTasks(const std::vector <GUI_TYPES::SHomePoint> &homePoints,
                     const std::vector <GUI_TYPES::STaskPoint> &taskPoints);
     void stopTasks();
     void shapeTransformChanged(const BotSocket::EN_ShapeType shType);
@@ -40,6 +40,7 @@ private slots:
 
 private:
     std::vector <GUI_TYPES::STaskPoint> curTask;
+    std::vector <GUI_TYPES::SHomePoint> homePoints;
     int camDelay_;
     int lastTaskDelay;
     int calibWaitCounter;

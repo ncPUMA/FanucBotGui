@@ -98,25 +98,25 @@ BotSocket::SBotPosition xyzwpr2botposition(const xyzwpr_data &pos, const gp_Trsf
     return BotSocket::SBotPosition(p.xyzwpr[0], p.xyzwpr[1], p.xyzwpr[2], p.xyzwpr[3], p.xyzwpr[4], p.xyzwpr[5]);
 }
 
-xyzwpr_data botposition2xyzwpr(const GUI_TYPES::STaskPoint &pos, const gp_Trsf &user2world)
+xyzwpr_data botposition2xyzwpr(const GUI_TYPES::SVertex &globalPos, const GUI_TYPES::SRotationAngle &angle, const GUI_TYPES::SVertex &normal, const gp_Trsf &user2world)
 {
     xyzwpr_data p;
 
     //normal represent as the ZAxis
-    gp_Dir zDir(pos.normal.x, pos.normal.y, pos.normal.z);
+    gp_Dir zDir(normal.x, normal.y, normal.z);
 
     //normal rotation angles from global coord system
-    gp_Quaternion normal(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
+    gp_Quaternion normal_q(gp_Vec(gp_Dir(0., 0., 1.)), gp_Vec(zDir));
 
     //delta rotation from global coord system
     gp_Quaternion delta;
     delta.SetEulerAngles(gp_Extrinsic_XYZ,
-                         pos.angle.x * M_PI / 180.,
-                         pos.angle.y * M_PI / 180.,
-                         pos.angle.z * M_PI / 180.);
+                         angle.x * M_PI / 180.,
+                         angle.y * M_PI / 180.,
+                         angle.z * M_PI / 180.);
 
     //final rotation from global coord system
-    gp_Quaternion finalRotationZAxis = normal * delta;
+    gp_Quaternion finalRotationZAxis = normal_q * delta;
 
     double ax = 0, ay = 0, az = 0;
     finalRotationZAxis.GetEulerAngles(gp_Extrinsic_XYZ,
@@ -124,9 +124,19 @@ xyzwpr_data botposition2xyzwpr(const GUI_TYPES::STaskPoint &pos, const gp_Trsf &
                          ay,
                          az);
 
-    p.xyzwpr = {pos.globalPos.x, pos.globalPos.y, pos.globalPos.z, ax * 180/M_PI, ay * 180/M_PI, az * 180/M_PI};
+    p.xyzwpr = {globalPos.x, globalPos.y, globalPos.z, ax * 180/M_PI, ay * 180/M_PI, az * 180/M_PI};
 
     return transform(p, user2world);
+}
+
+xyzwpr_data botposition2xyzwpr(const GUI_TYPES::STaskPoint &pos, const gp_Trsf &user2world)
+{
+    return botposition2xyzwpr(pos.globalPos, pos.angle, pos.normal, user2world);
+}
+
+xyzwpr_data botposition2xyzwpr(const GUI_TYPES::SHomePoint &pos, const gp_Trsf &user2world)
+{
+    return botposition2xyzwpr(pos.globalPos, pos.angle, pos.normal, user2world);
 }
 
 void CFanucBotSocket::updatePosition(const xyzwpr_data &pos)
@@ -188,24 +198,33 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
     else
     {
         GUI_TYPES::STaskPoint &p = curTask.front();
-        LOG_F(INFO, "Task %d: xyz = %f %f %f normal = %f %f %f angle = %f %f %f",
-              p.taskType,
+        LOG_F(INFO, "Task %d (home=%d, calib=%d): xyz = %f %f %f normal = %f %f %f angle = %f %f %f",
+              p.taskType, p.bUseHomePnt, p.bNeedCalib,
               p.globalPos.x, p.globalPos.y, p.globalPos.z,
               p.normal.x, p.normal.y, p.normal.z,
               p.angle.x, p.angle.y, p.angle.z);
 
-        xyzwpr_data point = botposition2xyzwpr(p, user2world_);
-        point.flip = flip_;
-        point.up = up_;
-        point.top = top_;
-        lastTaskDelay = static_cast <int> (p.delay * 1000.);
-        bNeedCalib = p.bNeedCalib;
-        // if point needs calibration, move to it after calibration
-        if(bNeedCalib)
-            p.bNeedCalib = false;
+        if(p.bUseHomePnt && !homePoints.empty())
+        {
+            xyzwpr_data point = botposition2xyzwpr(homePoints[0], user2world_);
+            p.bUseHomePnt = false;
+            fanuc_relay_.move_point(point);
+        }
         else
-            curTask.erase(curTask.begin());
-        fanuc_relay_.move_point(point);
+        {
+            xyzwpr_data point = botposition2xyzwpr(p, user2world_);
+            point.flip = flip_;
+            point.up = up_;
+            point.top = top_;
+            lastTaskDelay = static_cast <int> (p.delay * 1000.);
+            bNeedCalib = p.bNeedCalib;
+            // if point needs calibration, move to it after calibration
+            if(bNeedCalib)
+                p.bNeedCalib = false;
+            else
+                curTask.erase(curTask.begin());
+            fanuc_relay_.move_point(point);
+        }
     }
 }
 
@@ -319,12 +338,13 @@ BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI
     return result;
 }
 
-void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SHomePoint> &,
+void CFanucBotSocket::startTasks(const std::vector<GUI_TYPES::SHomePoint> &homePoints_,
                                  const std::vector<GUI_TYPES::STaskPoint> &taskPoints)
 {
     VLOG_CALL;
 
     curTask = taskPoints;
+    homePoints = homePoints_;
     bNeedCalib = false;
     lastTaskDelay = 0;
     calibWaitCounter = 0;
