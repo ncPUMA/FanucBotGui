@@ -327,7 +327,6 @@ private:
         for(auto scpnt : calibPoints) {
             context->Display(scpnt.pnt, Standard_False);
             context->Display(scpnt.pntLbl, Standard_False);
-            context->Deactivate(scpnt.pntLbl);
         }
     }
 
@@ -341,14 +340,12 @@ private:
         for(auto stpnt : taskPoints) {
             context->Display(stpnt.pnt, Standard_False);
             context->Display(stpnt.pntLbl, Standard_False);
-            context->Deactivate(stpnt.pntLbl);
             context->Display(stpnt.tPnt, Standard_False);
             context->Deactivate(stpnt.tPnt);
         }
         for(auto sppnt : homePoints) {
             context->Display(sppnt.pnt, Standard_False);
             context->Display(sppnt.pntLbl, Standard_False);
-            context->Deactivate(sppnt.pntLbl);
             context->Display(sppnt.tPnt, Standard_False);
             context->Deactivate(sppnt.tPnt);
         }
@@ -411,7 +408,6 @@ private:
         context->Display(scpnt.pnt, Standard_False);
         context->SetZLayer(scpnt.pntLbl, depthTestOffZlayer);
         context->Display(scpnt.pntLbl, Standard_False);
-        context->Deactivate(scpnt.pntLbl);
     }
 
     void changeCalibPoint(const size_t index, const GUI_TYPES::SCalibPoint &calibPoint) {
@@ -485,7 +481,6 @@ private:
         context->Display(stpnt.pnt, Standard_False);
         context->SetZLayer(stpnt.pntLbl, depthTestOffZlayer);
         context->Display(stpnt.pntLbl, Standard_False);
-        context->Deactivate(stpnt.pntLbl);
         context->Display(stpnt.tPnt, Standard_False);
         context->Deactivate(stpnt.tPnt);
         redrawPathVec();
@@ -573,7 +568,6 @@ private:
         context->Display(sppnt.pnt, Standard_False);
         context->SetZLayer(sppnt.pntLbl, depthTestOffZlayer);
         context->Display(sppnt.pntLbl, Standard_False);
-        context->Deactivate(sppnt.pntLbl);
         context->Display(sppnt.tPnt, Standard_False);
         context->Deactivate(sppnt.tPnt);
         redrawPathVec();
@@ -952,6 +946,8 @@ bool CInteractiveContext::isCalibPointDetected(size_t &index) const
     {
         if (scpnt.pnt == curShape)
             return true;
+        if (scpnt.pntLbl == curShape)
+            return true;
 
         ++index;
     }
@@ -966,6 +962,8 @@ bool CInteractiveContext::isTaskPointDetected(size_t &index) const
     {
         if (stpnt.pnt == curShape)
             return true;
+        if (stpnt.pntLbl == curShape)
+            return true;
         ++index;
     }
     return false;
@@ -978,6 +976,8 @@ bool CInteractiveContext::isPathPointDetected(size_t &index) const
     for (auto sppnt : d_ptr->homePoints)
     {
         if (sppnt.pnt == curShape)
+            return true;
+        if (sppnt.pntLbl == curShape)
             return true;
         ++index;
     }
