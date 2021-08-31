@@ -184,7 +184,7 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
         });
 
         calibWaitCounter = 0;
-        QTimer::singleShot(camDelay_ + 1000, this, &CFanucBotSocket::slCalibWaitTimeout);
+        QTimer::singleShot(camDelay_ + 2000, this, &CFanucBotSocket::slCalibWaitTimeout);
     }
     else if(lastTaskDelay > 0)
     {
