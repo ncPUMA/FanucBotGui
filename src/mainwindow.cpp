@@ -495,6 +495,11 @@ void MainWindow::slLoadPoints()
                                                        tr("Загрузка задания"),
                                                        QString(),
                                                        tr("Task (*.task)"));
+    loadPoints(fName);
+}
+
+void MainWindow::loadPoints(const QString &fName)
+{
     if (!fName.isEmpty())
     {
         std::vector <GUI_TYPES::STaskPoint> taskPoints;
@@ -519,7 +524,6 @@ void MainWindow::slLoadPoints()
 void MainWindow::slResetPoints()
 {
     ui->mainView->setTaskPoints(std::vector<GUI_TYPES::STaskPoint> ());
-    ui->mainView->setHomePoints(std::vector<GUI_TYPES::SHomePoint> ());
 }
 
 void MainWindow::slExit()

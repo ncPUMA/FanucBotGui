@@ -734,8 +734,12 @@ std::vector<GUI_TYPES::STaskPoint> CMainViewport::getTaskPoints() const
 
 void CMainViewport::setHomePoints(const std::vector<GUI_TYPES::SHomePoint> &points)
 {
-    while(d_ptr->context->getHomePointCount() > 0)
-        d_ptr->context->removeHomePoint(0);
+    // do not remove current home point if task file doesn't contains any
+    if(!points.empty())
+    {
+        while(d_ptr->context->getHomePointCount() > 0)
+            d_ptr->context->removeHomePoint(0);
+    }
     for (const auto &pnt : points)
         d_ptr->context->appendHomePoint(pnt);
     d_ptr->viewer->Redraw();

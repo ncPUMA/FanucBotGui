@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QApplication>
 #include <QFile>
+#include <QSettings>
 
 #include <OpenGl_GraphicDriver.hxx>
 #include <OSD_Environment.hxx>
@@ -42,10 +43,11 @@ int main(int argc, char *argv[])
 
     CSimpleSettingsStorage settings;
 #ifdef Q_OS_WIN
-    settings.setSettingsFName("LBOT.INI");
+    const char *settings_fname = "LBOT.INI";
 #else
-    settings.setSettingsFName("conf.cfg");
+    const char *settings_fname = "conf.cfg";
 #endif
+    settings.setSettingsFName(settings_fname);
 
     MainWindow w;
     CFanucBotSocket bot_socket;
@@ -60,6 +62,14 @@ int main(int argc, char *argv[])
             const QString str = QString(f.readAll());
             w.setStyleSheet(str);
             f.close();
+        }
+    }
+    {
+        // FIXME: move to main_window/settings_storage
+        QSettings s(settings_fname, QSettings::IniFormat);
+        if(s.contains("default_task"))
+        {
+            w.loadPoints(s.value("default_task").toString());
         }
     }
     w.show();
