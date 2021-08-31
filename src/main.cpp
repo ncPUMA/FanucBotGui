@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
     w.init(*aGraphicDriver);
     w.setSettingsStorage(settings);
     w.setBotSocket(bot_socket);
+    w.loadBackupPoints();
     if (bStyleSheet)
     {
         QFile f(":/Styles/Data/StyleSheets/style.qss");

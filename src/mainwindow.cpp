@@ -702,3 +702,7 @@ void MainWindow::configToolBar()
     d_ptr->initToolBar(ui->toolBar);
 }
 
+void MainWindow::loadBackupPoints()
+{
+    ui->mainView->loadBackupPoints();
+}

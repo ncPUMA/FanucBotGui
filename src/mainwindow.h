@@ -26,6 +26,7 @@ public:
     void init(OpenGl_GraphicDriver &driver);
     void setSettingsStorage(CAbstractSettingsStorage &storage);
     void setBotSocket(CAbstractBotSocket &botSocket);
+    void loadBackupPoints();
 
 private slots:
     //Menu "File"

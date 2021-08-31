@@ -534,8 +534,6 @@ void CMainViewport::init(OpenGl_GraphicDriver &driver)
 void CMainViewport::setGuiSettings(const GUI_TYPES::SGuiSettings &settings)
 {
     d_ptr->setGuiSettings(settings);
-
-    loadPoints(backup_points_fname);
 }
 
 GUI_TYPES::SGuiSettings CMainViewport::getGuiSettings() const
@@ -1274,4 +1272,9 @@ void CMainViewport::loadPoints(const QString &fName)
             setHomePoints(homePoints);
         }
     }
+}
+
+void CMainViewport::loadBackupPoints()
+{
+    loadPoints(backup_points_fname);
 }

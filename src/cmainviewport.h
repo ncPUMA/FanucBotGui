@@ -104,6 +104,7 @@ public:
     void makePartSnapshot(const char *fname);
     void makeCorrectionBySnapshot(const gp_Vec &globalDelta);
 
+    void loadBackupPoints();
     void loadPoints(const QString &fName);
     void savePoints(const QString &fName);
 
