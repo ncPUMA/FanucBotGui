@@ -64,14 +64,6 @@ int main(int argc, char *argv[])
             f.close();
         }
     }
-    {
-        // FIXME: move to main_window/settings_storage
-        QSettings s(settings_fname, QSettings::IniFormat);
-        if(s.contains("default_task"))
-        {
-            w.loadPoints(s.value("default_task").toString());
-        }
-    }
     w.show();
     const int retCode = a.exec();
     return retCode;

@@ -8,6 +8,7 @@
 #include <QAction>
 #include <QContextMenuEvent>
 #include <QVariant>
+#include <QMessageBox>
 
 #include <AIS_ViewController.hxx>
 
@@ -40,6 +41,8 @@
 #include "csnapshotdialog.h"
 #include "csnapshotviewport.h"
 
+#include "cjsonfilepointssaver.h"
+
 static constexpr double DEGREE_K = M_PI / 180.;
 
 static const Quantity_Color BG_CLR   = Quantity_Color( .7765,  .9 , 1.  , Quantity_TOC_RGB);
@@ -49,6 +52,8 @@ static const GUI_TYPES::TDistance DISTANCE_PRECITION = 0.000005;
 static const GUI_TYPES::TDegree   ROTATION_PRECITION = 0.000005;
 
 static const GUI_TYPES::TScale SNAP_SCALE = 5.;
+
+static const char *backup_points_fname = "_backup_points_.task";
 
 static class CEmptySubscriber : public CAbstractMainViewportSubscriber
 {
@@ -529,6 +534,8 @@ void CMainViewport::init(OpenGl_GraphicDriver &driver)
 void CMainViewport::setGuiSettings(const GUI_TYPES::SGuiSettings &settings)
 {
     d_ptr->setGuiSettings(settings);
+
+    loadPoints(backup_points_fname);
 }
 
 GUI_TYPES::SGuiSettings CMainViewport::getGuiSettings() const
@@ -1058,12 +1065,14 @@ void CMainViewport::fillTaskAddCntxtMenu(QMenu &menu)
 
 void CMainViewport::taskPointsChanged()
 {
+    savePoints(backup_points_fname);
     for(auto s : d_ptr->subs)
         s->tasksChanged();
 }
 
 void CMainViewport::homePointsChanged()
 {
+    savePoints(backup_points_fname);
     for(auto s : d_ptr->subs)
         s->homePointsChanged();
 }
@@ -1226,5 +1235,43 @@ void CMainViewport::slRemovePathPoint()
         d_ptr->context->removeHomePoint(index);
         homePointsChanged();
         d_ptr->viewer->Redraw();
+    }
+}
+
+void CMainViewport::savePoints(const QString &fName)
+{
+    if (!fName.isEmpty())
+    {
+        CJsonFilePointsSaver saver;
+        saver.setFileName(fName.toLatin1());
+        const bool res = saver.savePoints(getTaskPoints(),
+                                          getHomePoints());
+        if (!res)
+            QMessageBox::critical(this,
+                                  tr("Сохранение задания"),
+                                  tr("Не удалось сохранить задание"));
+    }
+}
+
+void CMainViewport::loadPoints(const QString &fName)
+{
+    if (!fName.isEmpty())
+    {
+        std::vector <GUI_TYPES::STaskPoint> taskPoints;
+        std::vector <GUI_TYPES::SHomePoint> homePoints;
+        CJsonFilePointsSaver saver;
+        saver.setFileName(fName.toLatin1());
+        const bool bRes = saver.loadPoints(taskPoints, homePoints);
+        if (!bRes || (taskPoints.empty() && homePoints.empty()))
+        {
+            QMessageBox::critical(this,
+                                  tr("Загрузка задания"),
+                                  tr("Не удалось загрузить задание"));
+        }
+        else
+        {
+            setTaskPoints(taskPoints);
+            setHomePoints(homePoints);
+        }
     }
 }

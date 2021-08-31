@@ -27,8 +27,6 @@ public:
     void setSettingsStorage(CAbstractSettingsStorage &storage);
     void setBotSocket(CAbstractBotSocket &botSocket);
 
-    void loadPoints(const QString &fName);
-
 private slots:
     //Menu "File"
     void slImport();

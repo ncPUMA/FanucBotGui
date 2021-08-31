@@ -18,8 +18,6 @@
 #include "Dialogs/TaskPoints/ctaskpointsorderdialog.h"
 #include "Dialogs/PathPoints/cpathpointsorderdialog.h"
 
-#include "cjsonfilepointssaver.h"
-
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
 static const int STATE_LAMP_UPDATE_INTERVAL = 200;
 
@@ -472,21 +470,12 @@ void MainWindow::slSavePoints()
                                                  tr("Сохранение задания"),
                                                  QString(),
                                                  tr("Task (*.task)"));
-    if (!fName.isEmpty())
-    {
-        const QStringList ls = fName.split(".");
-        if (ls.last() != QString("task"))
-            fName.append(".task");
 
-        CJsonFilePointsSaver saver;
-        saver.setFileName(fName.toLatin1());
-        const bool res = saver.savePoints(ui->mainView->getTaskPoints(),
-                                          ui->mainView->getHomePoints());
-        if (!res)
-            QMessageBox::critical(this,
-                                  tr("Сохранение задания"),
-                                  tr("Не удалось сохранить задание"));
-    }
+    const QStringList ls = fName.split(".");
+    if (ls.last() != QString("task"))
+        fName.append(".task");
+
+    ui->mainView->savePoints(fName);
 }
 
 void MainWindow::slLoadPoints()
@@ -495,30 +484,7 @@ void MainWindow::slLoadPoints()
                                                        tr("Загрузка задания"),
                                                        QString(),
                                                        tr("Task (*.task)"));
-    loadPoints(fName);
-}
-
-void MainWindow::loadPoints(const QString &fName)
-{
-    if (!fName.isEmpty())
-    {
-        std::vector <GUI_TYPES::STaskPoint> taskPoints;
-        std::vector <GUI_TYPES::SHomePoint> homePoints;
-        CJsonFilePointsSaver saver;
-        saver.setFileName(fName.toLatin1());
-        const bool bRes = saver.loadPoints(taskPoints, homePoints);
-        if (!bRes || (taskPoints.empty() && homePoints.empty()))
-        {
-            QMessageBox::critical(this,
-                                  tr("Загрузка задания"),
-                                  tr("Не удалось загрузить задание"));
-        }
-        else
-        {
-            ui->mainView->setTaskPoints(taskPoints);
-            ui->mainView->setHomePoints(homePoints);
-        }
-    }
+    ui->mainView->loadPoints(fName);
 }
 
 void MainWindow::slResetPoints()
