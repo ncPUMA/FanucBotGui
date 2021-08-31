@@ -49,6 +49,7 @@ private slots:
     void slCallibApply();
     void slCallibCalc();
     void slPartPrntScr();
+    void slSyncGuiSettings();
 
     //start/stop
     void slStart();

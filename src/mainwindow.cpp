@@ -349,6 +349,7 @@ MainWindow::MainWindow(QWidget *parent) :
     d_ptr->uiIface.viewport = ui->mainView;
     d_ptr->uiIface.jrnl = ui->teJrnl;
     connect(d_ptr->lampTm, &QTimer::timeout, this, &MainWindow::slUpdateBotLamps);
+    connect(ui->mainView, &CMainViewport::updateGuiSettings, this, &MainWindow::slSyncGuiSettings);
 
     configMenu();
     configToolBar();
@@ -585,6 +586,12 @@ void MainWindow::slCallibCalc()
 
     ui->wSettings->initFromGuiSettings(ui->mainView->getGuiSettings());
     ui->mainView->setCalibResult(calibRes);
+}
+
+void MainWindow::slSyncGuiSettings()
+{
+    ui->wSettings->initFromGuiSettings(ui->mainView->getGuiSettings());
+    d_ptr->settingsStorage->saveGuiSettings(ui->wSettings->getChangedSettings());
 }
 
 void MainWindow::slPartPrntScr()

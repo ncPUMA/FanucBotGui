@@ -824,6 +824,8 @@ void CMainViewport::makeCorrectionBySnapshot(const gp_Vec &globalDelta)
     setCalibrationPoints(movedPoints(getCallibrationLocalPoints(), globalDelta));
     setTaskPoints(movedPoints(getTaskPoints(), globalDelta));
     setHomePoints(movedPoints(getHomePoints(), globalDelta));
+
+    emit updateGuiSettings();
 }
 
 QPaintEngine *CMainViewport::paintEngine() const

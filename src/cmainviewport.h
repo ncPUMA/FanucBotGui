@@ -104,6 +104,9 @@ public:
     void makePartSnapshot(const char *fname);
     void makeCorrectionBySnapshot(const gp_Vec &globalDelta);
 
+signals:
+    void updateGuiSettings();
+
 protected:
     QPaintEngine* paintEngine() const final;
     void paintEvent(QPaintEvent *) final;
