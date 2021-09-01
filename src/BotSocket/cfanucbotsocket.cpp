@@ -229,9 +229,14 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
             bNeedCalib = p.bNeedCalib;
             // if point needs calibration, move to it after calibration
             if(bNeedCalib)
+            {
+                lastTaskDelay = 0;
                 p.bNeedCalib = false;
+            }
             else
+            {
                 curTask.erase(curTask.begin());
+            }
             fanuc_relay_.move_point(point);
         }
     }
