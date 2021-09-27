@@ -18,6 +18,8 @@
 #include "Dialogs/TaskPoints/ctaskpointsorderdialog.h"
 #include "Dialogs/PathPoints/cpathpointsorderdialog.h"
 
+#include "csnapshotdialog.h"
+
 static constexpr int MAX_JRNL_ROW_COUNT = 15000;
 static const int STATE_LAMP_UPDATE_INTERVAL = 200;
 
@@ -28,6 +30,8 @@ class CUiIface : public CAbstractUi, public CAbstractMainViewportSubscriber
 public:
     CUiIface() :
         viewport(nullptr),
+        snapView(nullptr),
+        depthView(nullptr),
         jrnl(nullptr) { }
 
 protected:
@@ -113,6 +117,8 @@ protected:
     void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
     {
         viewport->shapeTransformChanged(shType, transform);
+        snapView->updatePosition();
+        depthView->updatePosition();
     }
 
     const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const final {
@@ -209,11 +215,19 @@ protected:
     }
 
     void makePartSnapshot(const char *fname) final {
-        viewport->makePartSnapshot(fname);
+        const GUI_TYPES::SGuiSettings settings = viewport->getGuiSettings();
+        snapView->createSnapshot(fname, settings.snapshotWidth, settings.snapshotHeight);
+    }
+
+    void makeDepthMap(const char *fname) final {
+        const GUI_TYPES::SGuiSettings settings = viewport->getGuiSettings();
+        depthView->createSnapshot(fname, settings.snapshotWidth, settings.snapshotHeight);
     }
 
     void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta) final {
         viewport->makeCorrectionBySnapshot(globalDelta);
+        snapView->updatePosition();
+        depthView->updatePosition();
     }
 
     bool execSnapshotCalibrationWarning() final {
@@ -228,6 +242,8 @@ protected:
 
 private:
     CMainViewport *viewport;
+    CSnapshotViewport *snapView;
+    CDepthMapViewport *depthView;
     QTextEdit *jrnl;
     QAction *btnStart;
     QString usrText;
@@ -345,6 +361,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     d_ptr->uiIface.viewport = ui->mainView;
+    d_ptr->uiIface.snapView = ui->snapshotView;
+    d_ptr->uiIface.depthView = ui->depthMapView;
     d_ptr->uiIface.jrnl = ui->teJrnl;
     connect(d_ptr->lampTm, &QTimer::timeout, this, &MainWindow::slUpdateBotLamps);
     connect(ui->mainView, &CMainViewport::updateGuiSettings, this, &MainWindow::slSyncGuiSettings);
@@ -383,6 +401,9 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
     ui->mainView->setStatsVisible(ui->actionFPS->isChecked());
 
     ui->mainView->addSubscriber(&d_ptr->uiIface);
+
+    ui->snapshotView->setContext(ui->mainView->context());
+    ui->depthMapView->setContext(ui->mainView->context());
 }
 
 void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
@@ -409,6 +430,11 @@ void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
 
     foreach(QAction * const action, d_ptr->attachActions)
         action->setVisible(settings.gripVis);
+
+    ui->snapshotView->setScale(settings.snapshotScale);
+    ui->snapshotView->updatePosition();
+    ui->depthMapView->setScale(settings.snapshotScale);
+    ui->depthMapView->updatePosition();
 }
 
 void MainWindow::setBotSocket(CAbstractBotSocket &botSocket)
@@ -566,22 +592,32 @@ void MainWindow::slSyncGuiSettings()
 
 void MainWindow::slPartPrntScr()
 {
-    const GUI_TYPES::SGuiSettings oldSettings = ui->mainView->getGuiSettings();
-    const GUI_TYPES::SGuiSettings newSettings = ui->mainView->partPrntScr();
+    GUI_TYPES::SGuiSettings settings = ui->mainView->getGuiSettings();
+
+    CSnapshotDialog dialog(this);
+    dialog.setContext(ui->mainView->context());
+    dialog.setFileName("partSnapshot.bmp");
+    dialog.init(settings.snapshotScale,
+                settings.snapshotWidth,
+                settings.snapshotHeight);
+    dialog.exec();
+
     const bool needSave =
-            oldSettings.snapshotScale  != newSettings.snapshotScale ||
-            oldSettings.snapshotWidth  != newSettings.snapshotWidth ||
-            oldSettings.snapshotHeight != newSettings.snapshotHeight;
+            settings.snapshotScale  != dialog.getScale() ||
+            settings.snapshotWidth  != dialog.getWidth() ||
+            settings.snapshotHeight != dialog.getHeight();
     if (needSave &&
         QMessageBox::question(this,
                               tr("Снимок детали"),
                               tr("Сохранить новые настройки снимка детали?")) == QMessageBox::Yes)
     {
-        ui->mainView->setSnapshotParams(newSettings.snapshotScale,
-                                        newSettings.snapshotWidth,
-                                        newSettings.snapshotHeight);
-        d_ptr->settingsStorage->saveGuiSettings(newSettings);
-        ui->wSettings->initFromGuiSettings(newSettings);
+        settings.snapshotScale  = dialog.getScale();
+        settings.snapshotWidth  = dialog.getWidth();
+        settings.snapshotHeight = dialog.getHeight();
+        d_ptr->settingsStorage->saveGuiSettings(settings);
+        ui->wSettings->initFromGuiSettings(settings);
+        ui->snapshotView->updatePosition();
+        ui->depthMapView->updatePosition();
     }
 }
 
@@ -598,6 +634,9 @@ void MainWindow::slCallibApply()
 
     foreach(QAction * const action, d_ptr->attachActions)
         action->setVisible(settings.gripVis);
+
+    ui->snapshotView->updatePosition();
+    ui->depthMapView->updatePosition();
 }
 
 void MainWindow::slStart()

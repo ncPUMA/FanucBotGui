@@ -15,6 +15,7 @@ SOURCES += \
     BotSocket/fanuc_relay_socket.cpp \
     BotSocket/fanuc_state_socket.cpp \
     Primitives/cpathvec.cpp \
+    cdepthmapviewport.cpp \
     cjsonfilepointssaver.cpp \
     log/loguru.cpp \
     Dialogs/CalibPoints/caddcalibpointdialog.cpp \
@@ -56,6 +57,7 @@ HEADERS += \
     BotSocket/simple_message.h \
     Primitives/cpathvec.h \
     cabstractpointssaver.h \
+    cdepthmapviewport.h \
     cjsonfilepointssaver.h \
     log/loguru.hpp \
     Dialogs/CalibPoints/caddcalibpointdialog.h \
@@ -100,7 +102,6 @@ FORMS += \
     Dialogs/TaskPoints/ctaskpointsorderdialog.ui \
     cguisettingswidget.ui \
     csnapshotdialog.ui \
-    csnapshotviewport.ui \
     mainwindow.ui
 
 include(opencascade.pri)
@@ -135,6 +136,8 @@ DISTFILES += \
     Data/Models/table_lifted.step \
     Data/Models/tool_camera_flir.step \
     Data/Models/turbine_blade.stp \
+    Data/Shaders/depthMapShader.frag \
+    Data/Shaders/depthMapShader.vert \
     Data/StyleSheets/style.qss \
     ../LICENSE \
     ../README.md

@@ -1,9 +1,10 @@
 #include "csnapshotviewport.h"
-#include "ui_csnapshotviewport.h"
 
 #include <QWheelEvent>
 #include <QDoubleSpinBox>
 #include <QImage>
+
+#include <V3d_BadValue.hxx>
 
 #include <AIS_InteractiveContext.hxx>
 #include <V3d_View.hxx>
@@ -12,6 +13,118 @@
 
 #include "cinteractivecontext.h"
 #include "caspectwindow.h"
+
+static const Quantity_Color BG_CLR   = Quantity_Color(1., 1., 1., Quantity_TOC_RGB);
+static const Quantity_Color FACE_CLR = Quantity_Color(0., 0., 0., Quantity_TOC_RGB);
+
+class CSnapshotV3dView : public V3d_View
+{
+public:
+    CSnapshotV3dView(CInteractiveContext &cntxt, const V3d_TypeOfView theType = V3d_ORTHOGRAPHIC) :
+        V3d_View(cntxt.context().CurrentViewer(), theType),
+        context(&cntxt) {
+        drawer = new Prs3d_Drawer();
+        Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
+        aShAspect->SetColor(BG_CLR);
+        drawer->SetShadingAspect(aShAspect);
+        drawer->SetShadingModel(Graphic3d_TOSM_UNLIT);
+
+        Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
+        lAspect->SetColor(FACE_CLR);
+        drawer->SetFaceBoundaryAspect(lAspect);
+        drawer->SetFaceBoundaryDraw(Standard_True);
+
+        origDrawer = context->context().DefaultDrawer();
+    }
+
+    void beforeRedraw() const {
+        context->hideAllAdditionalObjects();
+        AIS_InteractiveObject &ais_part = context->getAisPart();
+        context->context().SetLocalAttributes(&ais_part, drawer, Standard_False);
+        context->context().Redisplay(&ais_part, Standard_False);
+    }
+
+    void afterRedraw() const {
+        context->showAllAdditionalObjects();
+        AIS_InteractiveObject &ais_part = context->getAisPart();
+        context->context().SetLocalAttributes(&ais_part, origDrawer, Standard_False);
+        context->context().Redisplay(&ais_part, Standard_False);
+    }
+
+    void update() const {
+        if (!myView->IsDefined()
+         || !myView->IsActive()) {
+          return;
+        }
+
+        myIsInvalidatedImmediate = Standard_False;
+        myView->Update();
+        myView->Compute();
+        AutoZFit();
+        Redraw();
+    }
+
+    void setScale(const Standard_Real Coef) {
+        V3d_BadValue_Raise_if( Coef <= 0. ,"CSnapshotV3dView::setScale, bad coefficient");
+
+        Handle(Graphic3d_Camera) aCamera = Camera();
+
+        Standard_Real aDefaultScale = myDefaultCamera->Scale();
+        aCamera->SetAspect (myDefaultCamera->Aspect());
+        aCamera->SetScale (aDefaultScale / Coef);
+
+        update();
+    }
+
+    void Redraw() const {
+        beforeRedraw();
+        V3d_View::Redraw();
+        afterRedraw();
+    }
+
+    void RedrawImmediate() const {
+        beforeRedraw();
+        V3d_View::RedrawImmediate();
+        afterRedraw();
+    }
+
+    void updatePosition() {
+        gp_Pnt pos;
+        gp_Dir dir;
+        Standard_Real len;
+        context->getLaserLine(pos, dir, len);
+
+        /**
+         *  TODO: parametrize camera distance (e.g. 80 mm)
+         *        (plays a role when we look towards physycally-inspired
+         *                                     rendering and perspective)
+         */
+        Standard_Real len_cam = 0;
+
+        pos.Translate(-len_cam * gp_Vec(dir));
+        SetEye(pos.X(), pos.Y(), pos.Z());
+        pos.Translate(len * gp_Vec(dir));
+        gp_Pnt lastPoint = pos;
+        SetAt(lastPoint.X(), lastPoint.Y(), lastPoint.Z());
+
+        const gp_Trsf trsf = context->getLsrHeadTransform();
+        const gp_Quaternion rotation = trsf.GetRotation();
+        gp_Vec orient(1, 0, 0);
+        const gp_Vec orient_rot = rotation.Multiply(orient);
+        SetUp(orient_rot.X(), orient_rot.Y(), orient_rot.Z());
+
+        Redraw();
+    }
+
+    CInteractiveContext& getContext() const { return *context; }
+
+private:
+    CInteractiveContext * const context;
+    Handle(Prs3d_Drawer) drawer;
+    Handle(Prs3d_Drawer) origDrawer;
+};
+
+
 
 class CSnapshotViewportPrivate : public AIS_ViewController
 {
@@ -25,24 +138,17 @@ class CSnapshotViewportPrivate : public AIS_ViewController
         }
     }
 
-    CInteractiveContext *context;
-    Handle(V3d_View) view;
+    Handle(CSnapshotV3dView) view;
     Handle(CAspectWindow) aspect;
     QDoubleSpinBox *scaleSpinbox;
 };
 
 
 
-static const Quantity_Color BG_CLR   = Quantity_Color(1., 1., 1., Quantity_TOC_RGB);
-static const Quantity_Color FACE_CLR = Quantity_Color(0., 0., 0., Quantity_TOC_RGB);
-
 CSnapshotViewport::CSnapshotViewport(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::CSnapshotViewport),
     d_ptr(new CSnapshotViewportPrivate())
 {
-    ui->setupUi(this);
-
     d_ptr->scaleSpinbox = nullptr;
 
     setAttribute(Qt::WA_PaintOnScreen);
@@ -54,19 +160,12 @@ CSnapshotViewport::CSnapshotViewport(QWidget *parent) :
 
 CSnapshotViewport::~CSnapshotViewport()
 {
-    AIS_InteractiveObject &ais_part = d_ptr->context->getAisPart();
-    d_ptr->context->context().UnsetLocalAttributes(&ais_part, Standard_False);
-    d_ptr->context->context().Redisplay(&ais_part, Standard_True);
-
-    d_ptr->view->Remove();
     delete d_ptr;
-    delete ui;
 }
 
 void CSnapshotViewport::setContext(CInteractiveContext &context)
 {
-    d_ptr->context = &context;
-    d_ptr->view = d_ptr->context->context().CurrentViewer()->CreateView().get();
+    d_ptr->view = new CSnapshotV3dView(context, V3d_ORTHOGRAPHIC);
 
     //Aspect
     d_ptr->aspect = new CAspectWindow(*this);
@@ -74,48 +173,10 @@ void CSnapshotViewport::setContext(CInteractiveContext &context)
     if (!d_ptr->aspect->IsMapped())
         d_ptr->aspect->Map();
 
-    gp_Pnt pos;
-    gp_Dir dir;
-    Standard_Real len;
-    d_ptr->context->getLaserLine(pos, dir, len);
-
-    /**
-     *  TODO: parametrize camera distance (e.g. 80 mm)
-     *        (plays a role when we look towards physycally-inspired
-     *                                     rendering and perspective)
-     */
-    Standard_Real len_cam = 0;
-
-    pos.Translate(-len_cam * gp_Vec(dir));
-    d_ptr->view->SetEye(pos.X(), pos.Y(), pos.Z());
-    pos.Translate(len * gp_Vec(dir));
-    gp_Pnt lastPoint = pos;
-    d_ptr->view->SetAt(lastPoint.X(), lastPoint.Y(), lastPoint.Z());
-
-    const gp_Trsf trsf = d_ptr->context->getLsrHeadTransform();
-    const gp_Quaternion rotation = trsf.GetRotation();
-    gp_Vec orient(1, 0, 0);
-    const gp_Vec orient_rot = rotation.Multiply(orient);
-    d_ptr->view->SetUp(orient_rot.X(), orient_rot.Y(), orient_rot.Z());
-
     //Final
     d_ptr->view->ChangeRenderingParams().IsAntialiasingEnabled = Standard_True;
     d_ptr->view->SetBackgroundColor(BG_CLR);
     d_ptr->view->MustBeResized();
-
-    AIS_InteractiveObject &ais_part = d_ptr->context->getAisPart();
-    Handle(Prs3d_Drawer) drawer = new Prs3d_Drawer();
-    Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
-    aShAspect->SetColor(BG_CLR);
-    drawer->SetShadingAspect(aShAspect);
-    drawer->SetShadingModel(Graphic3d_TOSM_UNLIT);
-
-    Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
-    lAspect->SetColor(FACE_CLR);
-    drawer->SetFaceBoundaryAspect(lAspect);
-    drawer->SetFaceBoundaryDraw(Standard_True);
-    d_ptr->context->context().SetLocalAttributes(&ais_part, drawer, Standard_False);
-    d_ptr->context->context().Redisplay(&ais_part, Standard_True);
 }
 
 void CSnapshotViewport::setScaleWidget(QDoubleSpinBox &box)
@@ -123,7 +184,12 @@ void CSnapshotViewport::setScaleWidget(QDoubleSpinBox &box)
     d_ptr->scaleSpinbox = &box;
     d_ptr->updateSpinBox(getScale());
     connect(d_ptr->scaleSpinbox, SIGNAL(valueChanged(double)),
-                                 SLOT(slSpinChanged(double)));
+            SLOT(slSpinChanged(double)));
+}
+
+void CSnapshotViewport::updatePosition()
+{
+    d_ptr->view->updatePosition();
 }
 
 void CSnapshotViewport::createSnapshot(const char *fname, const size_t width, const size_t height)
@@ -154,7 +220,7 @@ void CSnapshotViewport::setScale(const double scale)
 {
     if (scale > 0)
     {
-        d_ptr->view->SetScale(scale);
+        d_ptr->view->setScale(scale);
         d_ptr->updateSpinBox(scale);
     }
 }
@@ -175,7 +241,7 @@ QPaintEngine *CSnapshotViewport::paintEngine() const
 void CSnapshotViewport::paintEvent(QPaintEvent *)
 {
     d_ptr->view->InvalidateImmediate();
-    d_ptr->FlushViewEvents(&d_ptr->context->context(), d_ptr->view, Standard_True);
+    d_ptr->FlushViewEvents(&d_ptr->view->getContext().context(), d_ptr->view, Standard_True);
 }
 
 void CSnapshotViewport::resizeEvent(QResizeEvent *)

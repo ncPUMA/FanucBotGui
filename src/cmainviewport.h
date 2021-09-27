@@ -56,8 +56,6 @@ public:
 
     void setMSAA(const GUI_TYPES::TMSAA msaa);
     GUI_TYPES::TMSAA getMSAA() const;
-    void setSnapshotParams(const GUI_TYPES::TScale scale,
-                           const size_t width, const size_t height);
     GUI_TYPES::TScale getSnapshotScale() const;
     void setStatsVisible(const bool value);
     void setShading(const bool enabled);
@@ -100,13 +98,13 @@ public:
     void setHomePoints(const std::vector <GUI_TYPES::SHomePoint> &points);
     std::vector <GUI_TYPES::SHomePoint> getHomePoints() const;
 
-    GUI_TYPES::SGuiSettings partPrntScr();
-    void makePartSnapshot(const char *fname);
     void makeCorrectionBySnapshot(const gp_Vec &globalDelta);
 
     void loadBackupPoints();
     void loadPoints(const QString &fName);
     void savePoints(const QString &fName);
+
+    CInteractiveContext& context();
 
 signals:
     void updateGuiSettings();

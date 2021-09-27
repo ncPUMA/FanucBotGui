@@ -3,10 +3,6 @@
 
 #include <QWidget>
 
-namespace Ui {
-class CSnapshotViewport;
-}
-
 class CSnapshotViewportPrivate;
 class CInteractiveContext;
 class QDoubleSpinBox;
@@ -21,6 +17,7 @@ public:
 
     void setContext(CInteractiveContext &context);
     void setScaleWidget(QDoubleSpinBox &box);
+    void updatePosition();
     void createSnapshot(const char *fname, const size_t width, const size_t height);
 
     void setScale(const double scale);
@@ -40,7 +37,6 @@ private slots:
     void slSpinChanged(double value);
 
 private:
-    Ui::CSnapshotViewport *ui;
     CSnapshotViewportPrivate * const d_ptr;
 };
 

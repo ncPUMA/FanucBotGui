@@ -3,6 +3,8 @@
 
 #include <Graphic3d_ZLayerId.hxx>
 
+#include "gui_types.h"
+
 namespace GUI_TYPES {
 struct SCalibPoint;
 struct STaskPoint;
@@ -34,6 +36,9 @@ public:
     void resetCursorPosition();
     gp_Pnt lastCursorPosition() const;
 
+    void setUiState(const GUI_TYPES::EN_UiStates state);
+    GUI_TYPES::EN_UiStates uiState() const;
+
     void setPartModel(const TopoDS_Shape &shape);
     void setPartMdlTransform(const gp_Trsf &trsf);
     void setDeskModel(const TopoDS_Shape &shape);
@@ -57,12 +62,12 @@ public:
     void getLaserLine(gp_Pnt &pnt, gp_Dir &dir, double &lenght) const;
 
     AIS_InteractiveObject& getAisPart();
+    AIS_InteractiveObject& getAisDesk();
 
     void hideAllAdditionalObjects();
-    void showCalibObjects();
-    void showTaskObjects();
+    void showAllAdditionalObjects();
 
-    void setGripVisible(const bool enabled, const bool selectable);
+    void setGripVisible(const bool enabled);
 
     bool isDeskDetected() const;
     bool isPartDetected() const;
@@ -93,7 +98,6 @@ public:
     void removeHomePoint(const size_t index);
 
     gp_Dir detectNormal(const gp_Pnt pnt) const;
-
 private:
     CInteractiveContextPrivate * const d_ptr;
 };

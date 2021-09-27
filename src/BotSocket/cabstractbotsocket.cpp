@@ -20,6 +20,7 @@ protected:
     void shapeTransformChanged(const BotSocket::EN_ShapeType, const gp_Trsf &) final {}
 
     void makePartSnapshot(const char *) final { }
+    void makeDepthMap(const char *) final { }
     void snapshotCalibrationDataRecieved(const gp_Vec &) final { }
     bool execSnapshotCalibrationWarning() final { return false; }
 private:
@@ -88,6 +89,11 @@ const gp_Trsf &CAbstractBotSocket::getShapeTransform(const BotSocket::EN_ShapeTy
 void CAbstractBotSocket::makePartSnapshot(const char *fname)
 {
     ui->makePartSnapshot(fname);
+}
+
+void CAbstractBotSocket::makeDepthMap(const char *fname)
+{
+    ui->makeDepthMap(fname);
 }
 
 void CAbstractBotSocket::snapshotCalibrationDataRecieved(const gp_Vec &globalDelta)

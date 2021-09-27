@@ -32,6 +32,8 @@ CSnapshotDialog::~CSnapshotDialog()
 void CSnapshotDialog::setContext(CInteractiveContext &context)
 {
     ui->viewport->setContext(context);
+    ui->viewport->setScale(getScale());
+    ui->viewport->updatePosition();
 }
 
 void CSnapshotDialog::setFileName(const char *fname)

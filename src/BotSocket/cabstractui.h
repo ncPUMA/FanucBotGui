@@ -41,6 +41,7 @@ protected:
     void shapeTransformChaged(const BotSocket::EN_ShapeType shType);
 
     virtual void makePartSnapshot(const char *fname) = 0;
+    virtual void makeDepthMap(const char *fname) = 0;
     virtual void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta) = 0;
     virtual bool execSnapshotCalibrationWarning() = 0;
 

@@ -28,4 +28,8 @@
         <file>Data/Models/plate.stp</file>
         <file>Data/Models/45deg AdjMirr Adapter Left Rev1.STEP</file>
     </qresource>
+    <qresource prefix="/Shaders">
+        <file>Data/Shaders/depthMapShader.frag</file>
+        <file>Data/Shaders/depthMapShader.vert</file>
+    </qresource>
 </RCC>

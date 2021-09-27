@@ -22,7 +22,21 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="CMainViewport" name="mainView" native="true"/>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="CMainViewport" name="mainView" native="true"/>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="CDepthMapViewport" name="depthMapView" native="true"/>
+        </item>
+        <item>
+         <widget class="CSnapshotViewport" name="snapshotView" native="true"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -310,6 +324,18 @@ p, li { white-space: pre-wrap; }
    <class>CGuiSettingsWidget</class>
    <extends>QWidget</extends>
    <header>cguisettingswidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CSnapshotViewport</class>
+   <extends>QWidget</extends>
+   <header>csnapshotviewport.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CDepthMapViewport</class>
+   <extends>QWidget</extends>
+   <header>cdepthmapviewport.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

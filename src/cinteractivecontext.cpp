@@ -50,6 +50,10 @@ private:
     CInteractiveContextPrivate() :
         depthTestOffZlayer(Graphic3d_ZLayerId_UNKNOWN),
         bShading(false),
+        bGripVisible(false),
+        uiState(GUI_TYPES::ENUS_TASK_EDITING),
+        ais_part(new AIS_Shape(TopoDS_Shape())),
+        ais_desk(new AIS_Shape(TopoDS_Shape())),
         lsrClip(true),
         bCursorIsVisible(false),
         cursorPnt(new AIS_Point(new Geom_CartesianPoint(gp_Pnt()))),
@@ -193,16 +197,16 @@ private:
             context->Remove(ais_desk, Standard_False);
         ais_desk = new AIS_Shape(shape);
 
-        Handle(Prs3d_Drawer) drawer = new Prs3d_Drawer();
-        Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
-        aShAspect->SetColor(Quantity_Color(Quantity_NOC_MATRAGRAY));
-        drawer->SetShadingAspect(aShAspect);
+//        Handle(Prs3d_Drawer) drawer = new Prs3d_Drawer();
+//        Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
+//        aShAspect->SetColor(Quantity_Color(Quantity_NOC_MATRAGRAY));
+//        drawer->SetShadingAspect(aShAspect);
 
-        Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
-        lAspect->SetColor(FACE_CLR);
-        drawer->SetFaceBoundaryAspect(lAspect);
-        drawer->SetFaceBoundaryDraw(Standard_True);
-        context->SetLocalAttributes(ais_desk, drawer, Standard_False);
+//        Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
+//        lAspect->SetColor(FACE_CLR);
+//        drawer->SetFaceBoundaryAspect(lAspect);
+//        drawer->SetFaceBoundaryDraw(Standard_True);
+//        context->SetLocalAttributes(ais_desk, drawer, Standard_False);
 
         context->SetDisplayMode(ais_desk, bShading ? AIS_Shaded : AIS_WireFrame, Standard_False);
         context->Display(ais_desk, Standard_False);
@@ -309,49 +313,50 @@ private:
         }
         for(auto vec : pathVec)
             context->Erase(vec, Standard_False);
-        resetCursorPosition();
     }
 
-    void showCalibObjects() {
-        context->Display(calibTrihedron, Standard_False);
-        context->Deactivate(calibTrihedron);
-        context->Display(ais_axis_cube, Standard_False);
-        context->Display(ais_laser, Standard_False);
-        context->Deactivate(ais_laser);
-        context->Display(ais_desk, Standard_False);
-        context->Deactivate(ais_desk);
-        context->Display(ais_grip, Standard_False);
-        context->Deactivate(ais_grip);
-        context->Display(ais_lsrhead, Standard_False);
-        context->Deactivate(ais_lsrhead);
-        for(auto scpnt : calibPoints) {
-            context->Display(scpnt.pnt, Standard_False);
-            context->Display(scpnt.pntLbl, Standard_False);
-        }
-    }
-
-    void showTaskObjects() {
-        context->Display(ais_axis_cube, Standard_False);
-        context->Display(ais_laser, Standard_False);
-        context->Deactivate(ais_laser);
-        context->Display(ais_desk, Standard_False);
-        context->Display(ais_grip, Standard_False);
-        context->Display(ais_lsrhead, Standard_False);
-        for(auto stpnt : taskPoints) {
-            context->Display(stpnt.pnt, Standard_False);
-            context->Display(stpnt.pntLbl, Standard_False);
-            context->Display(stpnt.tPnt, Standard_False);
-            context->Deactivate(stpnt.tPnt);
-        }
-        for(auto sppnt : homePoints) {
-            context->Display(sppnt.pnt, Standard_False);
-            context->Display(sppnt.pntLbl, Standard_False);
-            context->Display(sppnt.tPnt, Standard_False);
-            context->Deactivate(sppnt.tPnt);
-        }
-        for(auto vec : pathVec) {
-            context->Display(vec, Standard_False);
-            context->Deactivate(vec);
+    void showAllAdditionalObjects() {
+        switch(uiState) {
+            case GUI_TYPES::ENUS_CALIBRATION :
+                context->Display(calibTrihedron, Standard_False);
+                context->Deactivate(calibTrihedron);
+                context->Display(ais_axis_cube, Standard_False);
+                context->Display(ais_laser, Standard_False);
+                context->Deactivate(ais_laser);
+                context->Display(ais_desk, Standard_False);
+                context->Deactivate(ais_desk);
+                context->Display(ais_grip, Standard_False);
+                context->Deactivate(ais_grip);
+                context->Display(ais_lsrhead, Standard_False);
+                context->Deactivate(ais_lsrhead);
+                for(auto scpnt : calibPoints) {
+                    context->Display(scpnt.pnt, Standard_False);
+                    context->Display(scpnt.pntLbl, Standard_False);
+                }
+                break;
+            default:
+                context->Display(ais_axis_cube, Standard_False);
+                context->Display(ais_laser, Standard_False);
+                context->Deactivate(ais_laser);
+                context->Display(ais_desk, Standard_False);
+                context->Display(ais_grip, Standard_False);
+                context->Display(ais_lsrhead, Standard_False);
+                for(auto stpnt : taskPoints) {
+                    context->Display(stpnt.pnt, Standard_False);
+                    context->Display(stpnt.pntLbl, Standard_False);
+                    context->Display(stpnt.tPnt, Standard_False);
+                    context->Deactivate(stpnt.tPnt);
+                }
+                for(auto sppnt : homePoints) {
+                    context->Display(sppnt.pnt, Standard_False);
+                    context->Display(sppnt.pntLbl, Standard_False);
+                    context->Display(sppnt.tPnt, Standard_False);
+                    context->Deactivate(sppnt.tPnt);
+                }
+                for(auto vec : pathVec) {
+                    context->Display(vec, Standard_False);
+                    context->Deactivate(vec);
+                }
         }
     }
 
@@ -691,6 +696,7 @@ private:
     Graphic3d_ZLayerId depthTestOffZlayer;
     bool bShading;
     bool bGripVisible;
+    GUI_TYPES::EN_UiStates uiState;
 
     //AIS_Objects
     Handle(AIS_InteractiveContext) context;
@@ -785,6 +791,19 @@ gp_Pnt CInteractiveContext::lastCursorPosition() const
     const gp_Trsf transform =
             d_ptr->context->Location(d_ptr->cursorPnt).Transformation();
     return d_ptr->cursorPnt->Component()->Pnt().Transformed(transform);
+}
+
+void CInteractiveContext::setUiState(const GUI_TYPES::EN_UiStates state)
+{
+    d_ptr->uiState = state;
+    hideAllAdditionalObjects();
+    showAllAdditionalObjects();
+    resetCursorPosition();
+}
+
+GUI_TYPES::EN_UiStates CInteractiveContext::uiState() const
+{
+    return d_ptr->uiState;
 }
 
 void CInteractiveContext::setPartModel(const TopoDS_Shape &shape)
@@ -891,27 +910,27 @@ AIS_InteractiveObject &CInteractiveContext::getAisPart()
     return *d_ptr->ais_part.get();
 }
 
+AIS_InteractiveObject &CInteractiveContext::getAisDesk()
+{
+    return *d_ptr->ais_desk.get();
+}
+
 void CInteractiveContext::hideAllAdditionalObjects()
 {
     d_ptr->hideAllAdditionalObjects();
 }
 
-void CInteractiveContext::showCalibObjects()
+void CInteractiveContext::showAllAdditionalObjects()
 {
-    d_ptr->showCalibObjects();
+    d_ptr->showAllAdditionalObjects();
 }
 
-void CInteractiveContext::showTaskObjects()
-{
-    d_ptr->showTaskObjects();
-}
-
-void CInteractiveContext::setGripVisible(const bool enabled, const bool selectable)
+void CInteractiveContext::setGripVisible(const bool enabled)
 {
     if (enabled)
     {
         d_ptr->context->Display(d_ptr->ais_grip, Standard_False);
-        if (!selectable)
+        if (d_ptr->uiState == GUI_TYPES::ENUS_CALIBRATION)
             d_ptr->context->Deactivate(d_ptr->ais_grip);
     }
     else

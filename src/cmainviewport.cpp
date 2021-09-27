@@ -9,6 +9,7 @@
 #include <QContextMenuEvent>
 #include <QVariant>
 #include <QMessageBox>
+#include <QDebug>
 
 #include <AIS_ViewController.hxx>
 
@@ -37,9 +38,6 @@
 #include "Dialogs/CalibPoints/caddcalibpointdialog.h"
 #include "Dialogs/TaskPoints/cbottaskdialogfacade.h"
 #include "Dialogs/PathPoints/caddpathpointdialog.h"
-
-#include "csnapshotdialog.h"
-#include "csnapshotviewport.h"
 
 #include "cjsonfilepointssaver.h"
 
@@ -77,7 +75,6 @@ class CMainViewportPrivate : public AIS_ViewController
     CMainViewportPrivate(CMainViewport * const qptr) :
         q_ptr(qptr),
         context(new CInteractiveContext()),
-        uiState(GUI_TYPES::ENUS_TASK_EDITING),
         calibResult(BotSocket::ENCR_OK),
         botState(BotSocket::ENBS_FALL) {
         myMouseGestureMap.Clear();
@@ -266,7 +263,7 @@ class CMainViewportPrivate : public AIS_ViewController
         context->setLaserLine(start, dir, guiSettings.lheadLsrLenght, guiSettings.lheadLsrClip);
         context->setLsrheadMdlTransform(calcLsrheadTrsf());
         context->setGripMdlTransform(calcGripTrsf());
-        context->setGripVisible(guiSettings.gripVis, uiState != GUI_TYPES::ENUS_CALIBRATION);
+        context->setGripVisible(guiSettings.gripVis);
         view->Redraw();
     }
 
@@ -291,7 +288,7 @@ class CMainViewportPrivate : public AIS_ViewController
     void setGripModel(const TopoDS_Shape &shape) {
         context->setGripModel(shape);
         context->setGripMdlTransform(calcGripTrsf());
-        context->setGripVisible(guiSettings.gripVis, uiState != GUI_TYPES::ENUS_CALIBRATION);
+        context->setGripVisible(guiSettings.gripVis);
         view->Redraw();
     }
 
@@ -308,14 +305,8 @@ class CMainViewportPrivate : public AIS_ViewController
     }
 
     void setUiState(const GUI_TYPES::EN_UiStates state) {
-        uiState = state;
-        context->hideAllAdditionalObjects();
-        switch(state) {
-            case GUI_TYPES::ENUS_CALIBRATION : context->showCalibObjects(); break;
-            default: context->showTaskObjects();
-        }
-        context->resetCursorPosition();
-        context->setGripVisible(guiSettings.gripVis, state != GUI_TYPES::ENUS_CALIBRATION);
+        context->setUiState(state);
+        context->setGripVisible(guiSettings.gripVis);
         view->Redraw();
     }
 
@@ -452,7 +443,7 @@ class CMainViewportPrivate : public AIS_ViewController
             context->removeCalibPoint(0);
         for (const auto &pnt : points)
             context->appendCalibPoint(pnt);
-        viewer->Redraw();
+        view->Redraw();
     }
 
     std::vector<GUI_TYPES::SCalibPoint> getCallibrationPoints() const {
@@ -468,7 +459,7 @@ class CMainViewportPrivate : public AIS_ViewController
             context->removeTaskPoint(0);
         for (const auto &pnt : points)
             context->appendTaskPoint(pnt);
-        viewer->Redraw();
+        view->Redraw();
     }
 
     std::vector <GUI_TYPES::STaskPoint> getTaskPoints() const {
@@ -489,7 +480,6 @@ class CMainViewportPrivate : public AIS_ViewController
     GUI_TYPES::SGuiSettings guiSettings;
     CInteractiveContext * const context;
 
-    GUI_TYPES::EN_UiStates uiState;
     QPoint rbPos;
 
     BotSocket::EN_CalibResult calibResult;
@@ -551,14 +541,6 @@ GUI_TYPES::TMSAA CMainViewport::getMSAA() const
     return static_cast <GUI_TYPES::TMSAA> (d_ptr->view->RenderingParams().NbMsaaSamples);
 }
 
-void CMainViewport::setSnapshotParams(const GUI_TYPES::TScale scale,
-                                      const size_t width, const size_t height)
-{
-    d_ptr->guiSettings.snapshotScale  = scale;
-    d_ptr->guiSettings.snapshotWidth  = width;
-    d_ptr->guiSettings.snapshotHeight = height;
-}
-
 GUI_TYPES::TScale CMainViewport::getSnapshotScale() const
 {
     return d_ptr->guiSettings.snapshotScale;
@@ -599,7 +581,7 @@ void CMainViewport::setUiState(const GUI_TYPES::EN_UiStates state)
 
 GUI_TYPES::EN_UiStates CMainViewport::getUiState() const
 {
-    return d_ptr->uiState;
+    return d_ptr->context->uiState();
 }
 
 void CMainViewport::setPartModel(const TopoDS_Shape &shape)
@@ -760,53 +742,6 @@ std::vector<GUI_TYPES::SHomePoint> CMainViewport::getHomePoints() const
     return res;
 }
 
-GUI_TYPES::SGuiSettings CMainViewport::partPrntScr()
-{
-    d_ptr->context->hideAllAdditionalObjects();
-
-    CSnapshotDialog dialog(this);
-    dialog.setContext(*d_ptr->context);
-    dialog.setFileName("partSnapshot.bmp");
-    dialog.init(d_ptr->guiSettings.snapshotScale,
-                d_ptr->guiSettings.snapshotWidth,
-                d_ptr->guiSettings.snapshotHeight);
-    dialog.exec();
-    switch(d_ptr->uiState) {
-        case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
-        default: d_ptr->context->showTaskObjects();
-    }
-    d_ptr->context->resetCursorPosition();
-    d_ptr->context->setGripVisible(d_ptr->guiSettings.gripVis, d_ptr->uiState != GUI_TYPES::ENUS_CALIBRATION);
-    d_ptr->view->Redraw();
-
-    GUI_TYPES::SGuiSettings changedSettings = d_ptr->guiSettings;
-    changedSettings.snapshotScale  = dialog.getScale();
-    changedSettings.snapshotWidth  = dialog.getWidth();
-    changedSettings.snapshotHeight = dialog.getHeight();
-    return changedSettings;
-}
-
-void CMainViewport::makePartSnapshot(const char *fname)
-{
-    d_ptr->context->hideAllAdditionalObjects();
-    CSnapshotDialog dialog(this);
-    dialog.setContext(*d_ptr->context);
-    dialog.setFileName(fname);
-    dialog.init(d_ptr->guiSettings.snapshotScale,
-                d_ptr->guiSettings.snapshotWidth,
-                d_ptr->guiSettings.snapshotHeight);
-    QMetaObject::invokeMethod(&dialog, "makeSnapshot", Qt::QueuedConnection);
-    QMetaObject::invokeMethod(&dialog, "reject", Qt::QueuedConnection);
-    dialog.exec();
-    switch(d_ptr->uiState) {
-        case GUI_TYPES::ENUS_CALIBRATION : d_ptr->context->showCalibObjects(); break;
-        default: d_ptr->context->showTaskObjects();
-    }
-    d_ptr->context->resetCursorPosition();
-    d_ptr->context->setGripVisible(d_ptr->guiSettings.gripVis, d_ptr->uiState != GUI_TYPES::ENUS_CALIBRATION);
-    d_ptr->view->Redraw();
-}
-
 template <typename T>
 inline static std::vector <T> movedPoints(const std::vector <T> points,
                                           const gp_Vec &globalDelta)
@@ -913,7 +848,7 @@ void CMainViewport::mouseReleaseEvent(QMouseEvent *event)
         d_ptr->rbPos = QPoint();
 
         QMenu menu;
-        switch(d_ptr->uiState)
+        switch(d_ptr->context->uiState())
         {
             using namespace GUI_TYPES;
 
@@ -946,7 +881,7 @@ void CMainViewport::mouseMoveEvent(QMouseEvent *event)
     }
 
     d_ptr->rbPos = QPoint();
-    switch(d_ptr->uiState)
+    switch(d_ptr->context->uiState())
     {
         case GUI_TYPES::ENUS_CALIBRATION:
         case GUI_TYPES::ENUS_TASK_EDITING:
@@ -1249,6 +1184,11 @@ void CMainViewport::savePoints(const QString &fName)
                                   tr("Сохранение задания"),
                                   tr("Не удалось сохранить задание"));
     }
+}
+
+CInteractiveContext &CMainViewport::context()
+{
+    return *d_ptr->context;
 }
 
 void CMainViewport::loadPoints(const QString &fName)

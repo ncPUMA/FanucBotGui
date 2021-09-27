@@ -39,6 +39,7 @@ protected:
     const gp_Trsf& getShapeTransform(const BotSocket::EN_ShapeType shType) const;
 
     void makePartSnapshot(const char *fname);
+    void makeDepthMap(const char *fname);
     void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta);
     bool execSnapshotCalibrationWarning();
 
