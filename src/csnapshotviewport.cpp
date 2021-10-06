@@ -107,7 +107,7 @@ public:
         gp_Pnt lastPoint = pos;
         SetAt(lastPoint.X(), lastPoint.Y(), lastPoint.Z());
 
-        const gp_Trsf trsf = context->getLsrHeadTransform();
+        const gp_Trsf trsf = context->getTransform(GUI_TYPES::ENST_LSRHEAD);
         const gp_Quaternion rotation = trsf.GetRotation();
         gp_Vec orient(1, 0, 0);
         const gp_Vec orient_rot = rotation.Multiply(orient);

@@ -75,7 +75,7 @@ protected:
         else
             jrnl->append(jrnlTxt);
         viewport->moveLsrhead(pos);
-        shapeTransformChaged(BotSocket::ENST_LSRHEAD);
+        shapeTransformChaged(GUI_TYPES::ENST_LSRHEAD);
     }
 
     void gripPositionChanged(const BotSocket::SBotPosition &pos) final {
@@ -97,12 +97,12 @@ protected:
         else
             jrnl->append(jrnlTxt);
         viewport->moveGrip(pos);
-        shapeTransformChaged(BotSocket::ENST_GRIP);
+        shapeTransformChaged(GUI_TYPES::ENST_GRIP);
         if (viewport->getBotState() == BotSocket::ENBS_ATTACHED)
-            shapeTransformChaged(BotSocket::ENST_PART);
+            shapeTransformChaged(GUI_TYPES::ENST_PART);
     }
 
-    void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
+    void shapeCalibrationChanged(const GUI_TYPES::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
     {
         if (std::isnan(pos.globalPos.x) ||
             std::isnan(pos.globalPos.y) ||
@@ -114,15 +114,14 @@ protected:
 
         viewport->shapeCalibrationChanged(shType, pos);
     }
-    void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
+    void shapeTransformChanged(const GUI_TYPES::EN_ShapeType shType, const gp_Trsf &transform)
     {
         viewport->shapeTransformChanged(shType, transform);
         snapView->updatePosition();
-        depthView->updatePosition();
     }
 
-    const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const final {
-        using namespace BotSocket;
+    const TopoDS_Shape& getShape(const GUI_TYPES::EN_ShapeType shType) const final {
+        using namespace GUI_TYPES;
         switch(shType) {
             case ENST_DESK   : return viewport->getDeskShape();
             case ENST_PART   : return viewport->getPartShape();
@@ -133,16 +132,8 @@ protected:
         return sh;
     }
 
-    const gp_Trsf& getShapeTransform(const BotSocket::EN_ShapeType shType) const final {
-        using namespace BotSocket;
-        switch(shType) {
-            case ENST_DESK   : return viewport->getDeskTransform();
-            case ENST_PART   : return viewport->getPartTransform();
-            case ENST_LSRHEAD: return viewport->getLsrheadTransform();
-            case ENST_GRIP   : return viewport->getGripTransform();
-        }
-        static const gp_Trsf trsf;
-        return trsf;
+    const gp_Trsf getShapeTransform(const GUI_TYPES::EN_ShapeType shType) const final {
+        return viewport->getTransform(shType);
     }
 
     void updateUiState() {
@@ -219,6 +210,10 @@ protected:
         snapView->createSnapshot(fname, settings.snapshotWidth, settings.snapshotHeight);
     }
 
+    void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient) final {
+        depthView->setCameraPos(pos, dir, orient);
+    }
+
     void makeDepthMap(const char *fname) final {
         const GUI_TYPES::SGuiSettings settings = viewport->getGuiSettings();
         depthView->createSnapshot(fname, settings.snapshotWidth, settings.snapshotHeight);
@@ -227,7 +222,6 @@ protected:
     void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta) final {
         viewport->makeCorrectionBySnapshot(globalDelta);
         snapView->updatePosition();
-        depthView->updatePosition();
     }
 
     bool execSnapshotCalibrationWarning() final {
@@ -240,10 +234,18 @@ protected:
                 == QMessageBox::Yes;
     }
 
+    void shapeChanged(const GUI_TYPES::EN_ShapeType shType, const TopoDS_Shape &shape) final {
+        depthView->modelShapeChanged(shType, shape);
+    }
+
+    void transformChanged(const GUI_TYPES::EN_ShapeType shType, const gp_Trsf &trsf) final {
+        depthView->modelTransformChanged(shType, trsf);
+    }
+
 private:
     CMainViewport *viewport;
     CSnapshotViewport *snapView;
-    CDepthMapViewport *depthView;
+    CAdvancedDepthMapViewport *depthView;
     QTextEdit *jrnl;
     QAction *btnStart;
     QString usrText;
@@ -403,17 +405,17 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
     ui->mainView->addSubscriber(&d_ptr->uiIface);
 
     ui->snapshotView->setContext(ui->mainView->context());
-    ui->depthMapView->setContext(ui->mainView->context());
+    ui->depthMapView->init(driver);
 }
 
 void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
 {
     d_ptr->settingsStorage = &storage;
 
-    ui->mainView->setPartModel   (loadShape(storage.loadModelPath(GUI_TYPES::ENMP_PART   )));
-    ui->mainView->setDeskModel   (loadShape(storage.loadModelPath(GUI_TYPES::ENMP_DESK   )));
-    ui->mainView->setLsrheadModel(loadShape(storage.loadModelPath(GUI_TYPES::ENMP_LSRHEAD)));
-    ui->mainView->setGripModel   (loadShape(storage.loadModelPath(GUI_TYPES::ENMP_GRIP   )));
+    ui->mainView->setPartModel   (loadShape(storage.loadModelPath(GUI_TYPES::ENST_PART   )));
+    ui->mainView->setDeskModel   (loadShape(storage.loadModelPath(GUI_TYPES::ENST_DESK   )));
+    ui->mainView->setLsrheadModel(loadShape(storage.loadModelPath(GUI_TYPES::ENST_LSRHEAD)));
+    ui->mainView->setGripModel   (loadShape(storage.loadModelPath(GUI_TYPES::ENST_GRIP   )));
 
     ui->mainView->setShading(true);
     ui->mainView->setUiState(GUI_TYPES::ENUS_TASK_EDITING);
@@ -425,6 +427,20 @@ void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
         pair.second->blockSignals(false);
     }
     ui->wSettings->initFromGuiSettings(settings);
+
+    const gp_Pnt start = gp_Pnt(settings.lheadLsrTrX,
+                                settings.lheadLsrTrY,
+                                settings.lheadLsrTrZ);
+    gp_Dir dir(0.f, 0.f, 1.f);
+    if (settings.lheadLsrNormalX != 0. ||
+            settings.lheadLsrNormalY != 0. ||
+            settings.lheadLsrNormalZ != 0.)
+        dir = gp_Dir(settings.lheadLsrNormalX,
+                     settings.lheadLsrNormalY,
+                     settings.lheadLsrNormalZ);
+    ui->depthMapView->setLaserPos(start, dir);
+    ui->depthMapView->setCameraScale(settings.snapshotScale);
+
     ui->mainView->setGuiSettings(settings);
     ui->mainView->fitInView();
 
@@ -433,8 +449,6 @@ void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
 
     ui->snapshotView->setScale(settings.snapshotScale);
     ui->snapshotView->updatePosition();
-    ui->depthMapView->setScale(settings.snapshotScale);
-    ui->depthMapView->updatePosition();
 }
 
 void MainWindow::setBotSocket(CAbstractBotSocket &botSocket)
@@ -459,7 +473,7 @@ void MainWindow::slImport()
         CAbstractModelLoader &loader = factory.loader(selectedFilter);
         const TopoDS_Shape shape = loader.load(fName.toStdString().c_str());
         ui->mainView->setPartModel(shape);
-        d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART);
+        d_ptr->uiIface.shapeTransformChaged(GUI_TYPES::ENST_PART);
         if (!shape.IsNull())
             ui->mainView->fitInView();
         else
@@ -617,7 +631,6 @@ void MainWindow::slPartPrntScr()
         d_ptr->settingsStorage->saveGuiSettings(settings);
         ui->wSettings->initFromGuiSettings(settings);
         ui->snapshotView->updatePosition();
-        ui->depthMapView->updatePosition();
     }
 }
 
@@ -625,10 +638,10 @@ void MainWindow::slCallibApply()
 {
     const GUI_TYPES::SGuiSettings settings = ui->wSettings->getChangedSettings();
     ui->mainView->setGuiSettings(settings);
-    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_DESK   );
-    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_LSRHEAD);
-    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_PART   );
-    d_ptr->uiIface.shapeTransformChaged(BotSocket::ENST_GRIP   );
+    d_ptr->uiIface.shapeTransformChaged(GUI_TYPES::ENST_DESK   );
+    d_ptr->uiIface.shapeTransformChaged(GUI_TYPES::ENST_LSRHEAD);
+    d_ptr->uiIface.shapeTransformChaged(GUI_TYPES::ENST_PART   );
+    d_ptr->uiIface.shapeTransformChaged(GUI_TYPES::ENST_GRIP   );
 
     d_ptr->settingsStorage->saveGuiSettings(settings);
 
@@ -636,7 +649,18 @@ void MainWindow::slCallibApply()
         action->setVisible(settings.gripVis);
 
     ui->snapshotView->updatePosition();
-    ui->depthMapView->updatePosition();
+
+    const gp_Pnt start = gp_Pnt(settings.lheadLsrTrX,
+                                settings.lheadLsrTrY,
+                                settings.lheadLsrTrZ);
+    gp_Dir dir(0.f, 0.f, 1.f);
+    if (settings.lheadLsrNormalX != 0. ||
+            settings.lheadLsrNormalY != 0. ||
+            settings.lheadLsrNormalZ != 0.)
+        dir = gp_Dir(settings.lheadLsrNormalX,
+                     settings.lheadLsrNormalY,
+                     settings.lheadLsrNormalZ);
+    ui->depthMapView->setLaserPos(start, dir);
 }
 
 void MainWindow::slStart()

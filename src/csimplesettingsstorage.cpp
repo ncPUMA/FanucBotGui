@@ -290,30 +290,30 @@ public:
         writeGuiValue(ENGK_GRIP_VIS     , settings.gripVis);
     }
 
-    inline static std::string defMdlName(const GUI_TYPES::EN_ModelPurpose model) {
+    inline static std::string defMdlName(const GUI_TYPES::EN_ShapeType model) {
         switch(model) {
             using namespace GUI_TYPES;
-            case ENMP_DESK   : return ":/Models/Data/Models/table_lifted.step";
-            case ENMP_PART   : return ":/Models/Data/Models/45deg AdjMirr Adapter Left Rev1.STEP";
-            case ENMP_LSRHEAD: return ":/Models/Data/Models/tool_camera_flir.step";
-            case ENMP_GRIP   : return ":/Models/Data/Models/MHZ2_16D_grip.stp";
+            case ENST_DESK   : return ":/Models/Data/Models/table_lifted.step";
+            case ENST_PART   : return ":/Models/Data/Models/45deg AdjMirr Adapter Left Rev1.STEP";
+            case ENST_LSRHEAD: return ":/Models/Data/Models/tool_camera_flir.step";
+            case ENST_GRIP   : return ":/Models/Data/Models/MHZ2_16D_grip.stp";
         }
         assert(false);
         return std::string();
     }
 
-    inline static EN_GuiKeys keyForMdl(const GUI_TYPES::EN_ModelPurpose model) {
+    inline static EN_GuiKeys keyForMdl(const GUI_TYPES::EN_ShapeType model) {
         switch(model) {
             using namespace GUI_TYPES;
-            case ENMP_DESK   : return ENGK_MDL_DESK;
-            case ENMP_PART   : return ENGK_MDL_PART;
-            case ENMP_LSRHEAD: return ENGK_MDL_LHEAD;
-            case ENMP_GRIP   : return ENGK_MDL_GRIP;
+            case ENST_DESK   : return ENGK_MDL_DESK;
+            case ENST_PART   : return ENGK_MDL_PART;
+            case ENST_LSRHEAD: return ENGK_MDL_LHEAD;
+            case ENST_GRIP   : return ENGK_MDL_GRIP;
         }
         return ENGK_LAST;
     }
 
-    std::string loadModelPath(const GUI_TYPES::EN_ModelPurpose model) {
+    std::string loadModelPath(const GUI_TYPES::EN_ShapeType model) {
         std::string result = defMdlName(model);
         auto it = guiKeyMap.find(keyForMdl(model));
         if (it != guiKeyMap.cend()) {
@@ -377,7 +377,7 @@ void CSimpleSettingsStorage::saveGuiSettings(const GUI_TYPES::SGuiSettings &sett
     d_ptr->saveGuiSettings(settings);
 }
 
-std::string CSimpleSettingsStorage::loadModelPath(const GUI_TYPES::EN_ModelPurpose model)
+std::string CSimpleSettingsStorage::loadModelPath(const GUI_TYPES::EN_ShapeType model)
 {
     return d_ptr->loadModelPath(model);
 }

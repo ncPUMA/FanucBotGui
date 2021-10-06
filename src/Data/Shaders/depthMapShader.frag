@@ -19,6 +19,6 @@ void main()
     if (dist < 0.0)
         dist = 0.0;
 
-    occSetFragColor(vec4(toColor(dist), 1.));
+    gl_FragColor = vec4(toColor(dist), 1.);
 }
 

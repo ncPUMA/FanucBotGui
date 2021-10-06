@@ -50,14 +50,12 @@ public:
     void setGripModel(const TopoDS_Shape &shape);
     void setGripMdlTransform(const gp_Trsf &trsf);
 
+    const gp_Trsf getTransform(const GUI_TYPES::EN_ShapeType shType) const;
     const TopoDS_Shape& getPartShape() const;
-    const gp_Trsf& getPartTransform() const;
     const TopoDS_Shape& getDeskShape() const;
-    const gp_Trsf& getDeskTransform() const;
     const TopoDS_Shape& getLsrHeadShape() const;
-    const gp_Trsf& getLsrHeadTransform() const;
     const TopoDS_Shape& getGripShape() const;
-    const gp_Trsf& getGripTransform() const;
+
     gp_Pnt getLaserLineCalibration() const;
     void getLaserLine(gp_Pnt &pnt, gp_Dir &dir, double &lenght) const;
 

@@ -16,7 +16,7 @@ public:
     GUI_TYPES::SGuiSettings loadGuiSettings();
     void saveGuiSettings(const GUI_TYPES::SGuiSettings &settings);
 
-    std::string loadModelPath(const GUI_TYPES::EN_ModelPurpose model);
+    std::string loadModelPath(const GUI_TYPES::EN_ShapeType model);
 
 private:
     CSimpleSettingsStoragePrivate * const d_ptr;

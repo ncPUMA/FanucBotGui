@@ -122,12 +122,12 @@ inline static Value extract_map_value(const Map &map,
     return res;
 }
 
-enum EN_ModelPurpose
+enum EN_ShapeType
 {
-    ENMP_DESK,
-    ENMP_PART,
-    ENMP_LSRHEAD,
-    ENMP_GRIP
+    ENST_DESK,
+    ENST_PART,
+    ENST_LSRHEAD,
+    ENST_GRIP
 };
 
 }

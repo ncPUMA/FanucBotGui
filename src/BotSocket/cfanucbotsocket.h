@@ -18,7 +18,7 @@ public:
     void startTasks(const std::vector <GUI_TYPES::SHomePoint> &homePoints,
                     const std::vector <GUI_TYPES::STaskPoint> &taskPoints);
     void stopTasks();
-    void shapeTransformChanged(const BotSocket::EN_ShapeType shType);
+    void shapeTransformChanged(const GUI_TYPES::EN_ShapeType shType);
 
 private:
 

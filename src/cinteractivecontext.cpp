@@ -239,7 +239,7 @@ private:
     }
 
     void setLsrheadMdlTransform(const gp_Trsf &trsf) {
-        if (!ais_part.IsNull())
+        if (!ais_lsrhead.IsNull())
             context->SetLocation(ais_lsrhead, trsf);
 
         if (!ais_laser.IsNull()) {
@@ -852,14 +852,35 @@ void CInteractiveContext::setGripMdlTransform(const gp_Trsf &trsf)
     d_ptr->setGripMdlTransform(trsf);
 }
 
+const gp_Trsf CInteractiveContext::getTransform(const GUI_TYPES::EN_ShapeType shType) const
+{
+    gp_Trsf emptyResult;
+    Handle(AIS_Shape) shape;
+    switch(shType)
+    {
+        using namespace GUI_TYPES;
+
+        case ENST_DESK:
+            shape = d_ptr->ais_desk;
+            break;
+        case ENST_PART:
+            shape = d_ptr->ais_part;
+            break;
+        case ENST_LSRHEAD:
+            shape = d_ptr->ais_lsrhead;
+            break;
+        case ENST_GRIP:
+            shape = d_ptr->ais_grip;
+            break;
+
+        default: return emptyResult;
+    }
+    return d_ptr->context->Location(shape).Transformation();
+}
+
 const TopoDS_Shape &CInteractiveContext::getPartShape() const
 {
     return d_ptr->ais_part->Shape();
-}
-
-const gp_Trsf &CInteractiveContext::getPartTransform() const
-{
-    return d_ptr->context->Location(d_ptr->ais_part).Transformation();
 }
 
 const TopoDS_Shape &CInteractiveContext::getDeskShape() const
@@ -867,29 +888,14 @@ const TopoDS_Shape &CInteractiveContext::getDeskShape() const
     return d_ptr->ais_desk->Shape();
 }
 
-const gp_Trsf &CInteractiveContext::getDeskTransform() const
-{
-    return d_ptr->context->Location(d_ptr->ais_desk).Transformation();
-}
-
 const TopoDS_Shape &CInteractiveContext::getLsrHeadShape() const
 {
     return d_ptr->ais_lsrhead->Shape();
 }
 
-const gp_Trsf &CInteractiveContext::getLsrHeadTransform() const
-{
-    return d_ptr->context->Location(d_ptr->ais_lsrhead).Transformation();
-}
-
 const TopoDS_Shape &CInteractiveContext::getGripShape() const
 {
     return d_ptr->ais_grip->Shape();
-}
-
-const gp_Trsf &CInteractiveContext::getGripTransform() const
-{
-    return d_ptr->context->Location(d_ptr->ais_grip).Transformation();
 }
 
 gp_Pnt CInteractiveContext::getLaserLineCalibration() const

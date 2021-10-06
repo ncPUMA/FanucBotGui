@@ -29,7 +29,7 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="CDepthMapViewport" name="depthMapView" native="true"/>
+         <widget class="CAdvancedDepthMapViewport" name="depthMapView" native="true"/>
         </item>
         <item>
          <widget class="CSnapshotViewport" name="snapshotView" native="true"/>
@@ -333,9 +333,9 @@ p, li { white-space: pre-wrap; }
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>CDepthMapViewport</class>
+   <class>CAdvancedDepthMapViewport</class>
    <extends>QWidget</extends>
-   <header>cdepthmapviewport.h</header>
+   <header>cadvanceddepthmapviewport.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

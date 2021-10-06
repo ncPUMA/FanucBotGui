@@ -25,20 +25,21 @@ protected:
     virtual void startTasks(const std::vector <GUI_TYPES::SHomePoint> &homePoints,
                             const std::vector <GUI_TYPES::STaskPoint> &taskPoints) = 0;
     virtual void stopTasks() = 0;
-    virtual void shapeTransformChanged(const BotSocket::EN_ShapeType shType) = 0;
+    virtual void shapeTransformChanged(const GUI_TYPES::EN_ShapeType shType) = 0;
 
     void prepareComplete(const BotSocket::EN_PrepareResult result);
     void tasksComplete(const BotSocket::EN_WorkResult result);
     void socketStateChanged(const BotSocket::EN_BotState state);
     void laserHeadPositionChanged(const BotSocket::SBotPosition &pos);
     void gripPositionChanged(const BotSocket::SBotPosition &pos);
-    void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos);
-    void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform);
+    void shapeCalibrationChanged(const GUI_TYPES::EN_ShapeType shType, const BotSocket::SBotPosition &pos);
+    void shapeTransformChanged(const GUI_TYPES::EN_ShapeType shType, const gp_Trsf &transform);
     GUI_TYPES::EN_UiStates getUiState() const;
-    const TopoDS_Shape& getShape(const BotSocket::EN_ShapeType shType) const;
-    const gp_Trsf& getShapeTransform(const BotSocket::EN_ShapeType shType) const;
+    const TopoDS_Shape& getShape(const GUI_TYPES::EN_ShapeType shType) const;
+    const gp_Trsf getShapeTransform(const GUI_TYPES::EN_ShapeType shType) const;
 
     void makePartSnapshot(const char *fname);
+    void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient);
     void makeDepthMap(const char *fname);
     void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta);
     bool execSnapshotCalibrationWarning();

@@ -31,6 +31,8 @@ protected:
     virtual void calibrationChanged() = 0;
     virtual void tasksChanged() = 0;
     virtual void homePointsChanged() = 0;
+    virtual void shapeChanged(const GUI_TYPES::EN_ShapeType shType, const TopoDS_Shape &shape) = 0;
+    virtual void transformChanged(const GUI_TYPES::EN_ShapeType shType, const gp_Trsf &trsf) = 0;
 
 private:
     CAbstractMainViewportSubscriber(const CAbstractMainViewportSubscriber &) = delete;
@@ -75,10 +77,7 @@ public:
     const TopoDS_Shape& getLsrheadShape() const;
     const TopoDS_Shape& getGripShape() const;
 
-    const gp_Trsf& getPartTransform() const;
-    const gp_Trsf& getDeskTransform() const;
-    const gp_Trsf& getLsrheadTransform() const;
-    const gp_Trsf& getGripTransform() const;
+    const gp_Trsf getTransform(const GUI_TYPES::EN_ShapeType shType) const;
 
     void setCalibResult(const BotSocket::EN_CalibResult val);
     BotSocket::EN_CalibResult getCalibResult() const;
@@ -87,8 +86,8 @@ public:
     void moveLsrhead(const BotSocket::SBotPosition &pos);
     void moveGrip(const BotSocket::SBotPosition &pos);
 
-    void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos);
-    void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform);
+    void shapeCalibrationChanged(const GUI_TYPES::EN_ShapeType shType, const BotSocket::SBotPosition &pos);
+    void shapeTransformChanged(const GUI_TYPES::EN_ShapeType shType, const gp_Trsf &transform);
 
     void setCalibrationPoints(const std::vector <GUI_TYPES::SCalibPoint> &points);
     std::vector <GUI_TYPES::SCalibPoint> getCallibrationPoints() const;

@@ -42,14 +42,6 @@ struct SBotPosition
     SRotationAngle   globalRotation;
 };
 
-enum EN_ShapeType
-{
-    ENST_DESK,
-    ENST_PART,
-    ENST_LSRHEAD,
-    ENST_GRIP
-};
-
 enum EN_CalibResult
 {
     ENCR_OK,

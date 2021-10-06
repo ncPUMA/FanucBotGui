@@ -249,7 +249,7 @@ void CFanucBotSocket::calibFinish(const gp_Vec &delta)
     if (!delta.IsEqual(gp_Vec(), Precision::Confusion(), Precision::Angular()))
     {
         //Current task correction
-        gp_Trsf lHeadPos = getShapeTransform(BotSocket::ENST_LSRHEAD);
+        gp_Trsf lHeadPos = getShapeTransform(GUI_TYPES::ENST_LSRHEAD);
         gp_Quaternion quatLsrHead = lHeadPos.GetRotation();
         const gp_Vec rotatedDelta = quatLsrHead.Multiply(delta);
 
@@ -365,7 +365,7 @@ BotSocket::EN_CalibResult CFanucBotSocket::execCalibration(const std::vector<GUI
         r.z *= 180. / M_PI;
 
         BotSocket::SBotPosition part_position(translation.X(), translation.Y(), translation.Z(), r.x, r.y, r.z);
-        shapeCalibrationChanged(BotSocket::ENST_PART, part_position);
+        shapeCalibrationChanged(GUI_TYPES::ENST_PART, part_position);
 
         return BotSocket::ENCR_OK;
     }
@@ -392,5 +392,5 @@ void CFanucBotSocket::stopTasks()
     fanuc_relay_.stop();
 }
 
-void CFanucBotSocket::shapeTransformChanged(const BotSocket::EN_ShapeType)
+void CFanucBotSocket::shapeTransformChanged(const GUI_TYPES::EN_ShapeType)
 {}

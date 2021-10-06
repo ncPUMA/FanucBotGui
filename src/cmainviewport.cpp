@@ -63,6 +63,8 @@ protected:
     void calibrationChanged() final { }
     void tasksChanged() final { }
     void homePointsChanged() final { }
+    void shapeChanged(const GUI_TYPES::EN_ShapeType, const TopoDS_Shape &) final { }
+    void transformChanged(const GUI_TYPES::EN_ShapeType, const gp_Trsf &) final { }
 
 } emptySub;
 
@@ -337,9 +339,9 @@ class CMainViewportPrivate : public AIS_ViewController
         pnt.globalPos.z = gpPnt.Z();
     }
 
-    void shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
+    void shapeCalibrationChanged(const GUI_TYPES::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
     {
-        using namespace BotSocket;
+        using namespace GUI_TYPES;
         switch(shType) {
             case ENST_DESK   : {
                 guiSettings.deskTrX = pos.globalPos.x;
@@ -360,7 +362,7 @@ class CMainViewportPrivate : public AIS_ViewController
                 guiSettings.partRotationY = pos.globalRotation.y;
                 guiSettings.partRotationZ = pos.globalRotation.z;
                 const gp_Trsf newTrsf = calcPartTrsf();
-                const gp_Trsf pntTrsf = context->getPartTransform().Inverted() * newTrsf;
+                const gp_Trsf pntTrsf = context->getTransform(GUI_TYPES::ENST_PART).Inverted() * newTrsf;
                 context->setPartMdlTransform(newTrsf);
                 //points transformation by new calibration data
                 const size_t calibPntCount = context->getCalibPointCount();
@@ -410,9 +412,9 @@ class CMainViewportPrivate : public AIS_ViewController
         }
     }
 
-    void shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
+    void shapeTransformChanged(const GUI_TYPES::EN_ShapeType shType, const gp_Trsf &transform)
     {
-        using namespace BotSocket;
+        using namespace GUI_TYPES;
         switch(shType) {
             case ENST_DESK   : {
                 context->setDeskMdlTransform(transform);
@@ -524,6 +526,13 @@ void CMainViewport::init(OpenGl_GraphicDriver &driver)
 void CMainViewport::setGuiSettings(const GUI_TYPES::SGuiSettings &settings)
 {
     d_ptr->setGuiSettings(settings);
+    for(auto s : d_ptr->subs) {
+        using namespace GUI_TYPES;
+        s->transformChanged(ENST_DESK, d_ptr->context->getTransform(ENST_DESK));
+        s->transformChanged(ENST_PART, d_ptr->context->getTransform(ENST_PART));
+        s->transformChanged(ENST_GRIP, d_ptr->context->getTransform(ENST_GRIP));
+        s->transformChanged(ENST_LSRHEAD, d_ptr->context->getTransform(ENST_LSRHEAD));
+    }
 }
 
 GUI_TYPES::SGuiSettings CMainViewport::getGuiSettings() const
@@ -587,21 +596,37 @@ GUI_TYPES::EN_UiStates CMainViewport::getUiState() const
 void CMainViewport::setPartModel(const TopoDS_Shape &shape)
 {
     d_ptr->setPartModel(shape);
+    for(auto s : d_ptr->subs) {
+        s->shapeChanged(GUI_TYPES::ENST_PART, shape);
+        s->transformChanged(GUI_TYPES::ENST_PART, d_ptr->context->getTransform(GUI_TYPES::ENST_PART));
+    }
 }
 
 void CMainViewport::setDeskModel(const TopoDS_Shape &shape)
 {
     d_ptr->setDeskModel(shape);
+    for(auto s : d_ptr->subs) {
+        s->shapeChanged(GUI_TYPES::ENST_DESK, shape);
+        s->transformChanged(GUI_TYPES::ENST_DESK, d_ptr->context->getTransform(GUI_TYPES::ENST_DESK));
+    }
 }
 
 void CMainViewport::setLsrheadModel(const TopoDS_Shape &shape)
 {
     d_ptr->setLsrheadModel(shape);
+    for(auto s : d_ptr->subs) {
+        s->shapeChanged(GUI_TYPES::ENST_LSRHEAD, shape);
+        s->transformChanged(GUI_TYPES::ENST_LSRHEAD, d_ptr->context->getTransform(GUI_TYPES::ENST_LSRHEAD));
+    }
 }
 
 void CMainViewport::setGripModel(const TopoDS_Shape &shape)
 {
     d_ptr->setGripModel(shape);
+    for(auto s : d_ptr->subs) {
+        s->shapeChanged(GUI_TYPES::ENST_GRIP, shape);
+        s->transformChanged(GUI_TYPES::ENST_GRIP, d_ptr->context->getTransform(GUI_TYPES::ENST_GRIP));
+    }
 }
 
 const TopoDS_Shape& CMainViewport::getPartShape() const
@@ -624,24 +649,9 @@ const TopoDS_Shape& CMainViewport::getGripShape() const
     return d_ptr->context->getGripShape();
 }
 
-const gp_Trsf &CMainViewport::getPartTransform() const
+const gp_Trsf CMainViewport::getTransform(const GUI_TYPES::EN_ShapeType shType) const
 {
-    return d_ptr->context->getPartTransform();
-}
-
-const gp_Trsf &CMainViewport::getDeskTransform() const
-{
-    return d_ptr->context->getDeskTransform();
-}
-
-const gp_Trsf &CMainViewport::getLsrheadTransform() const
-{
-    return d_ptr->context->getLsrHeadTransform();
-}
-
-const gp_Trsf &CMainViewport::getGripTransform() const
-{
-    return d_ptr->context->getGripTransform();
+    return d_ptr->context->getTransform(shType);
 }
 
 void CMainViewport::setCalibResult(const BotSocket::EN_CalibResult val)
@@ -677,16 +687,25 @@ void CMainViewport::moveLsrhead(const BotSocket::SBotPosition &pos)
 void CMainViewport::moveGrip(const BotSocket::SBotPosition &pos)
 {
     d_ptr->moveGrip(pos);
+    for(auto s : d_ptr->subs) {
+        s->transformChanged(GUI_TYPES::ENST_GRIP, d_ptr->context->getTransform(GUI_TYPES::ENST_GRIP));
+        if (d_ptr->botState == BotSocket::ENBS_ATTACHED)
+            s->transformChanged(GUI_TYPES::ENST_PART, d_ptr->context->getTransform(GUI_TYPES::ENST_PART));
+    }
 }
 
-void CMainViewport::shapeCalibrationChanged(const BotSocket::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
+void CMainViewport::shapeCalibrationChanged(const GUI_TYPES::EN_ShapeType shType, const BotSocket::SBotPosition &pos)
 {
     d_ptr->shapeCalibrationChanged(shType, pos);
+    for(auto s : d_ptr->subs)
+        s->transformChanged(shType, d_ptr->context->getTransform(shType));
 }
 
-void CMainViewport::shapeTransformChanged(const BotSocket::EN_ShapeType shType, const gp_Trsf &transform)
+void CMainViewport::shapeTransformChanged(const GUI_TYPES::EN_ShapeType shType, const gp_Trsf &transform)
 {
     d_ptr->shapeTransformChanged(shType, transform);
+    for(auto s : d_ptr->subs)
+        s->transformChanged(shType, transform);
 }
 
 void CMainViewport::setCalibrationPoints(const std::vector<GUI_TYPES::SCalibPoint> &points)
@@ -763,6 +782,8 @@ void CMainViewport::makeCorrectionBySnapshot(const gp_Vec &globalDelta)
     d_ptr->guiSettings.partTrY += globalDelta.Y();
     d_ptr->guiSettings.partTrZ += globalDelta.Z();
     d_ptr->context->setPartMdlTransform(d_ptr->calcPartTrsf());
+    for(auto s : d_ptr->subs)
+        s->transformChanged(GUI_TYPES::ENST_PART, d_ptr->context->getTransform(GUI_TYPES::ENST_PART));
 
     //Points correction
     setCalibrationPoints(movedPoints(getCallibrationLocalPoints(), globalDelta));

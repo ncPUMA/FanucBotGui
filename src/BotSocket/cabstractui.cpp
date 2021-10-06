@@ -15,7 +15,7 @@ protected:
     void startTasks(const std::vector <GUI_TYPES::SHomePoint> &,
                     const std::vector <GUI_TYPES::STaskPoint> &) final { }
     void stopTasks() final { }
-    void shapeTransformChanged(const BotSocket::EN_ShapeType) final { }
+    void shapeTransformChanged(const GUI_TYPES::EN_ShapeType) final { }
 
 } emptySocket;
 
@@ -69,7 +69,7 @@ void CAbstractUi::stopTasks()
     d_ptr->bot->stopTasks();
 }
 
-void CAbstractUi::shapeTransformChaged(const BotSocket::EN_ShapeType shType)
+void CAbstractUi::shapeTransformChaged(const GUI_TYPES::EN_ShapeType shType)
 {
     d_ptr->bot->shapeTransformChanged(shType);
 }
