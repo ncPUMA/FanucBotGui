@@ -93,8 +93,15 @@
     <addaction name="actionHelp"/>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuAlg">
+    <property name="title">
+     <string>Алгоритмы</string>
+    </property>
+    <addaction name="actionPartDetection"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuAlg"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -310,6 +317,11 @@ p, li { white-space: pre-wrap; }
   <action name="actionResetPoints">
    <property name="text">
     <string>Сброс заданий</string>
+   </property>
+  </action>
+  <action name="actionPartDetection">
+   <property name="text">
+    <string>Обнаружение детали</string>
    </property>
   </action>
  </widget>

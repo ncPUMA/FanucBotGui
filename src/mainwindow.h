@@ -52,6 +52,9 @@ private slots:
     void slPartPrntScr();
     void slSyncGuiSettings();
 
+    //Menu "Algorithms"
+    void slPartDetection();
+
     //start/stop
     void slStart();
     void slStop();

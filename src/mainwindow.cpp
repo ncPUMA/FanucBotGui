@@ -626,6 +626,11 @@ void MainWindow::slSyncGuiSettings()
     d_ptr->settingsStorage->saveGuiSettings(ui->wSettings->getChangedSettings());
 }
 
+void MainWindow::slPartDetection()
+{
+    QMessageBox::information(this, windowTitle(), tr("Stub"));
+}
+
 void MainWindow::slPartPrntScr()
 {
     GUI_TYPES::SGuiSettings settings = ui->mainView->getGuiSettings();
@@ -735,6 +740,9 @@ void MainWindow::configMenu()
 
     //teJrnl
     connect(ui->actionClearJrnl, SIGNAL(triggered(bool)), SLOT(slClearJrnl()));
+
+    //Menu "Algorithms"
+    connect(ui->actionPartDetection, SIGNAL(triggered(bool)), SLOT(slPartDetection()));
 }
 
 void MainWindow::configToolBar()
