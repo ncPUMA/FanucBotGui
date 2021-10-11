@@ -35,6 +35,8 @@ public:
 
     void createSnapshot(const char *fname, const size_t width, const size_t height);
 
+    QImage createSnapshot(const size_t width, const size_t height);
+
 protected:
     // QWidget
     QPaintEngine* paintEngine() const final;

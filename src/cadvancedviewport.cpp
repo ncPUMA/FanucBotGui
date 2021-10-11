@@ -172,6 +172,30 @@ void CAdvancedViewport::createSnapshot(const char *fname, const size_t width, co
     img.save(fname);
 }
 
+QImage CAdvancedViewport::createSnapshot(const size_t width, const size_t height)
+{
+    Image_PixMap pix;
+    V3d_ImageDumpOptions params;
+    params.Width = width;
+    params.Height = height;
+    d_ptr->view->ToPixMap(pix, params);
+
+    QImage img(pix.Width(), pix.Height(), QImage::Format_RGB32);
+    for (Standard_Size y = 0; y < pix.Height(); y++)
+    {
+        uchar * const pRowSrc = pix.ChangeRow(y);
+        uchar * const pRowDest = img.scanLine(y);
+        for (Standard_Size x = 0; x < pix.Width(); x++)
+        {
+            pRowDest[x * 4    ] = pRowSrc[x * 3 + 2];
+            pRowDest[x * 4 + 1] = pRowSrc[x * 3 + 1];
+            pRowDest[x * 4 + 2] = pRowSrc[x * 3 + 0];
+            pRowDest[x * 4 + 3] = 0;
+        }
+    }
+    return img;
+}
+
 QPaintEngine *CAdvancedViewport::paintEngine() const
 {
     return nullptr;

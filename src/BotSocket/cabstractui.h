@@ -6,6 +6,8 @@
 
 #include "bot_socket_types.h"
 
+class QImage;
+
 class CAbstractUiPrivate;
 class CAbstractBotSocket;
 
@@ -43,6 +45,7 @@ protected:
     virtual void makePartSnapshot(const char *fname) = 0;
     virtual void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient) = 0;
     virtual void makeDepthMap(const char *fname) = 0;
+    virtual QImage makeDepthMap() = 0;
     virtual void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta) = 0;
     virtual bool execSnapshotCalibrationWarning() = 0;
 

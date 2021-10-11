@@ -1,5 +1,7 @@
 #include "cabstractbotsocket.h"
 
+#include <QImage>
+
 #include <TopoDS_Shape.hxx>
 
 #include "cabstractui.h"
@@ -22,6 +24,7 @@ protected:
     void makePartSnapshot(const char *) final { }
     void setDepthMapCameraPos(const gp_Pnt &, const gp_Dir &, const gp_Dir &) final { }
     void makeDepthMap(const char *) final { }
+    QImage makeDepthMap() final { return QImage(); }
     void snapshotCalibrationDataRecieved(const gp_Vec &) final { }
     bool execSnapshotCalibrationWarning() final { return false; }
 private:
@@ -100,6 +103,11 @@ void CAbstractBotSocket::setDepthMapCameraPos(const gp_Pnt &pos, const gp_Dir &d
 void CAbstractBotSocket::makeDepthMap(const char *fname)
 {
     ui->makeDepthMap(fname);
+}
+
+QImage CAbstractBotSocket::makeDepthMap()
+{
+    return ui->makeDepthMap();
 }
 
 void CAbstractBotSocket::snapshotCalibrationDataRecieved(const gp_Vec &globalDelta)

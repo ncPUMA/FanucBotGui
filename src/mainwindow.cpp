@@ -219,6 +219,11 @@ protected:
         depthView->createSnapshot(fname, settings.snapshotWidth, settings.snapshotHeight);
     }
 
+    QImage makeDepthMap() final {
+        const GUI_TYPES::SGuiSettings settings = viewport->getGuiSettings();
+        return depthView->createSnapshot(settings.snapshotWidth, settings.snapshotHeight);
+    }
+
     void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta) final {
         viewport->makeCorrectionBySnapshot(globalDelta);
         snapView->updatePosition();
