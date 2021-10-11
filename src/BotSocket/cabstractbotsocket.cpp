@@ -21,12 +21,12 @@ protected:
     void shapeCalibrationChanged(const GUI_TYPES::EN_ShapeType, const BotSocket::SBotPosition &) final {}
     void shapeTransformChanged(const GUI_TYPES::EN_ShapeType, const gp_Trsf &) final {}
 
-    void setSnapshotCameraPos(const gp_Pnt &, const gp_Dir &, const gp_Dir &) final { }
+    void setSnapshotCameraPos(const gp_Pnt &, const gp_Pnt &, const gp_Dir &) final { }
     void makeSnapshot(const char *) final { }
     QImage makeSnapshot() final { return QImage(); }
     void setSnapshotShapeVisible(const GUI_TYPES::EN_ShapeType, bool) final { }
 
-    void setDepthMapCameraPos(const gp_Pnt &, const gp_Dir &, const gp_Dir &) final { }
+    void setDepthMapCameraPos(const gp_Pnt &, const gp_Pnt &, const gp_Dir &) final { }
     void makeDepthMap(const char *) final { }
     QImage makeDepthMap() final { return QImage(); }
     void setDepthMapShapeVisible(const GUI_TYPES::EN_ShapeType, bool) final { }
@@ -96,7 +96,7 @@ const gp_Trsf CAbstractBotSocket::getShapeTransform(const GUI_TYPES::EN_ShapeTyp
     return ui->getShapeTransform(shType);
 }
 
-void CAbstractBotSocket::setSnapshotCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient)
+void CAbstractBotSocket::setSnapshotCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient)
 {
     ui->setSnapshotCameraPos(pos, dir, orient);
 }
@@ -116,7 +116,7 @@ void CAbstractBotSocket::setSnapshotShapeVisible(const GUI_TYPES::EN_ShapeType m
     ui->setSnapshotShapeVisible(model, visible);
 }
 
-void CAbstractBotSocket::setDepthMapCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient)
+void CAbstractBotSocket::setDepthMapCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient)
 {
     ui->setDepthMapCameraPos(pos, dir, orient);
 }

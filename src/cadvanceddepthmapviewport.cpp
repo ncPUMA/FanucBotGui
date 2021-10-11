@@ -49,7 +49,9 @@ CAdvancedDepthMapViewport::~CAdvancedDepthMapViewport()
     delete d_ptr;
 }
 
-void CAdvancedDepthMapViewport::initPrivate(AIS_InteractiveContext &context)
+void CAdvancedDepthMapViewport::initPrivate(AIS_InteractiveContext &context, V3d_View &view)
 {
+    (void)view;
+
     d_ptr->init(context);
 }

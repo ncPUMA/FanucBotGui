@@ -12,6 +12,7 @@ class gp_Trsf;
 class gp_Pnt;
 class gp_Dir;
 class AIS_InteractiveContext;
+class V3d_View;
 class CAdvancedViewportPrivate;
 
 class CAdvancedViewport : public QWidget
@@ -30,7 +31,7 @@ public:
                                const gp_Trsf &trsf);
 
     void setCameraScale(const double scale);
-    void setCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient);
+    void setCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient);
 
     void setLaserPos(const gp_Pnt &pos, const gp_Dir &dir);
 
@@ -52,7 +53,7 @@ protected:
     void wheelEvent(QWheelEvent *event) final;
 
     // CAdvancedViewport
-    virtual void initPrivate(AIS_InteractiveContext &context) = 0;
+    virtual void initPrivate(AIS_InteractiveContext &context, V3d_View &view) = 0;
 
     virtual bool modelShapeChangedPrivate(AIS_InteractiveContext &context,
                                           const GUI_TYPES::EN_ShapeType model,
@@ -60,6 +61,7 @@ protected:
     virtual bool modelTransformChangedPrivate(AIS_InteractiveContext &context,
                                               const GUI_TYPES::EN_ShapeType model,
                                               const gp_Trsf &trsf) = 0;
+    virtual void cameraPosChanged(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient) = 0;
 
 private:
     CAdvancedViewportPrivate * const d_ptr;

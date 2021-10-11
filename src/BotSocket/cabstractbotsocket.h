@@ -40,12 +40,12 @@ protected:
     const TopoDS_Shape& getShape(const GUI_TYPES::EN_ShapeType shType) const;
     const gp_Trsf getShapeTransform(const GUI_TYPES::EN_ShapeType shType) const;
 
-    void setSnapshotCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient);
+    void setSnapshotCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient);
     void makeSnapshot(const char *fname);
     QImage makeSnapshot();
     void setSnapshotShapeVisible(const GUI_TYPES::EN_ShapeType model, bool visible);
 
-    void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient);
+    void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient);
     void makeDepthMap(const char *fname);
     QImage makeDepthMap();
     void setDepthMapShapeVisible(const GUI_TYPES::EN_ShapeType model, bool visible);

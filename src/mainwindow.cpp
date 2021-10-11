@@ -205,7 +205,7 @@ protected:
         updateUiState();
     }
 
-    void setSnapshotCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient) final {
+    void setSnapshotCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient) final {
         snapView->setCameraPos(pos, dir, orient);
     }
 
@@ -223,7 +223,7 @@ protected:
         snapView->setShapeVisible(model, visible);
     }
 
-    void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient) final {
+    void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient) final {
         depthView->setCameraPos(pos, dir, orient);
     }
 

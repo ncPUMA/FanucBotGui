@@ -30,8 +30,6 @@ class CAdvancedViewportPrivate : public AIS_ViewController
         viewer->SetDefaultViewProj(V3d_XposYposZpos);
         viewer->SetComputedMode(Standard_True);
         viewer->SetDefaultComputedMode(Standard_True);
-        viewer->SetDefaultLights();
-        viewer->SetLightOn();
 
         //Context
         context = new AIS_InteractiveContext(viewer);
@@ -174,7 +172,7 @@ CAdvancedViewport::~CAdvancedViewport()
 void CAdvancedViewport::init(OpenGl_GraphicDriver &driver)
 {
     d_ptr->init(driver, *this);
-    initPrivate(*d_ptr->context);
+    initPrivate(*d_ptr->context, *d_ptr->view);
 }
 
 void CAdvancedViewport::modelShapeChanged(const GUI_TYPES::EN_ShapeType model,
@@ -208,14 +206,12 @@ void CAdvancedViewport::modelTransformChanged(const GUI_TYPES::EN_ShapeType mode
     {
         gp_Pnt pos = d_ptr->laserPos;
         pos.Transform(trsf);
-        d_ptr->view->SetEye(pos.X(), pos.Y(), pos.Z());
 
         gp_Dir dir = d_ptr->laserDir;
         dir.Transform(trsf);
 
         gp_Pnt aLastPoint = pos;
         aLastPoint.Translate(gp_Vec(dir));
-        d_ptr->view->SetAt(aLastPoint.X(), aLastPoint.Y(), aLastPoint.Z());
 
         /**
          *  TODO: parametrize camera distance (e.g. 80 mm)
@@ -227,7 +223,8 @@ void CAdvancedViewport::modelTransformChanged(const GUI_TYPES::EN_ShapeType mode
         const gp_Quaternion rotation = trsf.GetRotation();
         gp_Vec orient(1, 0, 0);
         const gp_Vec orient_rot = rotation.Multiply(orient);
-        d_ptr->view->SetUp(orient_rot.X(), orient_rot.Y(), orient_rot.Z());
+
+        setCameraPos(pos, aLastPoint, orient_rot);
 
         needRedraw = true;
     }
@@ -244,11 +241,12 @@ void CAdvancedViewport::setCameraScale(const double scale)
     d_ptr->view->SetScale(scale);
 }
 
-void CAdvancedViewport::setCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient)
+void CAdvancedViewport::setCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient)
 {
     d_ptr->view->SetEye(pos.X(), pos.Y(), pos.Z());
     d_ptr->view->SetAt(dir.X(), dir.Y(), dir.Z());
     d_ptr->view->SetUp(orient.X(), orient.Y(), orient.Z());
+    cameraPosChanged(pos, dir, orient);
     d_ptr->view->Redraw();
 }
 

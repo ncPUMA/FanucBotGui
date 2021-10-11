@@ -43,12 +43,12 @@ protected:
     void shapeTransformChaged(const GUI_TYPES::EN_ShapeType shType);
 
     //
-    virtual void setSnapshotCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient) = 0;
+    virtual void setSnapshotCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient) = 0;
     virtual void makeSnapshot(const char *fname) = 0;
     virtual QImage makeSnapshot() = 0;
     virtual void setSnapshotShapeVisible(const GUI_TYPES::EN_ShapeType model, bool visible) = 0;
 
-    virtual void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient) = 0;
+    virtual void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient) = 0;
     virtual void makeDepthMap(const char *fname) = 0;
     virtual QImage makeDepthMap() = 0;
     virtual void setDepthMapShapeVisible(const GUI_TYPES::EN_ShapeType model, bool visible) = 0;
