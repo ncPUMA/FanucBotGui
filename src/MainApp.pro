@@ -16,6 +16,7 @@ SOURCES += \
     BotSocket/fanuc_state_socket.cpp \
     Primitives/cpathvec.cpp \
     cadvanceddepthmapviewport.cpp \
+    cadvancedsnapshotviewport.cpp \
     cadvancedviewport.cpp \
     cjsonfilepointssaver.cpp \
     log/loguru.cpp \
@@ -59,6 +60,7 @@ HEADERS += \
     Primitives/cpathvec.h \
     cabstractpointssaver.h \
     cadvanceddepthmapviewport.h \
+    cadvancedsnapshotviewport.h \
     cadvancedviewport.h \
     cjsonfilepointssaver.h \
     log/loguru.hpp \

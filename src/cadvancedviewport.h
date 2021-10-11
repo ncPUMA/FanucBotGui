@@ -7,6 +7,7 @@
 
 class OpenGl_GraphicDriver;
 class TopoDS_Shape;
+class AIS_Shape;
 class gp_Trsf;
 class gp_Pnt;
 class gp_Dir;
@@ -37,6 +38,8 @@ public:
 
     QImage createSnapshot(const size_t width, const size_t height);
 
+    void setShapeVisible(const GUI_TYPES::EN_ShapeType model, bool visible);
+
 protected:
     // QWidget
     QPaintEngine* paintEngine() const final;
@@ -53,7 +56,7 @@ protected:
 
     virtual bool modelShapeChangedPrivate(AIS_InteractiveContext &context,
                                           const GUI_TYPES::EN_ShapeType model,
-                                          const TopoDS_Shape &shape) = 0;
+                                          AIS_Shape &shape) = 0;
     virtual bool modelTransformChangedPrivate(AIS_InteractiveContext &context,
                                               const GUI_TYPES::EN_ShapeType model,
                                               const gp_Trsf &trsf) = 0;

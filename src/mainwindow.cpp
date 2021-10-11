@@ -114,10 +114,10 @@ protected:
 
         viewport->shapeCalibrationChanged(shType, pos);
     }
+
     void shapeTransformChanged(const GUI_TYPES::EN_ShapeType shType, const gp_Trsf &transform)
     {
         viewport->shapeTransformChanged(shType, transform);
-        snapView->updatePosition();
     }
 
     const TopoDS_Shape& getShape(const GUI_TYPES::EN_ShapeType shType) const final {
@@ -205,9 +205,22 @@ protected:
         updateUiState();
     }
 
-    void makePartSnapshot(const char *fname) final {
+    void setSnapshotCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient) final {
+        snapView->setCameraPos(pos, dir, orient);
+    }
+
+    void makeSnapshot(const char *fname) final {
         const GUI_TYPES::SGuiSettings settings = viewport->getGuiSettings();
         snapView->createSnapshot(fname, settings.snapshotWidth, settings.snapshotHeight);
+    }
+
+    QImage makeSnapshot() final {
+        const GUI_TYPES::SGuiSettings settings = viewport->getGuiSettings();
+        return snapView->createSnapshot(settings.snapshotWidth, settings.snapshotHeight);
+    }
+
+    void setSnapshotShapeVisible(const GUI_TYPES::EN_ShapeType model, bool visible) final {
+        snapView->setShapeVisible(model, visible);
     }
 
     void setDepthMapCameraPos(const gp_Pnt &pos, const gp_Dir &dir, const gp_Dir &orient) final {
@@ -224,9 +237,12 @@ protected:
         return depthView->createSnapshot(settings.snapshotWidth, settings.snapshotHeight);
     }
 
+    void setDepthMapShapeVisible(const GUI_TYPES::EN_ShapeType model, bool visible) {
+        depthView->setShapeVisible(model, visible);
+    }
+
     void snapshotCalibrationDataRecieved(const gp_Vec &globalDelta) final {
         viewport->makeCorrectionBySnapshot(globalDelta);
-        snapView->updatePosition();
     }
 
     bool execSnapshotCalibrationWarning() final {
@@ -240,16 +256,18 @@ protected:
     }
 
     void shapeChanged(const GUI_TYPES::EN_ShapeType shType, const TopoDS_Shape &shape) final {
+        snapView->modelShapeChanged(shType, shape);
         depthView->modelShapeChanged(shType, shape);
     }
 
     void transformChanged(const GUI_TYPES::EN_ShapeType shType, const gp_Trsf &trsf) final {
+        snapView->modelTransformChanged(shType, trsf);
         depthView->modelTransformChanged(shType, trsf);
     }
 
 private:
     CMainViewport *viewport;
-    CSnapshotViewport *snapView;
+    CAdvancedSnapshotViewport *snapView;
     CAdvancedDepthMapViewport *depthView;
     QTextEdit *jrnl;
     QAction *btnStart;
@@ -319,8 +337,8 @@ private:
                                                              Qt::SmoothTransformation);
         static const QPixmap green =
                 QPixmap(":/Lamps/Data/Lamps/green.png").scaled(iconSize,
-                                                             Qt::IgnoreAspectRatio,
-                                                             Qt::SmoothTransformation);
+                                                               Qt::IgnoreAspectRatio,
+                                                               Qt::SmoothTransformation);
         switch(state) {
             using namespace BotSocket;
             case ENBS_FALL:
@@ -409,7 +427,7 @@ void MainWindow::init(OpenGl_GraphicDriver &driver)
 
     ui->mainView->addSubscriber(&d_ptr->uiIface);
 
-    ui->snapshotView->setContext(ui->mainView->context());
+    ui->snapshotView->init(driver);
     ui->depthMapView->init(driver);
 }
 
@@ -443,6 +461,8 @@ void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
         dir = gp_Dir(settings.lheadLsrNormalX,
                      settings.lheadLsrNormalY,
                      settings.lheadLsrNormalZ);
+    ui->snapshotView->setLaserPos(start, dir);
+    ui->snapshotView->setCameraScale(settings.snapshotScale);
     ui->depthMapView->setLaserPos(start, dir);
     ui->depthMapView->setCameraScale(settings.snapshotScale);
 
@@ -451,9 +471,6 @@ void MainWindow::setSettingsStorage(CAbstractSettingsStorage &storage)
 
     foreach(QAction * const action, d_ptr->attachActions)
         action->setVisible(settings.gripVis);
-
-    ui->snapshotView->setScale(settings.snapshotScale);
-    ui->snapshotView->updatePosition();
 }
 
 void MainWindow::setBotSocket(CAbstractBotSocket &botSocket)
@@ -635,7 +652,6 @@ void MainWindow::slPartPrntScr()
         settings.snapshotHeight = dialog.getHeight();
         d_ptr->settingsStorage->saveGuiSettings(settings);
         ui->wSettings->initFromGuiSettings(settings);
-        ui->snapshotView->updatePosition();
     }
 }
 
@@ -652,8 +668,6 @@ void MainWindow::slCallibApply()
 
     foreach(QAction * const action, d_ptr->attachActions)
         action->setVisible(settings.gripVis);
-
-    ui->snapshotView->updatePosition();
 
     const gp_Pnt start = gp_Pnt(settings.lheadLsrTrX,
                                 settings.lheadLsrTrY,

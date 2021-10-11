@@ -180,7 +180,7 @@ void CFanucBotSocket::completePath(const BotSocket::EN_WorkResult result)
             calibResFile.remove();
 
         QTimer::singleShot(camDelay_, this, [this](){
-            makePartSnapshot("snapshot.bmp");
+            makeSnapshot("snapshot.bmp");
         });
 
         calibWaitCounter = 0;

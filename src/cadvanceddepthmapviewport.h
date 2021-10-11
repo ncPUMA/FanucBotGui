@@ -14,12 +14,12 @@ public:
 protected:
     void initPrivate(AIS_InteractiveContext &context) final;
 
-    bool modelShapeChangedPrivate(AIS_InteractiveContext &context,
-                                  const GUI_TYPES::EN_ShapeType model,
-                                  const TopoDS_Shape &shape) final;
-    bool modelTransformChangedPrivate(AIS_InteractiveContext &context,
-                                      const GUI_TYPES::EN_ShapeType model,
-                                      const gp_Trsf &trsf) final;
+    bool modelShapeChangedPrivate(AIS_InteractiveContext &,
+                                  const GUI_TYPES::EN_ShapeType,
+                                  AIS_Shape &) final { return false; }
+    bool modelTransformChangedPrivate(AIS_InteractiveContext &,
+                                      const GUI_TYPES::EN_ShapeType,
+                                      const gp_Trsf &) final { return false; }
 
 private:
     CAdvancedDepthMapViewportPrivate * const d_ptr;

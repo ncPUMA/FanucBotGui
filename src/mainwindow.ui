@@ -32,7 +32,7 @@
          <widget class="CAdvancedDepthMapViewport" name="depthMapView" native="true"/>
         </item>
         <item>
-         <widget class="CSnapshotViewport" name="snapshotView" native="true"/>
+         <widget class="CAdvancedSnapshotViewport" name="snapshotView" native="true"/>
         </item>
        </layout>
       </item>
@@ -327,15 +327,15 @@ p, li { white-space: pre-wrap; }
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>CSnapshotViewport</class>
-   <extends>QWidget</extends>
-   <header>csnapshotviewport.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>CAdvancedDepthMapViewport</class>
    <extends>QWidget</extends>
    <header>cadvanceddepthmapviewport.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CAdvancedSnapshotViewport</class>
+   <extends>QWidget</extends>
+   <header>cadvancedsnapshotviewport.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

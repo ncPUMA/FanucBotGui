@@ -3,7 +3,6 @@
 #include <QWheelEvent>
 #include <QDoubleSpinBox>
 #include <QImage>
-#include <QDebug>
 
 #include <V3d_BadValue.hxx>
 
@@ -13,6 +12,7 @@
 #include <V3d_View.hxx>
 #include <AIS_ViewController.hxx>
 #include <gp_Quaternion.hxx>
+#include <AIS_Shape.hxx>
 
 #include "caspectwindow.h"
 
@@ -50,6 +50,97 @@ class CAdvancedViewportPrivate : public AIS_ViewController
         view->MustBeResized();
     }
 
+    bool modelShapeChanged(const GUI_TYPES::EN_ShapeType model,
+                           const TopoDS_Shape &shape) {
+        bool needUpdate = false;
+        switch(model)
+        {
+            using namespace GUI_TYPES;
+
+            case ENST_DESK:
+                context->Remove(ais_desk, Standard_False);
+                ais_desk = new AIS_Shape(shape);
+                context->SetDisplayMode(ais_desk, AIS_Shaded, Standard_False);
+                context->Display(ais_desk, Standard_False);
+                context->Deactivate(ais_desk);
+                needUpdate = true;
+                break;
+            case ENST_PART:
+                context->Remove(ais_part, Standard_False);
+                ais_part = new AIS_Shape(shape);
+                context->SetDisplayMode(ais_part, AIS_Shaded, Standard_False);
+                context->Display(ais_part, Standard_False);
+                context->Deactivate(ais_part);
+                needUpdate = true;
+                break;
+            case ENST_LSRHEAD:
+            case ENST_GRIP:
+                break;
+        }
+        return needUpdate;
+    }
+
+    bool modelTransformChanged(const GUI_TYPES::EN_ShapeType model,
+                               const gp_Trsf &trsf) {
+        bool needUpdate = false;
+        switch(model)
+        {
+            using namespace GUI_TYPES;
+
+            case ENST_DESK:
+                context->SetLocation(ais_desk, trsf);
+                needUpdate = true;
+                break;
+            case ENST_PART:
+                context->SetLocation(ais_part, trsf);
+                needUpdate = true;
+                break;
+            case ENST_LSRHEAD:
+            case ENST_GRIP:
+                break;
+        }
+        return needUpdate;
+    }
+
+    void setShapeVisible(const GUI_TYPES::EN_ShapeType model, bool visible) {
+        bool needUpdate = false;
+        Handle(AIS_InteractiveObject ) obj;
+        switch(model)
+        {
+            using namespace GUI_TYPES;
+
+            case ENST_DESK:
+                obj = ais_desk;
+                break;
+            case ENST_PART:
+                obj = ais_part;
+                break;
+            case ENST_LSRHEAD:
+            case ENST_GRIP:
+                break;
+        }
+
+        if (!obj.IsNull())
+        {
+            bool isVis = context->IsDisplayed(obj);
+            if (isVis && !visible)
+            {
+                context->Erase(obj, Standard_False);
+                needUpdate = true;
+            }
+            else if (!isVis && visible)
+            {
+                context->SetDisplayMode(obj, AIS_Shaded, Standard_False);
+                context->Display(obj, Standard_False);
+                context->Deactivate(obj);
+                needUpdate = true;
+            }
+        }
+
+        if (needUpdate)
+            view->Redraw();
+    }
+
     Handle(V3d_Viewer) viewer;
     Handle(V3d_View) view;
     Handle(CAspectWindow) aspect;
@@ -57,6 +148,9 @@ class CAdvancedViewportPrivate : public AIS_ViewController
 
     gp_Pnt laserPos;
     gp_Dir laserDir;
+
+    Handle(AIS_Shape) ais_desk;
+    Handle(AIS_Shape) ais_part;
 };
 
 
@@ -86,14 +180,29 @@ void CAdvancedViewport::init(OpenGl_GraphicDriver &driver)
 void CAdvancedViewport::modelShapeChanged(const GUI_TYPES::EN_ShapeType model,
                                           const TopoDS_Shape &shape)
 {
-    if (modelShapeChangedPrivate(*d_ptr->context, model, shape))
+    bool needRedraw = d_ptr->modelShapeChanged(model, shape);
+    switch(model)
+    {
+        using namespace GUI_TYPES;
+
+        case ENST_DESK:
+            needRedraw |= modelShapeChangedPrivate(*d_ptr->context, model, *d_ptr->ais_desk);
+            break;
+        case ENST_PART:
+            needRedraw |= modelShapeChangedPrivate(*d_ptr->context, model, *d_ptr->ais_part);
+            break;
+        case ENST_LSRHEAD:
+        case ENST_GRIP:
+            break;
+    }
+
+    if (needRedraw)
         d_ptr->view->Redraw();
 }
 
 void CAdvancedViewport::modelTransformChanged(const GUI_TYPES::EN_ShapeType model,
                                               const gp_Trsf &trsf)
 {
-    qDebug() << "CAdvancedViewport::modelTransformChanged " << model << " " << trsf.TranslationPart().X() << ":" << trsf.TranslationPart().Y() << ":" <<trsf.TranslationPart().Z();
     bool needRedraw = false;
     if (model == GUI_TYPES::ENST_LSRHEAD)
     {
@@ -123,7 +232,8 @@ void CAdvancedViewport::modelTransformChanged(const GUI_TYPES::EN_ShapeType mode
         needRedraw = true;
     }
 
-    needRedraw |= modelTransformChangedPrivate(*d_ptr->context, model, trsf);
+    needRedraw |= d_ptr->modelTransformChanged(model, trsf)
+            || modelTransformChangedPrivate(*d_ptr->context, model, trsf);
 
     if (needRedraw)
         d_ptr->view->Redraw();
@@ -194,6 +304,11 @@ QImage CAdvancedViewport::createSnapshot(const size_t width, const size_t height
         }
     }
     return img;
+}
+
+void CAdvancedViewport::setShapeVisible(const GUI_TYPES::EN_ShapeType model, bool visible)
+{
+    d_ptr->setShapeVisible(model, visible);
 }
 
 QPaintEngine *CAdvancedViewport::paintEngine() const
