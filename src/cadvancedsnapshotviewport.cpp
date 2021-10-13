@@ -28,11 +28,6 @@ class CAdvancedSnapshotViewportPrivate
         drawer->SetFaceBoundaryDraw(Standard_True);
     }
 
-    void cameraPosChanged(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient) {
-        (void)dir;
-        (void)orient;
-    }
-
     Handle(Prs3d_Drawer) drawer;
     Handle(V3d_DirectionalLight) light;
 };
@@ -67,9 +62,4 @@ bool CAdvancedSnapshotViewport::modelShapeChangedPrivate(AIS_InteractiveContext 
 //    context.SetLocalAttributes(&shape, d_ptr->drawer, Standard_False);
     context.Redisplay(&shape, Standard_False);
     return true;
-}
-
-void CAdvancedSnapshotViewport::cameraPosChanged(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient)
-{
-    d_ptr->cameraPosChanged(pos, dir, orient);
 }
