@@ -20,12 +20,12 @@ class CAdvancedSnapshotViewportPrivate
         Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
         aShAspect->SetColor(FACE_CLR);
         drawer->SetShadingAspect(aShAspect);
-        drawer->SetShadingModel(Graphic3d_TOSM_UNLIT);
+        drawer->SetShadingModel(Graphic3d_TOSM_FACET);
 
         Handle(Prs3d_LineAspect) lAspect = drawer->FaceBoundaryAspect();
         lAspect->SetColor(FACE_CLR);
         drawer->SetFaceBoundaryAspect(lAspect);
-        drawer->SetFaceBoundaryDraw(Standard_True);
+        drawer->SetFaceBoundaryDraw(Standard_False);
     }
 
     Handle(Prs3d_Drawer) drawer;
