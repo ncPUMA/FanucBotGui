@@ -7,8 +7,8 @@
 #include <Prs3d_ShadingAspect.hxx>
 #include <Prs3d_LineAspect.hxx>
 
-static const Quantity_Color BG_CLR   = Quantity_Color(1., 1., 1., Quantity_TOC_RGB);
-static const Quantity_Color FACE_CLR = Quantity_Color(0., 0., 0., Quantity_TOC_RGB);
+static const Quantity_Color BG_CLR   = Quantity_Color(0., 0., 0., Quantity_TOC_RGB);
+static const Quantity_Color FACE_CLR = Quantity_Color(1., 1., 1., Quantity_TOC_RGB);
 
 class CAdvancedSnapshotViewportPrivate
 {
@@ -18,7 +18,7 @@ class CAdvancedSnapshotViewportPrivate
         : drawer(new Prs3d_Drawer())
         , light(new V3d_DirectionalLight(gp_Dir(0, 0, -1), Quantity_NOC_WHITE, Standard_True)) {
         Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
-        aShAspect->SetColor(BG_CLR);
+        aShAspect->SetColor(FACE_CLR);
         drawer->SetShadingAspect(aShAspect);
         drawer->SetShadingModel(Graphic3d_TOSM_UNLIT);
 
@@ -51,6 +51,7 @@ void CAdvancedSnapshotViewport::initPrivate(AIS_InteractiveContext &context, V3d
     (void)context;
 
     view.SetLightOn(d_ptr->light);
+    view.SetBackgroundColor(BG_CLR);
 }
 
 bool CAdvancedSnapshotViewport::modelShapeChangedPrivate(AIS_InteractiveContext &context,
@@ -59,7 +60,7 @@ bool CAdvancedSnapshotViewport::modelShapeChangedPrivate(AIS_InteractiveContext 
 {
     (void)model;
 
-//    context.SetLocalAttributes(&shape, d_ptr->drawer, Standard_False);
+    context.SetLocalAttributes(&shape, d_ptr->drawer, Standard_False);
     context.Redisplay(&shape, Standard_False);
     return true;
 }

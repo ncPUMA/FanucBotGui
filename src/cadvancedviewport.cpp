@@ -399,3 +399,8 @@ void CAdvancedViewport::wheelEvent(QWheelEvent *event)
     setCameraScale(d_ptr->view->Scale() + delta);
     update();
 }
+
+void CAdvancedViewport::setBackgroundColor(const Quantity_Color &clr)
+{
+    d_ptr->view->SetBackgroundColor(clr);
+}

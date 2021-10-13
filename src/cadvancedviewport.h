@@ -14,6 +14,7 @@ class gp_Dir;
 class AIS_InteractiveContext;
 class V3d_View;
 class CAdvancedViewportPrivate;
+class Quantity_Color;
 
 class CAdvancedViewport : public QWidget
 {
@@ -62,6 +63,8 @@ protected:
                                               const GUI_TYPES::EN_ShapeType model,
                                               const gp_Trsf &trsf) = 0;
     virtual void cameraPosChanged(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient) = 0;
+
+    void setBackgroundColor(const Quantity_Color &clr);
 
 private:
     CAdvancedViewportPrivate * const d_ptr;
