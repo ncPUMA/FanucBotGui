@@ -2,7 +2,7 @@
 
 #include <AIS_InteractiveContext.hxx>
 #include <V3d_View.hxx>
-#include <V3d_PositionalLight.hxx>
+#include <V3d_DirectionalLight.hxx>
 #include <AIS_Shape.hxx>
 #include <Prs3d_ShadingAspect.hxx>
 #include <Prs3d_LineAspect.hxx>
@@ -16,7 +16,7 @@ class CAdvancedSnapshotViewportPrivate
 
     CAdvancedSnapshotViewportPrivate()
         : drawer(new Prs3d_Drawer())
-        , light(new V3d_PositionalLight(gp_Pnt())) {
+        , light(new V3d_DirectionalLight(gp_Dir(0, 0, -1), Quantity_NOC_WHITE, Standard_True)) {
         Handle(Prs3d_ShadingAspect) aShAspect = drawer->ShadingAspect();
         aShAspect->SetColor(BG_CLR);
         drawer->SetShadingAspect(aShAspect);
@@ -31,12 +31,10 @@ class CAdvancedSnapshotViewportPrivate
     void cameraPosChanged(const gp_Pnt &pos, const gp_Pnt &dir, const gp_Dir &orient) {
         (void)dir;
         (void)orient;
-
-        light->SetPosition(pos);
     }
 
     Handle(Prs3d_Drawer) drawer;
-    Handle(V3d_PositionalLight) light;
+    Handle(V3d_DirectionalLight) light;
 };
 
 
